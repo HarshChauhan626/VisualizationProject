@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kruskal's MST</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .graph-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+        .node {
+            fill: #3b82f6;
+            stroke: #1e40af;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .node.visited {
+            fill: #10b981;
+        }
+        .node.current {
+            fill: #fbbf24;
+        }
+        .link {
+            stroke: #64748b;
+            stroke-width: 2px;
+        }
+        .link.visited {
+            stroke: #10b981;
+            stroke-width: 3px;
+        }
+        .link.current {
+            stroke: #fbbf24;
+            stroke-width: 3px;
+        }
+        .link.rejected {
+            stroke: #f43f5e;
+            stroke-width: 2px;
+            stroke-dasharray: 5,5;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .weight {
+            font-size: 12px;
+            fill: white;
+            text-anchor: middle;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Kruskal's Minimum Spanning Tree</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the Minimum Spanning Tree of a graph using Kruskal's Algorithm.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Number of Nodes</label>
+                            <input type="number" id="nodeCount" value="5" min="3" max="8"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Edge Density</label>
+                            <input type="range" min="1" max="100" value="50" class="w-full" id="densitySlider">
+                            <span id="densityValue" class="text-sm">50%</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Graph -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Graph</h3>
+                    <div id="graph" class="graph-container"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Total Weight: Not calculated yet</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def kruskalMST(graph):</span>
+<span class="code-line" data-line="2">    # Sort edges by weight</span>
+<span class="code-line" data-line="3">    edges = sorted(graph.edges, key=lambda x: x.weight)</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    # Initialize Union-Find</span>
+<span class="code-line" data-line="6">    parent = [i for i in range(len(graph.nodes))]</span>
+<span class="code-line" data-line="7">    </span>
+<span class="code-line" data-line="8">    def find(u):</span>
+<span class="code-line" data-line="9">        if parent[u] != u:</span>
+<span class="code-line" data-line="10">            parent[u] = find(parent[u])</span>
+<span class="code-line" data-line="11">        return parent[u]</span>
+<span class="code-line" data-line="12">    </span>
+<span class="code-line" data-line="13">    mst = []</span>
+<span class="code-line" data-line="14">    total_weight = 0</span>
+<span class="code-line" data-line="15">    </span>
+<span class="code-line" data-line="16">    for edge in edges:</span>
+<span class="code-line" data-line="17">        u, v, weight = edge</span>
+<span class="code-line" data-line="18">        pu = find(u)</span>
+<span class="code-line" data-line="19">        pv = find(v)</span>
+<span class="code-line" data-line="20">        </span>
+<span class="code-line" data-line="21">        if pu != pv:</span>
+<span class="code-line" data-line="22">            mst.append(edge)</span>
+<span class="code-line" data-line="23">            total_weight += weight</span>
+<span class="code-line" data-line="24">            parent[pv] = pu</span>
+<span class="code-line" data-line="25">        </span>
+<span class="code-line" data-line="26">    return mst, total_weight</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given a connected, undirected, weighted graph, find a subset of edges that connects all vertices with the minimum possible total edge weight.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(E log E) - where E is the number of edges</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(V) - for the parent array in Union-Find</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works as follows:
+                                <br>1. Sort all edges in non-decreasing order of weight
+                                <br>2. Initialize Union-Find data structure
+                                <br>3. For each edge in sorted order:
+                                <br>   - If adding the edge doesn't form a cycle, add it to MST
+                                <br>   - Otherwise, skip it
+                                <br>4. Continue until V-1 edges are added
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graph = null;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let simulation = null;
+
+        function initialize() {
+            const nodeCount = parseInt(document.getElementById('nodeCount').value);
+            const density = parseInt(document.getElementById('densitySlider').value) / 100;
+
+            if (isNaN(nodeCount) || nodeCount < 3 || nodeCount > 8) {
+                alert('Please enter a valid number of nodes between 3 and 8');
+                return;
+            }
+
+            // Create random edges with weights
+            const edges = [];
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    if (Math.random() < density) {
+                        const weight = Math.floor(Math.random() * 10) + 1;
+                        edges.push([i, j, weight]);
+                    }
+                }
+            }
+
+            // Ensure the graph is connected
+            if (edges.length < nodeCount - 1) {
+                // Add minimum spanning tree edges
+                for (let i = 1; i < nodeCount; i++) {
+                    const weight = Math.floor(Math.random() * 10) + 1;
+                    edges.push([i - 1, i, weight]);
+                }
+            }
+
+            // Initialize graph
+            graph = {
+                nodes: Array.from({ length: nodeCount }, (_, i) => ({ id: i, label: `Node ${i}` })),
+                links: edges.map(([source, target, weight]) => ({ source, target, weight }))
+            };
+
+            // Initialize D3 visualization
+            initializeD3();
+
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function initializeD3() {
+            const container = document.getElementById('graph');
+            container.innerHTML = '';
+            
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const svg = d3.select('#graph')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Create force simulation
+            simulation = d3.forceSimulation(graph.nodes)
+                .force('link', d3.forceLink(graph.links).id(d => d.id))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+
+            // Create links
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(graph.links)
+                .enter()
+                .append('line')
+                .attr('class', 'link');
+
+            // Add weights
+            const weight = svg.append('g')
+                .selectAll('text')
+                .data(graph.links)
+                .enter()
+                .append('text')
+                .attr('class', 'weight')
+                .text(d => d.weight);
+
+            // Create nodes
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(graph.nodes)
+                .enter()
+                .append('circle')
+                .attr('class', 'node')
+                .attr('r', 20)
+                .call(drag(simulation));
+
+            // Add labels
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(graph.nodes)
+                .enter()
+                .append('text')
+                .text(d => d.label)
+                .attr('text-anchor', 'middle')
+                .attr('dy', '.3em')
+                .style('fill', 'white');
+
+            // Update positions
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                weight
+                    .attr('x', d => (d.source.x + d.target.x) / 2)
+                    .attr('y', d => (d.source.y + d.target.y) / 2);
+
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+        }
+
+        function drag(simulation) {
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            // Sort edges by weight
+            const edges = graph.links.map(link => [link.source.id, link.target.id, link.weight]);
+            edges.sort((a, b) => a[2] - b[2]);
+            steps.push({
+                type: 'sort',
+                description: 'Sort edges by weight',
+                codeLine: 3
+            });
+
+            const parent = Array(graph.nodes.length).fill().map((_, i) => i);
+            let totalWeight = 0;
+
+            function find(u) {
+                if (parent[u] !== u) {
+                    steps.push({
+                        type: 'find',
+                        description: `Find parent of Node ${u}`,
+                        node: u,
+                        parent: parent[u],
+                        codeLine: 10
+                    });
+                    parent[u] = find(parent[u]);
+                }
+                return parent[u];
+            }
+
+            for (const [u, v, weight] of edges) {
+                steps.push({
+                    type: 'process',
+                    description: `Processing edge ${u}-${v} with weight ${weight}`,
+                    source: u,
+                    target: v,
+                    weight: weight,
+                    codeLine: 18
+                });
+
+                const pu = find(u);
+                const pv = find(v);
+
+                if (pu !== pv) {
+                    steps.push({
+                        type: 'accept',
+                        description: `Adding edge ${u}-${v} to MST`,
+                        source: u,
+                        target: v,
+                        weight: weight,
+                        codeLine: 22
+                    });
+                    totalWeight += weight;
+                    parent[pv] = pu;
+                } else {
+                    steps.push({
+                        type: 'reject',
+                        description: `Skipping edge ${u}-${v} (forms cycle)`,
+                        source: u,
+                        target: v,
+                        weight: weight,
+                        codeLine: 21
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                description: `MST complete with total weight ${totalWeight}`,
+                totalWeight: totalWeight,
+                codeLine: 1
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all nodes and links
+            d3.selectAll('.node').classed('visited current', false);
+            d3.selectAll('.link').classed('visited current rejected', false);
+
+            if (step.type === 'process' || step.type === 'check') {
+                d3.select(`#graph circle[data-id="${step.source}"]`)
+                    .classed('current', true);
+                d3.select(`#graph line[data-source="${step.source}"][data-target="${step.target}"]`)
+                    .classed('current', true);
+            } else if (step.type === 'accept') {
+                d3.select(`#graph line[data-source="${step.source}"][data-target="${step.target}"]`)
+                    .classed('visited', true);
+            } else if (step.type === 'reject') {
+                d3.select(`#graph line[data-source="${step.source}"][data-target="${step.target}"]`)
+                    .classed('rejected', true);
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Total Weight: ${step.totalWeight}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle sliders
+        document.getElementById('densitySlider').addEventListener('input', function() {
+            document.getElementById('densityValue').textContent = this.value + '%';
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

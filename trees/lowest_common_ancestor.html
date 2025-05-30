@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lowest Common Ancestor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .visualization-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .tree-container {
+            flex: 2;
+            min-width: 600px;
+            height: 450px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .info-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        .result-display {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .current-node {
+            stroke: #ffd166 !important;
+            stroke-width: 5px !important;
+            transition: stroke 0.3s ease;
+        }
+        .visited-node {
+            fill: #4ecdc4 !important;
+            transition: fill 0.3s ease;
+        }
+        .target-node {
+            fill: #ff6b6b !important;
+            transition: fill 0.3s ease;
+        }
+        .lca-node {
+            fill: #8a2be2 !important;
+            transition: fill 0.3s ease;
+        }
+        .path-node {
+            fill: #ffcc5c !important;
+            transition: fill 0.3s ease;
+        }
+        .code-container {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 3px;
+        }
+        .node text {
+            font: 12px sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .trace-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .trace-step {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        .current-step {
+            background-color: #e6f7ff;
+            border-left: 3px solid #1890ff;
+            padding-left: 5px;
+        }
+        .node-selector {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .node-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lowest Common Ancestor</h1>
+        
+        <div class="node-selector">
+            <div class="node-input">
+                <label for="node1">Node 1:</label>
+                <select id="node1"></select>
+            </div>
+            <div class="node-input">
+                <label for="node2">Node 2:</label>
+                <select id="node2"></select>
+            </div>
+        </div>
+        
+        <div class="visualization-container">
+            <div class="tree-container" id="tree-display"></div>
+            
+            <div class="info-container">
+                <h3>Lowest Common Ancestor (LCA)</h3>
+                <p>The lowest common ancestor (LCA) of two nodes in a tree is the lowest (deepest) node that has both nodes as descendants.</p>
+                <p>A node can be a descendant of itself (so if one of the nodes is in the path to the other, that node is the LCA).</p>
+                
+                <div class="code-container">
+function lowestCommonAncestor(root, p, q) {
+    // Base case: if root is null or matches either p or q
+    if (root === null || root.val === p || root.val === q) {
+        return root;
+    }
+    
+    // Look for p and q in left and right subtrees
+    const left = lowestCommonAncestor(root.left, p, q);
+    const right = lowestCommonAncestor(root.right, p, q);
+    
+    // If both left and right returned a node, root is the LCA
+    if (left !== null && right !== null) {
+        return root;
+    }
+    
+    // Otherwise, return the non-null value (either left or right)
+    return left !== null ? left : right;
+}
+                </div>
+                
+                <div class="result-display">
+                    <div>LCA: <span id="lca-result">-</span></div>
+                </div>
+                
+                <div class="trace-container" id="trace-container">
+                    <h4>Algorithm Trace:</h4>
+                    <div id="trace-steps"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="start-btn" onclick="startVisualization()">Start Visualization</button>
+            <button id="pause-btn" onclick="pauseVisualization()" disabled>Pause</button>
+            <button id="reset-btn" onclick="resetVisualization()">Reset</button>
+        </div>
+        
+        <div class="speed-control">
+            <label for="speed">Animation Speed:</label>
+            <input type="range" id="speed" min="1" max="10" value="5">
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: steelblue;"></div>
+                <span>Normal Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff6b6b;"></div>
+                <span>Target Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4ecdc4;"></div>
+                <span>Visited Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #8a2be2;"></div>
+                <span>LCA Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffcc5c;"></div>
+                <span>Path Node</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 15px; height: 15px; border-radius: 50%; border: 3px solid #ffd166;"></div>
+                <span>Current Node</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <script>
+        // Sample tree data
+        const treeData = {
+            val: 3,
+            left: {
+                val: 5,
+                left: {
+                    val: 6,
+                    left: null,
+                    right: null
+                },
+                right: {
+                    val: 2,
+                    left: {
+                        val: 7,
+                        left: null,
+                        right: null
+                    },
+                    right: {
+                        val: 4,
+                        left: null,
+                        right: null
+                    }
+                }
+            },
+            right: {
+                val: 1,
+                left: {
+                    val: 0,
+                    left: null,
+                    right: null
+                },
+                right: {
+                    val: 8,
+                    left: null,
+                    right: null
+                }
+            }
+        };
+
+        let animationState = {
+            running: false,
+            interval: null,
+            stepIndex: 0,
+            steps: [],
+            node1: null,
+            node2: null,
+            lcaNode: null,
+            nodeList: []
+        };
+
+        // Set up D3 visualization
+        const margin = {top: 40, right: 90, bottom: 50, left: 90};
+        const width = 600 - margin.left - margin.right;
+        const height = 450 - margin.top - margin.bottom;
+        let svg;
+
+        function drawTree() {
+            // Clear any existing tree
+            d3.select("#tree-display").selectAll("*").remove();
+
+            // Create the SVG container for the tree
+            svg = d3.select("#tree-display")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Create the tree layout
+            const treeLayout = d3.tree().size([width, height]);
+
+            // Convert the JSON tree to hierarchy
+            const root = d3.hierarchy(treeData);
+            
+            // Assign positions to each node
+            treeLayout(root);
+
+            // Add links between nodes
+            svg.selectAll(".link")
+                .data(root.links())
+                .enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("id", d => `link-${d.source.data.val}-${d.target.data.val}`)
+                .attr("d", d3.linkVertical()
+                    .x(d => d.x)
+                    .y(d => d.y));
+
+            // Add nodes
+            const nodes = svg.selectAll(".node")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("id", d => `node-${d.data.val}`)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            // Add circles to nodes
+            nodes.append("circle")
+                .attr("r", 20);
+
+            // Add labels to nodes
+            nodes.append("text")
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .text(d => d.data.val);
+            
+            // Collect all node values for dropdowns
+            animationState.nodeList = root.descendants().map(node => node.data.val);
+            populateNodeSelectors();
+        }
+
+        function populateNodeSelectors() {
+            const node1Select = document.getElementById('node1');
+            const node2Select = document.getElementById('node2');
+            
+            // Clear existing options
+            node1Select.innerHTML = '';
+            node2Select.innerHTML = '';
+            
+            // Add node options
+            animationState.nodeList.forEach(val => {
+                const option1 = document.createElement('option');
+                option1.value = val;
+                option1.textContent = val;
+                
+                const option2 = document.createElement('option');
+                option2.value = val;
+                option2.textContent = val;
+                
+                node1Select.appendChild(option1);
+                node2Select.appendChild(option2);
+            });
+            
+            // Set default selections to make sense
+            if (animationState.nodeList.length >= 2) {
+                node1Select.value = animationState.nodeList[1]; // Second node
+                node2Select.value = animationState.nodeList[animationState.nodeList.length - 1]; // Last node
+            }
+            
+            // Add event listeners
+            node1Select.addEventListener('change', resetVisualization);
+            node2Select.addEventListener('change', resetVisualization);
+        }
+
+        function getSelectedNodes() {
+            const node1 = parseInt(document.getElementById('node1').value);
+            const node2 = parseInt(document.getElementById('node2').value);
+            
+            return { node1, node2 };
+        }
+
+        function generateLCASteps(node, p, q, path = []) {
+            if (!node) return { steps: [], node: null };
+            
+            const currentPath = [...path, node.val];
+            
+            const steps = [{
+                type: 'visit',
+                node: node.val,
+                path: currentPath,
+                message: `Visiting node ${node.val}`
+            }];
+            
+            // Check if current node is one of the targets
+            if (node.val === p || node.val === q) {
+                steps.push({
+                    type: 'target-found',
+                    node: node.val,
+                    isP: node.val === p,
+                    isQ: node.val === q,
+                    path: currentPath,
+                    message: `Found target node ${node.val} (${node.val === p ? 'first' : 'second'} node)`
+                });
+                
+                return { steps, node: node };
+            }
+            
+            // Recursively search left subtree
+            let leftResult = { steps: [], node: null };
+            if (node.left) {
+                steps.push({
+                    type: 'go-left',
+                    node: node.val,
+                    childNode: node.left.val,
+                    path: currentPath,
+                    message: `Moving to left child of node ${node.val}: ${node.left.val}`
+                });
+                
+                leftResult = generateLCASteps(node.left, p, q, currentPath);
+                
+                // Add left subtree steps
+                steps.push(...leftResult.steps);
+                
+                steps.push({
+                    type: 'return-from-left',
+                    node: node.val,
+                    childNode: node.left.val,
+                    leftFound: leftResult.node !== null,
+                    path: currentPath,
+                    message: `Returned from left subtree of ${node.val}${leftResult.node !== null ? `, found ${leftResult.node.val === p && leftResult.node.val === q ? 'both nodes' : leftResult.node.val === p ? 'first node' : 'second node'}` : ', found nothing'}`
+                });
+            }
+            
+            // Recursively search right subtree
+            let rightResult = { steps: [], node: null };
+            if (node.right) {
+                steps.push({
+                    type: 'go-right',
+                    node: node.val,
+                    childNode: node.right.val,
+                    path: currentPath,
+                    message: `Moving to right child of node ${node.val}: ${node.right.val}`
+                });
+                
+                rightResult = generateLCASteps(node.right, p, q, currentPath);
+                
+                // Add right subtree steps
+                steps.push(...rightResult.steps);
+                
+                steps.push({
+                    type: 'return-from-right',
+                    node: node.val,
+                    childNode: node.right.val,
+                    rightFound: rightResult.node !== null,
+                    path: currentPath,
+                    message: `Returned from right subtree of ${node.val}${rightResult.node !== null ? `, found ${rightResult.node.val === p && rightResult.node.val === q ? 'both nodes' : rightResult.node.val === p ? 'first node' : 'second node'}` : ', found nothing'}`
+                });
+            }
+            
+            // Determine if this node is the LCA
+            let result = null;
+            
+            if (leftResult.node !== null && rightResult.node !== null) {
+                // If both subtrees found a target, this node is the LCA
+                steps.push({
+                    type: 'lca-found',
+                    node: node.val,
+                    path: currentPath,
+                    message: `Node ${node.val} is the LCA because one target was found in the left subtree and one in the right subtree`
+                });
+                
+                result = node;
+            } else if (node.val === p || node.val === q) {
+                // If this node is one of the targets and the other target was found in subtrees
+                if (leftResult.node !== null || rightResult.node !== null) {
+                    steps.push({
+                        type: 'lca-found',
+                        node: node.val,
+                        path: currentPath,
+                        message: `Node ${node.val} is the LCA because it is one of the targets and the other target was found in its subtree`
+                    });
+                    
+                    result = node;
+                } else {
+                    // This node is one of the targets but the other wasn't found in subtrees
+                    result = node;
+                }
+            } else {
+                // Return the non-null result from subtrees (if any)
+                result = leftResult.node !== null ? leftResult.node : rightResult.node;
+                
+                if (result !== null) {
+                    steps.push({
+                        type: 'propagate',
+                        node: node.val,
+                        resultNode: result.val,
+                        path: currentPath,
+                        message: `Node ${node.val} propagates result: ${result.val}`
+                    });
+                } else {
+                    steps.push({
+                        type: 'no-result',
+                        node: node.val,
+                        path: currentPath,
+                        message: `Node ${node.val} returns null (no target found in this subtree)`
+                    });
+                }
+            }
+            
+            return { steps, node: result };
+        }
+
+        function findNodeInTree(node, value) {
+            if (!node) return null;
+            if (node.val === value) return node;
+            
+            const leftResult = findNodeInTree(node.left, value);
+            if (leftResult) return leftResult;
+            
+            return findNodeInTree(node.right, value);
+        }
+
+        function startVisualization() {
+            if (animationState.running) return;
+            
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            // Reset result display
+            document.getElementById('lca-result').textContent = '-';
+            
+            // Get selected nodes
+            const { node1, node2 } = getSelectedNodes();
+            animationState.node1 = node1;
+            animationState.node2 = node2;
+            
+            // Generate steps if not already done
+            if (animationState.steps.length === 0) {
+                const result = generateLCASteps(treeData, node1, node2);
+                animationState.steps = result.steps;
+                animationState.lcaNode = result.node ? result.node.val : null;
+                
+                // Mark target nodes immediately
+                highlightTargetNodes();
+            }
+            
+            animationState.running = true;
+            
+            // Start the animation
+            const speed = 11 - document.getElementById('speed').value; // Invert so higher value = faster
+            animationState.interval = setInterval(() => {
+                if (animationState.stepIndex < animationState.steps.length) {
+                    visualizeNextStep();
+                } else {
+                    pauseVisualization();
+                    startBtn.disabled = true;
+                    
+                    // Display final result
+                    document.getElementById('lca-result').textContent = 
+                        animationState.lcaNode !== null ? animationState.lcaNode : "Not found";
+                        
+                    // Highlight the LCA node
+                    if (animationState.lcaNode !== null) {
+                        const lcaElement = document.getElementById(`node-${animationState.lcaNode}`);
+                        if (lcaElement) {
+                            d3.select(lcaElement).select('circle').classed('lca-node', true);
+                        }
+                    }
+                }
+            }, speed * 300);
+        }
+
+        function pauseVisualization() {
+            if (!animationState.running) return;
+            
+            clearInterval(animationState.interval);
+            animationState.running = false;
+            
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+        }
+
+        function resetVisualization() {
+            // Clear any running animation
+            if (animationState.running) {
+                clearInterval(animationState.interval);
+                animationState.running = false;
+            }
+            
+            // Reset animation state
+            animationState.stepIndex = 0;
+            animationState.steps = [];
+            animationState.lcaNode = null;
+            
+            // Reset UI
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+            document.getElementById('lca-result').textContent = '-';
+            document.getElementById('trace-steps').innerHTML = '';
+            
+            // Reset node colors
+            d3.selectAll('.node circle')
+                .classed('current-node', false)
+                .classed('visited-node', false)
+                .classed('target-node', false)
+                .classed('lca-node', false)
+                .classed('path-node', false);
+                
+            // Get new node selections
+            const { node1, node2 } = getSelectedNodes();
+            animationState.node1 = node1;
+            animationState.node2 = node2;
+            
+            // Mark target nodes
+            highlightTargetNodes();
+        }
+
+        function highlightTargetNodes() {
+            const node1Element = document.getElementById(`node-${animationState.node1}`);
+            const node2Element = document.getElementById(`node-${animationState.node2}`);
+            
+            if (node1Element) {
+                d3.select(node1Element).select('circle').classed('target-node', true);
+            }
+            
+            if (node2Element) {
+                d3.select(node2Element).select('circle').classed('target-node', true);
+            }
+        }
+
+        function addTraceStep(step, isActive = true) {
+            const traceSteps = document.getElementById('trace-steps');
+            const stepElement = document.createElement('div');
+            stepElement.className = `trace-step ${isActive ? 'current-step' : ''}`;
+            stepElement.textContent = step.message;
+            
+            // Clear current-step from all other steps
+            if (isActive) {
+                document.querySelectorAll('.trace-step').forEach(el => {
+                    el.classList.remove('current-step');
+                });
+            }
+            
+            traceSteps.appendChild(stepElement);
+            traceSteps.scrollTop = traceSteps.scrollHeight;
+        }
+
+        function visualizeNextStep() {
+            const step = animationState.steps[animationState.stepIndex];
+            
+            // Add this step to the trace
+            addTraceStep(step);
+            
+            // Reset current node highlighting
+            d3.selectAll('.node circle').classed('current-node', false);
+            
+            // Get the node element
+            const nodeElement = document.getElementById(`node-${step.node}`);
+            
+            // Process the step based on its type
+            if (step.type === 'visit' || 
+                step.type === 'go-left' || 
+                step.type === 'go-right' || 
+                step.type === 'return-from-left' || 
+                step.type === 'return-from-right' ||
+                step.type === 'propagate') {
+                
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle').classed('current-node', true);
+                    
+                    // Add to path if not a target node
+                    if (step.node !== animationState.node1 && step.node !== animationState.node2 && 
+                        !d3.select(nodeElement).select('circle').classed('lca-node')) {
+                        d3.select(nodeElement).select('circle').classed('path-node', true);
+                    }
+                }
+            }
+            else if (step.type === 'target-found') {
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle')
+                        .classed('current-node', true)
+                        .classed('target-node', true);
+                }
+            }
+            else if (step.type === 'lca-found') {
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle')
+                        .classed('current-node', true)
+                        .classed('lca-node', true);
+                }
+                
+                // Update result display
+                document.getElementById('lca-result').textContent = step.node;
+            }
+            else if (step.type === 'no-result') {
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle')
+                        .classed('current-node', true)
+                        .classed('visited-node', true);
+                }
+            }
+            
+            animationState.stepIndex++;
+        }
+
+        // Initialize the visualization
+        window.onload = function() {
+            drawTree();
+            resetVisualization();
+        };
+    </script>
+</body>
+</html> 

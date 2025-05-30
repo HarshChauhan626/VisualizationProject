@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0/1 Knapsack</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .item-element {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .item-element.current {
+            background-color: #eab308;
+        }
+        .item-element.selected {
+            background-color: #22c55e;
+        }
+        .item-element.rejected {
+            background-color: #ef4444;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .knapsack-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .dp-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #374151;
+            font-family: monospace;
+            transition: all 0.3s ease-in-out;
+        }
+        .dp-cell.current {
+            background-color: #eab308;
+        }
+        .dp-cell.processed {
+            background-color: #22c55e;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">0/1 Knapsack</h1>
+        <p class="text-gray-300 mb-8">Visualize how to solve the 0/1 Knapsack problem using dynamic programming.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Weights (comma-separated)</label>
+                            <input type="text" id="weightsInput" value="2,3,4,5" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter weights">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Values (comma-separated)</label>
+                            <input type="text" id="valuesInput" value="3,4,5,6" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter values">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Maximum Weight (W)</label>
+                            <input type="number" id="maxWeightInput" value="5" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter maximum weight">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyCustomInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Items Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Items</h3>
+                    <div id="itemsContainer" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">DP Table</h3>
+                    <div id="dpTable" class="overflow-auto"></div>
+                </div>
+
+                <!-- Knapsack Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current State</h3>
+                    <div id="knapsackInfo" class="knapsack-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Maximum Value: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function knapsack(weights, values, W):</span>
+<span class="code-line" data-line="2">    n = len(weights)</span>
+<span class="code-line" data-line="3">    dp = [[0] * (W + 1) for _ in range(n + 1)]</span>
+<span class="code-line" data-line="4">    for i = 1 to n:</span>
+<span class="code-line" data-line="5">        for w = 1 to W:</span>
+<span class="code-line" data-line="6">            if weights[i-1] <= w:</span>
+<span class="code-line" data-line="7">                dp[i][w] = max(values[i-1] + dp[i-1][w-weights[i-1]], dp[i-1][w])</span>
+<span class="code-line" data-line="8">            else:</span>
+<span class="code-line" data-line="9">                dp[i][w] = dp[i-1][w]</span>
+<span class="code-line" data-line="10">    return dp[n][W]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n*W) where n is the number of items and W is the maximum weight</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n*W) for the dp array, can be optimized to O(W)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Create a DP table of size (n+1) x (W+1)
+                                <br>2. For each item and weight:
+                                <br>&nbsp;&nbsp;&nbsp;- If item can be included, take max of including/excluding
+                                <br>&nbsp;&nbsp;&nbsp;- If item cannot be included, carry forward previous value
+                                <br>3. Return the maximum value achievable
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let weights = [];
+        let values = [];
+        let maxWeight = 0;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyCustomInputs() {
+            const weightsInput = document.getElementById('weightsInput').value;
+            const valuesInput = document.getElementById('valuesInput').value;
+            const maxWeightInput = document.getElementById('maxWeightInput').value;
+            try {
+                weights = weightsInput.split(',').map(Number);
+                values = valuesInput.split(',').map(Number);
+                maxWeight = parseInt(maxWeightInput);
+                
+                if (weights.length !== values.length) {
+                    throw new Error('Number of weights and values must be equal');
+                }
+                if (weights.some(w => w <= 0) || values.some(v => v <= 0)) {
+                    throw new Error('Weights and values must be positive');
+                }
+                if (maxWeight <= 0) {
+                    throw new Error('Maximum weight must be positive');
+                }
+                
+                createItemElements();
+                createDPTable();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid inputs: ' + error.message);
+            }
+        }
+
+        function createItemElements() {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+            
+            weights.forEach((weight, index) => {
+                const element = document.createElement('div');
+                element.className = 'item-element';
+                element.id = `item-${index}`;
+                element.innerHTML = `
+                    <span class="font-bold">Item ${index + 1}</span>
+                    <span>Weight: ${weight}</span>
+                    <span>Value: ${values[index]}</span>
+                `;
+                container.appendChild(element);
+            });
+        }
+
+        function createDPTable() {
+            const table = document.getElementById('dpTable');
+            table.innerHTML = '';
+            
+            const n = weights.length;
+            const W = maxWeight;
+            
+            // Create table header
+            const headerRow = document.createElement('div');
+            headerRow.className = 'flex';
+            
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'dp-cell';
+            emptyCell.style.width = '50px';
+            headerRow.appendChild(emptyCell);
+            
+            for (let w = 0; w <= W; w++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.textContent = w;
+                headerRow.appendChild(cell);
+            }
+            table.appendChild(headerRow);
+            
+            // Create table rows
+            for (let i = 0; i <= n; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex';
+                
+                const indexCell = document.createElement('div');
+                indexCell.className = 'dp-cell';
+                indexCell.textContent = i;
+                row.appendChild(indexCell);
+                
+                for (let w = 0; w <= W; w++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'dp-cell';
+                    cell.id = `dp-${i}-${w}`;
+                    cell.textContent = '0';
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = weights.length;
+            const W = maxWeight;
+            const dp = Array(n + 1).fill().map(() => Array(W + 1).fill(0));
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initializing DP table',
+                codeLine: 3
+            });
+            
+            // Fill DP table
+            for (let i = 1; i <= n; i++) {
+                for (let w = 1; w <= W; w++) {
+                    if (weights[i-1] <= w) {
+                        const include = values[i-1] + dp[i-1][w-weights[i-1]];
+                        const exclude = dp[i-1][w];
+                        dp[i][w] = Math.max(include, exclude);
+                        
+                        steps.push({
+                            type: 'fill',
+                            i: i,
+                            w: w,
+                            include: include,
+                            exclude: exclude,
+                            value: dp[i][w],
+                            description: `Item ${i} (weight: ${weights[i-1]}, value: ${values[i-1]}) can be included`,
+                            codeLine: 7
+                        });
+                    } else {
+                        dp[i][w] = dp[i-1][w];
+                        steps.push({
+                            type: 'fill',
+                            i: i,
+                            w: w,
+                            value: dp[i][w],
+                            description: `Item ${i} (weight: ${weights[i-1]}) cannot be included`,
+                            codeLine: 9
+                        });
+                    }
+                }
+            }
+            
+            steps.push({
+                type: 'complete',
+                value: dp[n][W],
+                description: `Maximum value achievable: ${dp[n][W]}`,
+                codeLine: 10
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Maximum Value: 0';
+            document.getElementById('knapsackInfo').textContent = '';
+            highlightCodeLine(1);
+            createItemElements();
+            createDPTable();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const items = document.querySelectorAll('.item-element');
+            const cells = document.querySelectorAll('.dp-cell');
+            items.forEach(item => item.className = 'item-element');
+            cells.forEach(cell => cell.classList.remove('current', 'processed'));
+
+            // Update current item
+            if (step.i > 0) {
+                document.getElementById(`item-${step.i-1}`).classList.add('current');
+            }
+
+            // Update DP table
+            if (step.type === 'fill') {
+                const cell = document.getElementById(`dp-${step.i}-${step.w}`);
+                cell.textContent = step.value;
+                cell.classList.add('current');
+                
+                // Mark previous cells as processed
+                if (step.i > 1) {
+                    document.getElementById(`dp-${step.i-1}-${step.w}`).classList.add('processed');
+                }
+                if (step.w > 1) {
+                    document.getElementById(`dp-${step.i}-${step.w-1}`).classList.add('processed');
+                }
+            }
+
+            // Update knapsack info
+            let knapsackInfo = '';
+            if (step.type === 'fill') {
+                if (step.include !== undefined) {
+                    knapsackInfo = `Item ${step.i} (weight: ${weights[step.i-1]}, value: ${values[step.i-1]})
+                        \nInclude: ${values[step.i-1]} + dp[${step.i-1}][${step.w-weights[step.i-1]}] = ${step.include}
+                        \nExclude: dp[${step.i-1}][${step.w}] = ${step.exclude}
+                        \nMax: ${step.value}`;
+                } else {
+                    knapsackInfo = `Item ${step.i} (weight: ${weights[step.i-1]}) cannot be included
+                        \nCarry forward: dp[${step.i-1}][${step.w}] = ${step.value}`;
+                }
+            }
+
+            document.getElementById('knapsackInfo').textContent = knapsackInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Maximum Value: ${step.value}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyCustomInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

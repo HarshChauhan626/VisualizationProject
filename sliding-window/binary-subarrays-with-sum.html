@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Subarrays With Sum Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-xl */
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b; /* slate-800 */
+            border: 2px solid #3b82f6; /* blue-500 */
+            color: #e2e8f0; /* slate-200 */
+            border-radius: 0.375rem; /* rounded */
+        }
+        .window-element { /* Highlight for current subarray window */
+            background-color: #22c55e; /* green-500 */
+            color: white;
+            border-color: #16a34a; /* green-600 */
+        }
+        .prefix-map-key, .prefix-map-value { /* For prefix sum map display */
+             background-color: #3b82f6; /* blue-500 */
+             color: white;
+        }
+        pre {
+            background-color: #0f172a !important; 
+            border: 1px solid #334155; /* slate-700 */
+            color: #cbd5e1; /* slate-300 */
+            overflow-x: auto;
+            font-family: 'Monospace', monospace;
+            border-radius: 0.375rem; /* rounded */
+        }
+        input[type="text"], input[type="number"] { 
+            background-color: #1e293b !important; 
+            border-color: #3b82f6 !important; 
+            color: #e2e8f0 !important; 
+            border-radius: 0.375rem; /* rounded */
+        }
+        input::placeholder {
+            color: #64748b !important; /* slate-500 */
+        }
+        .control-button, .algo-button { /* General button styling */
+            transition: background-color 0.2s ease-in-out;
+            border-radius: 0.375rem; /* rounded */
+            padding: 0.5rem 1rem; /* py-2 px-4 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* medium */
+        }
+        .highlight-pseudo { /* For potential pseudo-code line highlighting */
+            background-color: #059669; /* green-600 (consistent with other visualizer) */
+            color: #ffffff !important;   
+            border-radius: 3px;
+            padding: 1px 4px; 
+            margin: 1px 0; 
+            box-shadow: 0 0 5px rgba(5, 150, 105, 0.5); 
+        }
+        #pseudoCodeContainer pre span[id^="line-"] { /* For pseudo-code line highlighting */
+            display: block; 
+            padding: 2px 0; 
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto"> {/* Increased max-width for better layout */}
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-blue-400">Binary Subarrays With Sum</h1>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-3 text-blue-300">Problem Statement</h2>
+                    <p class="text-slate-300 text-sm">
+                        Given a binary array <code>nums</code> and an integer <code>goal</code>, return the number of non-empty subarrays with a sum equal to <code>goal</code>.
+                        A subarray is a contiguous part of the array.
+                    </p>
+                </div>
+
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-3 text-blue-300">Test Cases</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="border-b border-slate-700 pb-3">
+                            <p class="font-semibold text-slate-300">Test Case 1:</p>
+                            <p class="text-slate-400">Input: nums = [1,0,1,0,1], goal = 2</p>
+                            <p class="text-slate-400">Output: 4</p>
+                        </div>
+                        <div class="border-b border-slate-700 pb-3">
+                            <p class="font-semibold text-slate-300">Test Case 2:</p>
+                            <p class="text-slate-400">Input: nums = [0,0,0,0,0], goal = 0</p>
+                            <p class="text-slate-400">Output: 15</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-slate-300">Test Case 3:</p>
+                            <p class="text-slate-400">Input: nums = [1,1,1,1,1], goal = 3</p>
+                            <p class="text-slate-400">Output: 3</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-300">Input & Algorithm</h2>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4 items-end">
+                        <div class="flex-grow">
+                            <label for="arrayInput" class="block text-sm font-medium mb-1 text-slate-300">Binary Array (comma-separated)</label>
+                            <input type="text" id="arrayInput" placeholder="e.g., 1,0,1,0,1" 
+                                   class="border p-2 w-full" value="1,0,1,0,1">
+                        </div>
+                        <div class="w-full sm:w-32">
+                            <label for="goalInput" class="block text-sm font-medium mb-1 text-slate-300">Goal Sum</label>
+                            <input type="number" id="goalInput" placeholder="Goal" 
+                                   class="border p-2 w-full" value="2">
+                        </div>
+                        <button onclick="initializeVisualization()" 
+                                class="control-button bg-blue-500 text-white hover:bg-blue-600 w-full sm:w-auto">
+                            Initialize
+                        </button>
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="text-md font-semibold mb-2 text-slate-300">Select Algorithm:</h3>
+                        <div class="flex flex-wrap gap-3 justify-center">
+                            <button id="btn-bruteforce" onclick="switchAlgorithm('bruteforce')" 
+                                    class="algo-button bg-purple-500 text-white hover:bg-purple-600">
+                                Brute Force
+                            </button>
+                            <button id="btn-prefixsum" onclick="switchAlgorithm('prefixsum')" 
+                                    class="algo-button bg-purple-500 text-white hover:bg-purple-600">
+                                Prefix Sum
+                            </button>
+                            <button id="btn-slidingwindow" onclick="switchAlgorithm('slidingwindow')" 
+                                    class="algo-button bg-purple-500 text-white hover:bg-purple-600">
+                                Sliding Window
+                            </button>
+                        </div>
+                    </div>
+                     <h3 class="text-md font-semibold mb-2 text-slate-300">Controls:</h3>
+                    <div class="flex gap-3 justify-center">
+                        <button id="prevBtn" onclick="prev()" 
+                                class="control-button bg-slate-600 text-white hover:bg-slate-700">
+                            Previous
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" 
+                                class="control-button bg-green-600 text-white hover:bg-green-700 w-20">
+                            Play
+                        </button>
+                        <button id="nextBtn" onclick="next()" 
+                                class="control-button bg-slate-600 text-white hover:bg-slate-700">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-300">Visualization</h2>
+                    <div class="mb-4">
+                        <h3 class="font-semibold mb-2 text-slate-300">Current Array:</h3>
+                        <div id="arrayVisualization" class="flex flex-wrap gap-2 mb-4 min-h-[3rem] p-2 bg-slate-700/30 rounded">
+                            </div>
+                    </div>
+                    
+                    <div id="prefixSumVisualizationWrapper" class="mb-4 hidden"> {/* Wrapper for Prefix Sum */}
+                        <h3 class="font-semibold mb-2 text-slate-300">Prefix Sum Map (Sum: Count):</h3>
+                        <div id="prefixSumVisualization" class="flex flex-wrap gap-2 min-h-[3rem] p-2 bg-slate-700/30 rounded">
+                            </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">L Ptr:</h3>
+                            <div id="leftPointerViz" class="text-lg font-mono text-sky-400">N/A</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">R Ptr:</h3>
+                            <div id="rightPointerViz" class="text-lg font-mono text-sky-400">N/A</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">Current Sum:</h3>
+                            <div id="currentSumViz" class="text-lg font-mono text-orange-400">N/A</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">Count:</h3>
+                            <div id="countViz" class="text-lg font-mono text-green-400">0</div>
+                        </div>
+                    </div>
+                    
+                    <div id="explanation" class="text-slate-300 text-sm p-3 bg-slate-700 rounded min-h-[6em]">
+                        Enter an array and goal, then click "Initialize".
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="pseudoCodeContainer" class="card p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-300">Pseudo Code (<span id="currentAlgoName">Brute Force</span>)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div id="bruteforcePseudo" class="pseudo-code-block">
+                    <h3 class="font-semibold mb-2 text-slate-400">Brute Force Approach</h3>
+                    <pre><span id="line-bf-0" class="block">// Time Complexity: O(n²)</span>
+<span id="line-bf-1" class="block">function bruteForce(nums, goal):</span>
+<span id="line-bf-2" class="block">  count = 0</span>
+<span id="line-bf-3" class="block">  n = nums.length</span>
+<span id="line-bf-4" class="block">  </span>
+<span id="line-bf-5" class="block">  for i from 0 to n-1:</span>
+<span id="line-bf-6" class="block">    sum = 0</span>
+<span id="line-bf-7" class="block">    for j from i to n-1:</span>
+<span id="line-bf-8" class="block">      sum += nums[j]</span>
+<span id="line-bf-9" class="block">      if sum == goal:</span>
+<span id="line-bf-10" class="block">        count++</span>
+<span id="line-bf-11" class="block">  </span>
+<span id="line-bf-12" class="block">  return count</span></pre>
+                </div>
+                <div id="prefixsumPseudo" class="pseudo-code-block hidden">
+                    <h3 class="font-semibold mb-2 text-slate-400">Prefix Sum Approach</h3>
+                    <pre><span id="line-ps-0" class="block">// Time Complexity: O(n)</span>
+<span id="line-ps-1" class="block">function prefixSum(nums, goal):</span>
+<span id="line-ps-2" class="block">  count = 0</span>
+<span id="line-ps-3" class="block">  currentSum = 0</span>
+<span id="line-ps-4" class="block">  prefixSums = new Map()</span>
+<span id="line-ps-5" class="block">  prefixSums.set(0, 1)</span>
+<span id="line-ps-6" class="block">  </span>
+<span id="line-ps-7" class="block">  for num in nums:</span>
+<span id="line-ps-8" class="block">    currentSum += num</span>
+<span id="line-ps-9" class="block">    if prefixSums.has(currentSum - goal):</span>
+<span id="line-ps-10" class="block">      count += prefixSums.get(currentSum - goal)</span>
+<span id="line-ps-11" class="block">    </span>
+<span id="line-ps-12" class="block">    prefixSums.set(currentSum, (prefixSums.get(currentSum) || 0) + 1)</span>
+<span id="line-ps-13" class="block">  </span>
+<span id="line-ps-14" class="block">  return count</span></pre>
+                </div>
+                <div id="slidingwindowPseudo" class="pseudo-code-block hidden">
+                    <h3 class="font-semibold mb-2 text-slate-400">Sliding Window Approach</h3>
+                    <pre><span id="line-sw-0" class="block">// Time Complexity: O(n)</span>
+<span id="line-sw-1" class="block">function atMost(nums, k, stepsRef):</span>
+<span id="line-sw-2" class="block">  if k < 0: return 0</span>
+<span id="line-sw-3" class="block">  count = 0</span>
+<span id="line-sw-4" class="block">  left = 0</span>
+<span id="line-sw-5" class="block">  currentSum = 0</span>
+<span id="line-sw-6" class="block">  n = nums.length</span>
+<span id="line-sw-7" class="block">  </span>
+<span id="line-sw-8" class="block">  for right from 0 to n-1:</span>
+<span id="line-sw-9" class="block">    currentSum += nums[right]</span>
+<span id="line-sw-10" class="block">    while currentSum > k:</span>
+<span id="line-sw-11" class="block">      currentSum -= nums[left]</span>
+<span id="line-sw-12" class="block">      left++</span>
+<span id="line-sw-13" class="block">    count += right - left + 1</span>
+<span id="line-sw-14" class="block">    // Add step for visualization</span>
+<span id="line-sw-15" class="block">  </span>
+<span id="line-sw-16" class="block">  return count</span>
+
+<span id="line-sw-17" class="block">function slidingWindow(nums, goal):</span>
+<span id="line-sw-18" class="block">  // stepsForGoal = []</span>
+<span id="line-sw-19" class="block">  // valAtMostGoal = atMost(nums, goal, stepsForGoal)</span>
+<span id="line-sw-20" class="block">  // stepsForGoalMinus1 = []</span>
+<span id="line-sw-21" class="block">  // valAtMostGoalMinus1 = atMost(nums, goal - 1, stepsForGoalMinus1)</span>
+<span id="line-sw-22" class="block">  // Combine steps and calculate final count</span>
+<span id="line-sw-23" class="block">  return atMost(nums, goal) - atMost(nums, goal - 1)</span></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentArray = [];
+        let goal = 2;
+        let currentStep = 0;
+        // let count = 0; // 'count' is part of step data or calculated at the end
+        let currentAlgorithm = 'bruteforce';
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        // let prefixSums = new Map(); // This will be managed within step generation for prefix sum
+
+        // DOM Elements for displaying values
+        const leftPointerViz = document.getElementById('leftPointerViz');
+        const rightPointerViz = document.getElementById('rightPointerViz');
+        const currentSumViz = document.getElementById('currentSumViz');
+        const countViz = document.getElementById('countViz');
+        const explanationDiv = document.getElementById('explanation');
+        const arrayVisualizationDiv = document.getElementById('arrayVisualization');
+        const prefixSumVisualizationDiv = document.getElementById('prefixSumVisualization');
+        const prefixSumVisualizationWrapper = document.getElementById('prefixSumVisualizationWrapper');
+        const currentAlgoNameSpan = document.getElementById('currentAlgoName');
+
+        const pseudoBlocks = {
+            bruteforce: document.getElementById('bruteforcePseudo'),
+            prefixsum: document.getElementById('prefixsumPseudo'),
+            slidingwindow: document.getElementById('slidingwindowPseudo'),
+        };
+        const algoButtons = {
+            bruteforce: document.getElementById('btn-bruteforce'),
+            prefixsum: document.getElementById('btn-prefixsum'),
+            slidingwindow: document.getElementById('btn-slidingwindow'),
+        };
+
+
+        function initializeVisualization() {
+            const arrayInputStr = document.getElementById('arrayInput').value;
+            // Validate and parse array input
+            try {
+                currentArray = arrayInputStr.split(',').map(x => {
+                    const num = parseInt(x.trim());
+                    if (isNaN(num) || (num !== 0 && num !== 1)) {
+                        throw new Error("Array must contain only 0s and 1s.");
+                    }
+                    return num;
+                });
+            } catch (error) {
+                explanationDiv.innerHTML = `<p class="text-red-400">Error: ${error.message} Please enter a valid binary array (e.g., 1,0,1).</p>`;
+                return;
+            }
+            
+            goal = parseInt(document.getElementById('goalInput').value);
+            if (isNaN(goal)) {
+                explanationDiv.innerHTML = `<p class="text-red-400">Error: Please enter a valid integer for the goal.</p>`;
+                return;
+            }
+
+            currentStep = 0;
+            steps = [];
+            if (isPlaying) {
+                togglePlay(); // Stop playback if it's running
+            }
+            
+            generateSteps();
+            updateVisualization();
+            updateButtonStates();
+        }
+
+        function generateSteps() {
+            steps = [];
+            // Reset UI elements that show algorithm-specific values
+            leftPointerViz.textContent = 'N/A';
+            rightPointerViz.textContent = 'N/A';
+            currentSumViz.textContent = 'N/A';
+            countViz.textContent = '0';
+
+            if (currentAlgorithm === 'bruteforce') {
+                generateBruteForceSteps();
+            } else if (currentAlgorithm === 'prefixsum') {
+                generatePrefixSumSteps();
+            } else if (currentAlgorithm === 'slidingwindow') {
+                generateSlidingWindowSteps();
+            }
+            if (steps.length === 0) { // Add a final step if no specific steps were generated (e.g. empty array)
+                 steps.push({
+                    count: 0,
+                    explanation: "No operations to perform or array is empty. Final count is 0.",
+                    // Ensure other relevant fields are present if needed by updateVisualization
+                    windowStart: undefined, windowEnd: undefined, currentSum: 0, prefixSumMap: new Map()
+                });
+            }
+        }
+
+        function generateBruteForceSteps() {
+            let runningCount = 0;
+            const n = currentArray.length;
+            if (n === 0) {
+                 steps.push({ count: 0, explanation: "Array is empty. Count is 0.", windowStart: -1, windowEnd: -1, currentSum: 0 });
+                 return;
+            }
+
+            steps.push({ count: runningCount, explanation: `Starting Brute Force. Goal: ${goal}. n = ${n}`, windowStart: -1, windowEnd: -1, currentSum: 0 });
+
+            for (let i = 0; i < n; i++) {
+                steps.push({ count: runningCount, explanation: `Outer loop: i = ${i}.`, windowStart: i, windowEnd: i-1, currentSum: 0, left: i, right: i-1 });
+                let currentSubarraySum = 0;
+                for (let j = i; j < n; j++) {
+                    currentSubarraySum += currentArray[j];
+                    let prevCount = runningCount;
+                    if (currentSubarraySum === goal) {
+                        runningCount++;
+                    }
+                    steps.push({
+                        windowStart: i,
+                        windowEnd: j,
+                        currentSum: currentSubarraySum,
+                        count: runningCount,
+                        left: i, // for pointer display
+                        right: j, // for pointer display
+                        explanation: `Inner loop: j = ${j}. Subarray [${currentArray.slice(i, j + 1).join(',')}] sum = ${currentSubarraySum}. ${currentSubarraySum === goal ? `Sum matches goal! Count incremented to ${runningCount}.` : `Sum does not match goal. Count remains ${prevCount}.`}`
+                    });
+                }
+            }
+            steps.push({ count: runningCount, explanation: `Brute Force finished. Final Count: ${runningCount}.`, windowStart: -1, windowEnd: -1, currentSum: 0 });
+        }
+
+        function generatePrefixSumSteps() {
+            let runningCount = 0;
+            let currentSum = 0;
+            const prefixSumMap = new Map();
+            prefixSumMap.set(0, 1); // Base case: a sum of 0 is found once (empty prefix)
+
+            if (currentArray.length === 0) {
+                steps.push({ count: 0, explanation: "Array is empty. Count is 0.", currentSum: 0, prefixSumMap: new Map(prefixSumMap), index: -1 });
+                return;
+            }
+            
+            steps.push({
+                currentSum: 0,
+                count: runningCount,
+                prefixSumMap: new Map(prefixSumMap),
+                explanation: `Initialize prefix sum map: {0: 1}. Current Sum = 0. Count = 0. Goal: ${goal}.`,
+                index: -1 // Indicates before loop starts
+            });
+
+            for (let i = 0; i < currentArray.length; i++) {
+                currentSum += currentArray[i];
+                let explanationText = `Processing element at index ${i} (value: ${currentArray[i]}). Current Sum = ${currentSum}. `;
+                
+                let foundCount = 0;
+                if (prefixSumMap.has(currentSum - goal)) {
+                    foundCount = prefixSumMap.get(currentSum - goal);
+                    runningCount += foundCount;
+                    explanationText += `Prefix sum (currentSum - goal = ${currentSum - goal}) found in map with count ${foundCount}. Count updated to ${runningCount}. `;
+                } else {
+                    explanationText += `Prefix sum (currentSum - goal = ${currentSum - goal}) NOT found in map. `;
+                }
+                
+                // Update map for currentSum
+                prefixSumMap.set(currentSum, (prefixSumMap.get(currentSum) || 0) + 1);
+                explanationText += `Updated map for sum ${currentSum}: new count is ${prefixSumMap.get(currentSum)}. Map: {${Array.from(prefixSumMap.entries()).map(([k,v]) => `${k}:${v}`).join(', ')}}.`;
+                
+                steps.push({
+                    index: i, // current element being processed
+                    currentSum: currentSum,
+                    count: runningCount,
+                    prefixSumMap: new Map(prefixSumMap),
+                    explanation: explanationText,
+                    windowEnd: i // Highlight up to current element
+                });
+            }
+            steps.push({ count: runningCount, explanation: `Prefix Sum finished. Final Count: ${runningCount}.`, currentSum: currentSum, prefixSumMap: new Map(prefixSumMap), index: currentArray.length -1 });
+        }
+        
+        function generateSlidingWindowSteps() {
+            // Helper function for "atMost K" logic
+            // It will add its own steps to the global `steps` array
+            // `subGoal` is the 'k' in atMost(k)
+            // `passIdentifier` helps distinguish steps from the two atMost calls
+            function atMostK(nums, subGoal, passIdentifier) {
+                if (subGoal < 0) {
+                     steps.push({
+                        count: 0, // This is count of subarrays for this atMost call
+                        left: 0, right: -1, currentSum: 0,
+                        explanation: `${passIdentifier}: subGoal (${subGoal}) is less than 0. Returning 0 subarrays.`,
+                        isAtMostStep: true, atMostGoal: subGoal
+                    });
+                    return 0;
+                }
+
+                let resultForAtMost = 0;
+                let left = 0;
+                let currentWindowSum = 0;
+                const n = nums.length;
+
+                steps.push({
+                    count: resultForAtMost, left, right: -1, currentWindowSum,
+                    explanation: `${passIdentifier}: Starting 'atMost(${subGoal})'. Left=${left}, Right=-1, Sum=${currentWindowSum}, Result=${resultForAtMost}.`,
+                    isAtMostStep: true, atMostGoal: subGoal
+                });
+
+                for (let right = 0; right < n; right++) {
+                    currentWindowSum += nums[right];
+                    steps.push({
+                        count: resultForAtMost, left, right, currentSum: currentWindowSum, windowStart: left, windowEnd: right,
+                        explanation: `${passIdentifier}: Right pointer at ${right} ('${nums[right]}'). Sum = ${currentWindowSum}.`,
+                        isAtMostStep: true, atMostGoal: subGoal
+                    });
+
+                    while (currentWindowSum > subGoal) {
+                        currentWindowSum -= nums[left];
+                        steps.push({
+                            count: resultForAtMost, left, right, currentSum: currentWindowSum, windowStart: left, windowEnd: right,
+                            explanation: `${passIdentifier}: Sum (${currentWindowSum + nums[left]}) > ${subGoal}. Shrinking window. Removed '${nums[left]}' from left (index ${left}). New Sum = ${currentWindowSum}.`,
+                            isAtMostStep: true, atMostGoal: subGoal
+                        });
+                        left++;
+                         steps.push({
+                            count: resultForAtMost, left, right, currentSum: currentWindowSum, windowStart: left, windowEnd: right,
+                            explanation: `${passIdentifier}: Left pointer moved to ${left}.`,
+                            isAtMostStep: true, atMostGoal: subGoal
+                        });
+                    }
+                    // Number of subarrays ending at `right` with sum at most `subGoal`
+                    resultForAtMost += (right - left + 1);
+                    steps.push({
+                        count: resultForAtMost, left, right, currentSum: currentWindowSum, windowStart: left, windowEnd: right,
+                        explanation: `${passIdentifier}: Window [${left}..${right}] sum is ${currentWindowSum} (<= ${subGoal}). Added ${right - left + 1} to result. Result = ${resultForAtMost}.`,
+                        isAtMostStep: true, atMostGoal: subGoal
+                    });
+                }
+                 steps.push({
+                    count: resultForAtMost, left, right: n-1, currentSum: currentWindowSum,
+                    explanation: `${passIdentifier}: 'atMost(${subGoal})' finished. Returning ${resultForAtMost} subarrays.`,
+                    isAtMostStep: true, atMostGoal: subGoal, finalAtMostVal: resultForAtMost
+                });
+                return resultForAtMost;
+            }
+            
+            if (currentArray.length === 0) {
+                steps.push({ count: 0, explanation: "Array is empty. Count is 0.", left:0, right:-1, currentSum:0 });
+                return;
+            }
+
+            steps.push({ explanation: `Sliding Window: Calculating numSubarraysWithSum(goal) = atMost(goal) - atMost(goal - 1). Goal = ${goal}.`, count: 0 });
+            
+            const countAtMostGoal = atMostK(currentArray, goal, `Pass 1 (atMost ${goal})`);
+            const countAtMostGoalMinus1 = atMostK(currentArray, goal - 1, `Pass 2 (atMost ${goal - 1})`);
+            
+            const finalCount = countAtMostGoal - countAtMostGoalMinus1;
+            steps.push({
+                count: finalCount,
+                explanation: `Sliding Window finished. Final Count = atMost(${goal}) [${countAtMostGoal}] - atMost(${goal - 1}) [${countAtMostGoalMinus1}] = ${finalCount}.`,
+                finalResult: true // Mark this as the absolute final step
+            });
+        }
+
+
+        function updateVisualization() {
+            if (!steps || steps.length === 0) {
+                explanationDiv.innerHTML = `<p>No steps to display. Initialize first.</p>`;
+                arrayVisualizationDiv.innerHTML = '';
+                prefixSumVisualizationDiv.innerHTML = '';
+                prefixSumVisualizationWrapper.classList.add('hidden');
+                updateAlgorithmSpecificUI(null); // Clear specific UI
+                return;
+            }
+            
+            if (currentStep >= steps.length) currentStep = steps.length - 1;
+            if (currentStep < 0) currentStep = 0;
+            
+            const step = steps[currentStep];
+            
+            arrayVisualizationDiv.innerHTML = '';
+            currentArray.forEach((num, index) => {
+                const element = document.createElement('div');
+                element.className = 'array-element w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-sm md:text-base';
+                
+                // Highlight window for BruteForce and SlidingWindow
+                if ((currentAlgorithm === 'bruteforce' || currentAlgorithm === 'slidingwindow') && 
+                    step.windowStart !== undefined && step.windowEnd !== undefined &&
+                    index >= step.windowStart && index <= step.windowEnd) {
+                    element.classList.add('window-element');
+                }
+                // For PrefixSum, highlight up to current processing element
+                if (currentAlgorithm === 'prefixsum' && step.index !== undefined && index <= step.index) {
+                     element.classList.add('window-element'); // Re-using window-element for general highlight
+                }
+
+                element.textContent = num;
+                arrayVisualizationDiv.appendChild(element);
+            });
+            
+            updateAlgorithmSpecificUI(step);
+
+            explanationDiv.innerHTML = `
+                <p class="font-semibold">Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation || "No explanation for this step."}</p>
+            `;
+            countViz.textContent = step.count !== undefined ? step.count : 'N/A';
+            if (step.finalResult) { // If it's the absolute final result for sliding window
+                 countViz.textContent = step.count;
+            } else if (currentAlgorithm === 'slidingwindow' && step.isAtMostStep && step.finalAtMostVal !== undefined) {
+                // For sliding window, display intermediate atMost result if it's the end of an atMost call
+                countViz.textContent = `(atMost(${step.atMostGoal}) = ${step.finalAtMostVal})`;
+            } else if (currentAlgorithm === 'slidingwindow' && step.isAtMostStep) {
+                 countViz.textContent = `(intermediate atMost count: ${step.count})`;
+            }
+
+
+            updateButtonStates();
+        }
+
+        function updateAlgorithmSpecificUI(step) {
+            // Reset/hide all algo-specific sections first
+            prefixSumVisualizationWrapper.classList.add('hidden');
+            prefixSumVisualizationDiv.innerHTML = '';
+            leftPointerViz.textContent = 'N/A';
+            rightPointerViz.textContent = 'N/A';
+            currentSumViz.textContent = 'N/A';
+
+            if (!step) return;
+
+            if (currentAlgorithm === 'bruteforce' || currentAlgorithm === 'slidingwindow') {
+                leftPointerViz.textContent = step.left !== undefined ? step.left : (step.windowStart !== undefined ? step.windowStart : 'N/A');
+                rightPointerViz.textContent = step.right !== undefined ? step.right : (step.windowEnd !== undefined ? step.windowEnd : 'N/A');
+                currentSumViz.textContent = step.currentSum !== undefined ? step.currentSum : 'N/A';
+            }
+
+            if (currentAlgorithm === 'prefixsum') {
+                prefixSumVisualizationWrapper.classList.remove('hidden');
+                if (step.prefixSumMap) {
+                    step.prefixSumMap.forEach((count, sum) => {
+                        const entryDiv = document.createElement('div');
+                        entryDiv.className = 'flex flex-col items-center';
+                        
+                        const sumEl = document.createElement('div');
+                        sumEl.className = 'array-element prefix-map-key w-12 h-8 md:w-16 md:h-10 flex items-center justify-center text-xs md:text-sm mb-1';
+                        sumEl.textContent = sum;
+                        
+                        const countEl = document.createElement('div');
+                        countEl.className = 'array-element prefix-map-value w-12 h-8 md:w-16 md:h-10 flex items-center justify-center text-xs md:text-sm';
+                        countEl.textContent = count;
+                        
+                        entryDiv.appendChild(sumEl);
+                        entryDiv.appendChild(countEl);
+                        prefixSumVisualizationDiv.appendChild(entryDiv);
+                    });
+                }
+                currentSumViz.textContent = step.currentSum !== undefined ? step.currentSum : 'N/A';
+                // Pointers not typically used in prefix sum visualization in this manner
+            }
+        }
+
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            } else if (isPlaying) {
+                togglePlay(); // Stop if at the end
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                if (currentStep === steps.length - 1 && steps.length > 0) {
+                    currentStep = 0; // Restart if at the end
+                }
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                updateVisualization(); // Show current step before interval
+                playInterval = setInterval(next, 1200); // Animation speed
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                clearInterval(playInterval);
+            }
+        }
+        
+        function switchAlgorithm(algorithm) {
+            currentAlgorithm = algorithm;
+            currentAlgoNameSpan.textContent = algorithm.charAt(0).toUpperCase() + algorithm.slice(1).replace('sum', ' Sum'); // Format name
+
+            // Update pseudo-code visibility
+            Object.values(pseudoBlocks).forEach(block => block.classList.add('hidden'));
+            if (pseudoBlocks[currentAlgorithm]) {
+                pseudoBlocks[currentAlgorithm].classList.remove('hidden');
+            }
+            // Update active button style
+            Object.values(algoButtons).forEach(button => button.classList.replace('bg-purple-700', 'bg-purple-500') || button.classList.replace('hover:bg-purple-800', 'hover:bg-purple-600'));
+             if (algoButtons[currentAlgorithm]) {
+                algoButtons[currentAlgorithm].classList.replace('bg-purple-500', 'bg-purple-700');
+                algoButtons[currentAlgorithm].classList.replace('hover:bg-purple-600', 'hover:bg-purple-800');
+            }
+
+
+            initializeVisualization(); // Re-initialize with the new algorithm
+        }
+
+        function updateButtonStates() {
+            const hasSteps = steps && steps.length > 0;
+            const atEnd = currentStep === steps.length - 1;
+            const atStart = currentStep === 0;
+
+            document.getElementById('prevBtn').disabled = !hasSteps || atStart;
+            document.getElementById('nextBtn').disabled = !hasSteps || atEnd;
+            document.getElementById('playBtn').disabled = !hasSteps || (atEnd && !isPlaying); // Disable if at end and not playing
+
+            if (atEnd && isPlaying) { // If it reaches end while playing, stop it
+                togglePlay();
+            }
+        }
+
+        window.onload = () => {
+            switchAlgorithm('bruteforce'); // Set default algorithm and initialize
+            // initializeVisualization(); // Called by switchAlgorithm
+        };
+    </script>
+</body>
+</html>

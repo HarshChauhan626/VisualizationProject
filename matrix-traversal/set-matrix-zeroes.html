@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Matrix Zeroes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .matrix {
+            display: grid;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .cell.current {
+            background-color: #eab308;
+            transform: scale(1.1);
+        }
+        .cell.zero {
+            background-color: #ef4444;
+        }
+        .cell.marked {
+            background-color: #f59e0b;
+        }
+        .cell.to-zero {
+            background-color: #dc2626;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .matrix-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        .matrix-label {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Set Matrix Zeroes</h1>
+        <p class="text-gray-300 mb-8">Visualize how to set entire rows and columns to zero when a zero element is encountered in a matrix.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Matrix Size (rows, columns)</label>
+                            <input type="text" id="sizeInput" value="3,3" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter matrix size as rows,columns">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Zero Positions (row,col)</label>
+                            <input type="text" id="zeroInput" value="0,0" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter zero positions as row,col">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Input
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Matrix Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Matrix Transformation</h3>
+                    <div class="matrix-container">
+                        <div>
+                            <div class="matrix-label">Original Matrix</div>
+                            <div id="originalMatrix" class="matrix"></div>
+                        </div>
+                        <div>
+                            <div class="matrix-label">Transformed Matrix</div>
+                            <div id="transformedMatrix" class="matrix"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function setZeroes(matrix):</span>
+<span class="code-line" data-line="2">    m, n = len(matrix), len(matrix[0])</span>
+<span class="code-line" data-line="3">    firstRowHasZero = any(matrix[0][j] == 0 for j in range(n))</span>
+<span class="code-line" data-line="4">    firstColHasZero = any(matrix[i][0] == 0 for i in range(m))</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    # Mark rows and columns to be zeroed</span>
+<span class="code-line" data-line="7">    for i from 1 to m-1:</span>
+<span class="code-line" data-line="8">        for j from 1 to n-1:</span>
+<span class="code-line" data-line="9">            if matrix[i][j] == 0:</span>
+<span class="code-line" data-line="10">                matrix[i][0] = 0</span>
+<span class="code-line" data-line="11">                matrix[0][j] = 0</span>
+<span class="code-line" data-line="12">    </span>
+<span class="code-line" data-line="13">    # Set rows to zero</span>
+<span class="code-line" data-line="14">    for i from 1 to m-1:</span>
+<span class="code-line" data-line="15">        if matrix[i][0] == 0:</span>
+<span class="code-line" data-line="16">            for j from 1 to n-1:</span>
+<span class="code-line" data-line="17">                matrix[i][j] = 0</span>
+<span class="code-line" data-line="18">    </span>
+<span class="code-line" data-line="19">    # Set columns to zero</span>
+<span class="code-line" data-line="20">    for j from 1 to n-1:</span>
+<span class="code-line" data-line="21">        if matrix[0][j] == 0:</span>
+<span class="code-line" data-line="22">            for i from 1 to m-1:</span>
+<span class="code-line" data-line="23">                matrix[i][j] = 0</span>
+<span class="code-line" data-line="24">    </span>
+<span class="code-line" data-line="25">    # Handle first row and column</span>
+<span class="code-line" data-line="26">    if firstRowHasZero:</span>
+<span class="code-line" data-line="27">        for j from 0 to n-1:</span>
+<span class="code-line" data-line="28">            matrix[0][j] = 0</span>
+<span class="code-line" data-line="29">    if firstColHasZero:</span>
+<span class="code-line" data-line="30">        for i from 0 to m-1:</span>
+<span class="code-line" data-line="31">            matrix[i][0] = 0</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given an m x n matrix, if an element is 0, set its entire row and column to 0. The operation must be done in-place.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m * n) where m is the number of rows and n is the number of columns</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) as we use the first row and column to mark which rows and columns need to be zeroed</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works in three steps:
+                                <br>1. Use the first row and column to mark which rows and columns need to be zeroed
+                                <br>2. Set the marked rows and columns to zero
+                                <br>3. Handle the first row and column separately
+                                <br>
+                                <br>For example, given a matrix:
+                                <br>1 1 1    1 0 1
+                                <br>1 0 1 → 0 0 0
+                                <br>1 1 1    1 0 1
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let matrix = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createMatrix(rows, cols, zeroPositions) {
+            const originalMatrix = document.getElementById('originalMatrix');
+            const transformedMatrix = document.getElementById('transformedMatrix');
+            
+            originalMatrix.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            transformedMatrix.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            originalMatrix.innerHTML = '';
+            transformedMatrix.innerHTML = '';
+            
+            matrix = [];
+            for (let i = 0; i < rows; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < cols; j++) {
+                    const value = i * cols + j + 1;
+                    matrix[i][j] = value;
+                    
+                    // Create cell for original matrix
+                    const originalCell = document.createElement('div');
+                    originalCell.className = 'cell';
+                    originalCell.id = `original-cell-${i}-${j}`;
+                    originalCell.textContent = value;
+                    originalMatrix.appendChild(originalCell);
+                    
+                    // Create cell for transformed matrix
+                    const transformedCell = document.createElement('div');
+                    transformedCell.className = 'cell';
+                    transformedCell.id = `transformed-cell-${i}-${j}`;
+                    transformedCell.textContent = value;
+                    transformedMatrix.appendChild(transformedCell);
+                }
+            }
+            
+            // Set zero positions
+            zeroPositions.forEach(([row, col]) => {
+                matrix[row][col] = 0;
+                document.getElementById(`original-cell-${row}-${col}`).className = 'cell zero';
+                document.getElementById(`transformed-cell-${row}-${col}`).className = 'cell zero';
+            });
+        }
+
+        function applyInputs() {
+            const sizeInput = document.getElementById('sizeInput').value;
+            const zeroInput = document.getElementById('zeroInput').value;
+            
+            try {
+                const [rows, cols] = sizeInput.split(',').map(Number);
+                const zeroPositions = zeroInput.split(';').map(pos => pos.split(',').map(Number));
+                
+                if (isNaN(rows) || isNaN(cols) || rows <= 0 || cols <= 0) {
+                    throw new Error('Please enter valid matrix dimensions');
+                }
+                
+                if (!zeroPositions.every(pos => pos.length === 2 && !isNaN(pos[0]) && !isNaN(pos[1]))) {
+                    throw new Error('Please enter valid zero positions');
+                }
+                
+                createMatrix(rows, cols, zeroPositions);
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = matrix.length;
+            const n = matrix[0].length;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial matrix state',
+                matrix: JSON.parse(JSON.stringify(matrix)),
+                codeLine: 2
+            });
+            
+            // Check first row and column
+            const firstRowHasZero = matrix[0].some(val => val === 0);
+            const firstColHasZero = matrix.some(row => row[0] === 0);
+            
+            steps.push({
+                type: 'check_first',
+                description: 'Checking if first row or column contains zero',
+                firstRowHasZero,
+                firstColHasZero,
+                matrix: JSON.parse(JSON.stringify(matrix)),
+                codeLine: 4
+            });
+            
+            // Mark rows and columns to be zeroed
+            for (let i = 1; i < m; i++) {
+                for (let j = 1; j < n; j++) {
+                    if (matrix[i][j] === 0) {
+                        steps.push({
+                            type: 'mark',
+                            description: `Marking row ${i} and column ${j} for zeroing`,
+                            i,
+                            j,
+                            matrix: JSON.parse(JSON.stringify(matrix)),
+                            codeLine: 9
+                        });
+                        
+                        matrix[i][0] = 0;
+                        matrix[0][j] = 0;
+                    }
+                }
+            }
+            
+            // Set rows to zero
+            for (let i = 1; i < m; i++) {
+                if (matrix[i][0] === 0) {
+                    steps.push({
+                        type: 'zero_row',
+                        description: `Setting row ${i} to zero`,
+                        row: i,
+                        matrix: JSON.parse(JSON.stringify(matrix)),
+                        codeLine: 15
+                    });
+                    
+                    for (let j = 1; j < n; j++) {
+                        matrix[i][j] = 0;
+                    }
+                }
+            }
+            
+            // Set columns to zero
+            for (let j = 1; j < n; j++) {
+                if (matrix[0][j] === 0) {
+                    steps.push({
+                        type: 'zero_col',
+                        description: `Setting column ${j} to zero`,
+                        col: j,
+                        matrix: JSON.parse(JSON.stringify(matrix)),
+                        codeLine: 21
+                    });
+                    
+                    for (let i = 1; i < m; i++) {
+                        matrix[i][j] = 0;
+                    }
+                }
+            }
+            
+            // Handle first row
+            if (firstRowHasZero) {
+                steps.push({
+                    type: 'zero_first_row',
+                    description: 'Setting first row to zero',
+                    matrix: JSON.parse(JSON.stringify(matrix)),
+                    codeLine: 26
+                });
+                
+                for (let j = 0; j < n; j++) {
+                    matrix[0][j] = 0;
+                }
+            }
+            
+            // Handle first column
+            if (firstColHasZero) {
+                steps.push({
+                    type: 'zero_first_col',
+                    description: 'Setting first column to zero',
+                    matrix: JSON.parse(JSON.stringify(matrix)),
+                    codeLine: 29
+                });
+                
+                for (let i = 0; i < m; i++) {
+                    matrix[i][0] = 0;
+                }
+            }
+            
+            // Final state
+            steps.push({
+                type: 'final',
+                description: 'Matrix transformation complete',
+                matrix: JSON.parse(JSON.stringify(matrix)),
+                codeLine: 31
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = cell.className.replace(' current', '').replace(' marked', '').replace(' to-zero', '');
+            });
+            
+            // Update matrix visualization
+            const m = matrix.length;
+            const n = matrix[0].length;
+            
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const originalCell = document.getElementById(`original-cell-${i}-${j}`);
+                    const transformedCell = document.getElementById(`transformed-cell-${i}-${j}`);
+                    
+                    if (step.type === 'mark' && ((i === step.i && j === 0) || (i === 0 && j === step.j))) {
+                        transformedCell.className = 'cell marked';
+                    } else if (step.type === 'zero_row' && i === step.row) {
+                        transformedCell.className = 'cell to-zero';
+                    } else if (step.type === 'zero_col' && j === step.col) {
+                        transformedCell.className = 'cell to-zero';
+                    } else if (step.type === 'zero_first_row' && i === 0) {
+                        transformedCell.className = 'cell to-zero';
+                    } else if (step.type === 'zero_first_col' && j === 0) {
+                        transformedCell.className = 'cell to-zero';
+                    }
+                    
+                    transformedCell.textContent = step.matrix[i][j];
+                    if (step.matrix[i][j] === 0) {
+                        transformedCell.className = 'cell zero';
+                    }
+                }
+            }
+            
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

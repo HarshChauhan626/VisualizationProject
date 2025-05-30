@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 1px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1;
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .cell.fixed {
+            background-color: #e2e8f0;
+            font-weight: bold;
+        }
+        .cell.current {
+            background-color: #10b981;
+            color: white;
+            transform: scale(1.1);
+        }
+        .cell.invalid {
+            background-color: #f43f5e;
+            color: white;
+        }
+        .cell.tried {
+            background-color: #fbbf24;
+            color: #1e293b;
+        }
+        .subgrid {
+            border: 2px solid #2d3748;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Sudoku Solver</h1>
+        <p class="text-gray-300 mb-8">Visualize how to solve a Sudoku puzzle using backtracking.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Puzzle (9x9 grid)</label>
+                            <textarea id="puzzleInput" rows="9" class="w-full px-3 py-2 bg-gray-700 rounded text-white font-mono"
+                                placeholder="Enter puzzle (use . for empty cells)">53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79</textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Sudoku Grid -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Sudoku Grid</h3>
+                    <div id="sudokuGrid" class="sudoku-grid"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def solveSudoku(board):</span>
+<span class="code-line" data-line="2">    def isValid(row, col, num):</span>
+<span class="code-line" data-line="3">        # Check row</span>
+<span class="code-line" data-line="4">        for i in range(9):</span>
+<span class="code-line" data-line="5">            if board[row][i] == num:</span>
+<span class="code-line" data-line="6">                return False</span>
+<span class="code-line" data-line="7">        </span>
+<span class="code-line" data-line="8">        # Check column</span>
+<span class="code-line" data-line="9">        for i in range(9):</span>
+<span class="code-line" data-line="10">            if board[i][col] == num:</span>
+<span class="code-line" data-line="11">                return False</span>
+<span class="code-line" data-line="12">        </span>
+<span class="code-line" data-line="13">        # Check 3x3 box</span>
+<span class="code-line" data-line="14">        box_row = (row // 3) * 3</span>
+<span class="code-line" data-line="15">        box_col = (col // 3) * 3</span>
+<span class="code-line" data-line="16">        for i in range(3):</span>
+<span class="code-line" data-line="17">            for j in range(3):</span>
+<span class="code-line" data-line="18">                if board[box_row + i][box_col + j] == num:</span>
+<span class="code-line" data-line="19">                    return False</span>
+<span class="code-line" data-line="20">        </span>
+<span class="code-line" data-line="21">        return True</span>
+<span class="code-line" data-line="22">    </span>
+<span class="code-line" data-line="23">    def backtrack():</span>
+<span class="code-line" data-line="24">        for row in range(9):</span>
+<span class="code-line" data-line="25">            for col in range(9):</span>
+<span class="code-line" data-line="26">                if board[row][col] == '.':</span>
+<span class="code-line" data-line="27">                    for num in '123456789':</span>
+<span class="code-line" data-line="28">                        if isValid(row, col, num):</span>
+<span class="code-line" data-line="29">                            board[row][col] = num</span>
+<span class="code-line" data-line="30">                            if backtrack():</span>
+<span class="code-line" data-line="31">                                return True</span>
+<span class="code-line" data-line="32">                            board[row][col] = '.'</span>
+<span class="code-line" data-line="33">                    return False</span>
+<span class="code-line" data-line="34">        return True</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Fill a 9×9 grid with digits so that each column, each row, and each of the nine 3×3 subgrids contain all of the digits from 1 to 9.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(9^(n*n)) - where n is the size of the grid (9)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n*n) for the recursion stack</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses backtracking to solve the Sudoku puzzle:
+                                <br>1. Find an empty cell
+                                <br>2. Try placing digits 1-9 in the cell
+                                <br>3. Check if the placement is valid (no conflicts)
+                                <br>4. If valid, move to the next empty cell
+                                <br>5. If not valid, backtrack and try the next digit
+                                <br>6. If all digits are tried, backtrack to the previous cell
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let board = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initialize() {
+            const input = document.getElementById('puzzleInput').value;
+            if (input.length !== 81) {
+                alert('Please enter a valid 9x9 Sudoku puzzle');
+                return;
+            }
+
+            board = [];
+            for (let i = 0; i < 9; i++) {
+                board.push(input.slice(i * 9, (i + 1) * 9).split(''));
+            }
+
+            const sudokuGrid = document.getElementById('sudokuGrid');
+            sudokuGrid.innerHTML = '';
+            
+            // Create Sudoku grid cells
+            for (let i = 0; i < 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = `cell ${(i + j) % 2 === 0 ? 'white' : 'black'}`;
+                    if (board[i][j] !== '.') {
+                        cell.className += ' fixed';
+                    }
+                    cell.id = `cell-${i}-${j}`;
+                    cell.textContent = board[i][j] === '.' ? '' : board[i][j];
+                    sudokuGrid.appendChild(cell);
+                }
+            }
+
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            function isValid(row, col, num) {
+                // Check row
+                for (let i = 0; i < 9; i++) {
+                    if (board[row][i] === num) {
+                        steps.push({
+                            type: 'check_row',
+                            description: `Row conflict at (${row}, ${i})`,
+                            row: row,
+                            col: i,
+                            num: num,
+                            codeLine: 5
+                        });
+                        return false;
+                    }
+                }
+
+                // Check column
+                for (let i = 0; i < 9; i++) {
+                    if (board[i][col] === num) {
+                        steps.push({
+                            type: 'check_column',
+                            description: `Column conflict at (${i}, ${col})`,
+                            row: i,
+                            col: col,
+                            num: num,
+                            codeLine: 10
+                        });
+                        return false;
+                    }
+                }
+
+                // Check 3x3 box
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 3; j++) {
+                        if (board[boxRow + i][boxCol + j] === num) {
+                            steps.push({
+                                type: 'check_box',
+                                description: `Box conflict at (${boxRow + i}, ${boxCol + j})`,
+                                row: boxRow + i,
+                                col: boxCol + j,
+                                num: num,
+                                codeLine: 18
+                            });
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            function backtrack() {
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (board[row][col] === '.') {
+                            steps.push({
+                                type: 'find_empty',
+                                description: `Found empty cell at (${row}, ${col})`,
+                                row: row,
+                                col: col,
+                                codeLine: 26
+                            });
+
+                            for (let num = 1; num <= 9; num++) {
+                                steps.push({
+                                    type: 'try_number',
+                                    description: `Trying ${num} at (${row}, ${col})`,
+                                    row: row,
+                                    col: col,
+                                    num: num.toString(),
+                                    codeLine: 28
+                                });
+
+                                if (isValid(row, col, num.toString())) {
+                                    steps.push({
+                                        type: 'place_number',
+                                        description: `Placing ${num} at (${row}, ${col})`,
+                                        row: row,
+                                        col: col,
+                                        num: num.toString(),
+                                        codeLine: 29
+                                    });
+
+                                    board[row][col] = num.toString();
+                                    if (backtrack()) {
+                                        return true;
+                                    }
+                                    board[row][col] = '.';
+
+                                    steps.push({
+                                        type: 'remove_number',
+                                        description: `Removing ${num} from (${row}, ${col})`,
+                                        row: row,
+                                        col: col,
+                                        codeLine: 32
+                                    });
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            backtrack();
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = cell.className.replace(' current', '').replace(' invalid', '').replace(' tried', '');
+            });
+
+            if (step.type === 'find_empty') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' current';
+            } else if (step.type === 'try_number') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' tried';
+                cell.textContent = step.num;
+            } else if (step.type === 'place_number') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' current';
+                cell.textContent = step.num;
+            } else if (step.type === 'remove_number') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className = cell.className.replace(' current', '').replace(' tried', '');
+                cell.textContent = '';
+            } else if (step.type === 'check_row' || step.type === 'check_column' || step.type === 'check_box') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' invalid';
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

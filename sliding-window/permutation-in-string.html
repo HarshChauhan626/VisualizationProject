@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permutation in String Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .array-element {
+            transition: all 0.3s ease-in-out;
+        }
+        .window-element {
+            background-color: #4ade80;
+        }
+        .match-element {
+            background-color: #fb923c;
+        }
+        .freq-map {
+            background-color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Permutation in String</h1>
+        
+        <!-- Problem Statement -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Problem Statement</h2>
+            <p class="text-gray-700">
+                Given two strings s1 and s2, return true if s2 contains a permutation of s1, or false otherwise.
+                In other words, return true if one of s1's permutations is the substring of s2.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">Pattern String (s1)</label>
+                    <input type="text" id="s1Input" placeholder="Enter pattern string" 
+                        class="border p-2 rounded w-full" value="ab">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">Main String (s2)</label>
+                    <input type="text" id="s2Input" placeholder="Enter main string" 
+                        class="border p-2 rounded w-full" value="eidbaooo">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Pattern String (s1):</h3>
+                <div id="s1Visualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+                <h3 class="font-semibold mb-2">Main String (s2):</h3>
+                <div id="s2Visualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Character Frequency Maps:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Pattern Frequency:</h4>
+                        <div id="patternFreqVisualization" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Window Frequency:</h4>
+                        <div id="windowFreqVisualization" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-700 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Pseudo Code</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Sliding Window with Character Frequency</h3>
+                    <pre class="bg-gray-100 p-4 rounded">
+// Time Complexity: O(n), where n is length of s2
+function checkInclusion(s1, s2):
+    if s1.length > s2.length:
+        return false
+        
+    // Create frequency maps
+    patternFreq = new Map()
+    windowFreq = new Map()
+    
+    // Initialize pattern frequency
+    for char in s1:
+        patternFreq[char] = (patternFreq[char] || 0) + 1
+    
+    // Initialize first window
+    for i from 0 to s1.length-1:
+        windowFreq[s2[i]] = (windowFreq[s2[i]] || 0) + 1
+    
+    // Check if first window is a match
+    if mapsEqual(patternFreq, windowFreq):
+        return true
+    
+    // Slide window
+    for i from s1.length to s2.length-1:
+        // Remove leftmost character
+        leftChar = s2[i - s1.length]
+        windowFreq[leftChar]--
+        if windowFreq[leftChar] === 0:
+            delete windowFreq[leftChar]
+            
+        // Add new character
+        rightChar = s2[i]
+        windowFreq[rightChar] = (windowFreq[rightChar] || 0) + 1
+        
+        // Check if current window is a match
+        if mapsEqual(patternFreq, windowFreq):
+            return true
+    
+    return false</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 1:</p>
+                    <p>Input: s1 = "ab", s2 = "eidbaooo"</p>
+                    <p>Output: true</p>
+                    <p>Explanation: s2 contains one permutation of s1 ("ba")</p>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 2:</p>
+                    <p>Input: s1 = "ab", s2 = "eidboaoo"</p>
+                    <p>Output: false</p>
+                    <p>Explanation: s2 does not contain any permutation of s1</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Test Case 3:</p>
+                    <p>Input: s1 = "adc", s2 = "dcda"</p>
+                    <p>Output: true</p>
+                    <p>Explanation: s2 contains one permutation of s1 ("cda")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let s1 = "";
+        let s2 = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            s1 = document.getElementById('s1Input').value;
+            s2 = document.getElementById('s2Input').value;
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            if (s1.length > s2.length) {
+                steps.push({
+                    explanation: "Pattern string is longer than main string, no match possible",
+                    result: false
+                });
+                return;
+            }
+
+            // Create frequency maps
+            const patternFreq = new Map();
+            const windowFreq = new Map();
+            
+            // Initialize pattern frequency
+            for (let char of s1) {
+                patternFreq.set(char, (patternFreq.get(char) || 0) + 1);
+            }
+            
+            steps.push({
+                patternFreq: new Map(patternFreq),
+                windowFreq: new Map(windowFreq),
+                explanation: "Initialized pattern frequency map"
+            });
+
+            // Initialize first window
+            for (let i = 0; i < s1.length; i++) {
+                const char = s2[i];
+                windowFreq.set(char, (windowFreq.get(char) || 0) + 1);
+                steps.push({
+                    windowStart: 0,
+                    windowEnd: i,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    explanation: `Building initial window: added '${char}'`
+                });
+            }
+
+            // Check first window
+            if (mapsEqual(patternFreq, windowFreq)) {
+                steps.push({
+                    windowStart: 0,
+                    windowEnd: s1.length - 1,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    result: true,
+                    explanation: "Found matching permutation in first window!"
+                });
+                return;
+            }
+
+            // Slide window
+            for (let i = s1.length; i < s2.length; i++) {
+                // Remove leftmost character
+                const leftChar = s2[i - s1.length];
+                windowFreq.set(leftChar, windowFreq.get(leftChar) - 1);
+                if (windowFreq.get(leftChar) === 0) {
+                    windowFreq.delete(leftChar);
+                }
+                
+                steps.push({
+                    windowStart: i - s1.length + 1,
+                    windowEnd: i - 1,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    explanation: `Removed '${leftChar}' from window`
+                });
+
+                // Add new character
+                const rightChar = s2[i];
+                windowFreq.set(rightChar, (windowFreq.get(rightChar) || 0) + 1);
+                
+                steps.push({
+                    windowStart: i - s1.length + 1,
+                    windowEnd: i,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    explanation: `Added '${rightChar}' to window`
+                });
+
+                // Check current window
+                if (mapsEqual(patternFreq, windowFreq)) {
+                    steps.push({
+                        windowStart: i - s1.length + 1,
+                        windowEnd: i,
+                        patternFreq: new Map(patternFreq),
+                        windowFreq: new Map(windowFreq),
+                        result: true,
+                        explanation: "Found matching permutation!"
+                    });
+                    return;
+                }
+            }
+
+            steps.push({
+                patternFreq: new Map(patternFreq),
+                windowFreq: new Map(windowFreq),
+                result: false,
+                explanation: "No matching permutation found"
+            });
+        }
+
+        function mapsEqual(map1, map2) {
+            if (map1.size !== map2.size) return false;
+            for (let [key, value] of map1) {
+                if (map2.get(key) !== value) return false;
+            }
+            return true;
+        }
+
+        function updateVisualization() {
+            const s1Div = document.getElementById('s1Visualization');
+            const s2Div = document.getElementById('s2Visualization');
+            const patternFreqDiv = document.getElementById('patternFreqVisualization');
+            const windowFreqDiv = document.getElementById('windowFreqVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            s1Div.innerHTML = '';
+            s2Div.innerHTML = '';
+            patternFreqDiv.innerHTML = '';
+            windowFreqDiv.innerHTML = '';
+            
+            // Create pattern string visualization
+            for (let i = 0; i < s1.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded';
+                element.textContent = s1[i];
+                s1Div.appendChild(element);
+            }
+            
+            // Create main string visualization
+            for (let i = 0; i < s2.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded';
+                
+                if (step.windowStart !== undefined && 
+                    i >= step.windowStart && 
+                    i <= step.windowEnd) {
+                    element.classList.add('window-element');
+                }
+                
+                element.textContent = s2[i];
+                s2Div.appendChild(element);
+            }
+            
+            // Create frequency map visualizations
+            if (step.patternFreq) {
+                for (let [char, freq] of step.patternFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element w-20 h-12 flex items-center justify-center border rounded freq-map';
+                    element.textContent = `${char}: ${freq}`;
+                    patternFreqDiv.appendChild(element);
+                }
+            }
+            
+            if (step.windowFreq) {
+                for (let [char, freq] of step.windowFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element w-20 h-12 flex items-center justify-center border rounded freq-map';
+                    element.textContent = `${char}: ${freq}`;
+                    windowFreqDiv.appendChild(element);
+                }
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.result !== undefined ? 
+                    `<p class="font-semibold ${step.result ? 'text-green-600' : 'text-red-600'}">
+                        Result: ${step.result ? 'Found permutation!' : 'No permutation found'}
+                    </p>` : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

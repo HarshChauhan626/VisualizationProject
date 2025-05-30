@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Substring with At Most Two Distinct Characters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729; /* slate-900 */
+            color: #e2e8f0; /* slate-200 */
+            font-family: 'Inter', sans-serif;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b; /* slate-800 */
+            border: 2px solid #3b82f6; /* blue-500 */
+            color: #e2e8f0; /* slate-200 */
+        }
+        .window-element {
+            background-color: #059669; /* green-600 */
+            color: white;
+        }
+        .current-longest {
+            background-color: #fb923c; /* orange-400 */
+            color: white;
+        }
+        .freq-map-item { 
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+        }
+        .card {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+        }
+        pre {
+            background-color: #0f172a !important; 
+            border: 1px solid #334155; /* slate-700 */
+            color: #cbd5e1; /* slate-300 */
+            overflow-x: auto;
+            font-family: 'Monospace', monospace;
+        }
+        input[type="text"] { 
+            background-color: #1e293b !important; 
+            border-color: #3b82f6 !important; 
+            color: #e2e8f0 !important; 
+        }
+        input::placeholder {
+            color: #64748b !important; /* slate-500 */
+        }
+        .control-button {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .highlight-pseudo {
+            background-color: #059669; 
+            color: #ffffff !important;   
+            border-radius: 3px;
+            padding: 1px 4px; 
+            margin: 1px 0; 
+            box-shadow: 0 0 5px rgba(5, 150, 105, 0.5); 
+        }
+        #pseudoCodeBlock span[id^="line-"] {
+            display: block; 
+            padding: 2px 0; 
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl sm:text-4xl font-bold text-blue-400">Longest Substring with At Most Two Distinct Characters</h1>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h2 class="text-xl font-semibold mb-3 text-blue-300">Problem Statement</h2>
+                    <p class="text-slate-300 text-sm">
+                        Given a string <code>s</code>, return the length of the longest substring that contains at most two distinct characters.
+                        A substring is a contiguous sequence of characters within a string.
+                    </p>
+                </div>
+
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h2 class="text-xl font-semibold mb-3 text-blue-300">Test Cases</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="border-b border-slate-700 pb-3">
+                            <p class="font-semibold text-slate-300">Test Case 1:</p>
+                            <p class="text-slate-400">Input: <code>s = "eceba"</code></p>
+                            <p class="text-slate-400">Output: 3 (Substring: "ece")</p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-slate-300">Test Case 2:</p>
+                            <p class="text-slate-400">Input: <code>s = "ccaabbb"</code></p>
+                            <p class="text-slate-400">Output: 5 (Substring: "aabbb")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-300">Input & Controls</h2>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4 items-end">
+                        <div class="flex-grow w-full sm:w-auto">
+                            <label for="inputString" class="block text-sm font-medium mb-1 text-slate-300">Input String</label>
+                            <input type="text" id="inputString" placeholder="e.g., eceba" 
+                                   class="border p-2 rounded w-full text-sm" value="eceba">
+                        </div>
+                        <button onclick="initializeVisualization()" 
+                                class="control-button bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full sm:w-auto text-sm">
+                            Initialize / Reset
+                        </button>
+                    </div>
+                    <div class="flex gap-3 justify-center">
+                        <button id="prevBtn" onclick="prev()" 
+                                class="control-button bg-slate-600 text-white px-4 py-2 rounded hover:bg-slate-700 text-sm">
+                            Previous
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" 
+                                class="control-button bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 w-20 text-sm">
+                            Play
+                        </button>
+                        <button id="nextBtn" onclick="next()" 
+                                class="control-button bg-slate-600 text-white px-4 py-2 rounded hover:bg-slate-700 text-sm">
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card p-6 rounded-lg shadow-xl">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-300">Visualization</h2>
+                    <div class="mb-4">
+                        <h3 class="font-semibold mb-2 text-slate-300">Input String:</h3>
+                        <div id="stringVisualization" class="flex flex-wrap gap-2 mb-4 min-h-[3rem]">
+                            </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4 text-sm">
+                        <div class="lg:col-span-2"> {/* Char count map can take more space on larger screens */}
+                            <h3 class="font-semibold mb-1 text-slate-300">Char Count Map:</h3>
+                            <div id="countMapVisualization" class="flex flex-wrap gap-2 min-h-[3rem] bg-slate-700/50 p-2 rounded">
+                                </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">L Ptr:</h3>
+                            <div id="currentLeftVisualization" class="text-lg font-mono text-sky-400">0</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">R Ptr:</h3>
+                            <div id="currentRightVisualization" class="text-lg font-mono text-sky-400">-1</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">Win Len:</h3>
+                            <div id="windowLengthVisualization" class="text-lg font-mono text-orange-400">0</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1 text-slate-300">Max Len:</h3>
+                            <div id="maxLengthVisualization" class="text-lg font-mono text-green-400">0</div>
+                        </div>
+                    </div>
+                    <div id="explanation" class="text-slate-300 text-sm p-3 bg-slate-700 rounded min-h-[4em]">
+                        Initialize the visualizer by entering a string and clicking "Initialize".
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card p-6 rounded-lg shadow-xl mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-300">Pseudo Code</h2>
+            <pre id="pseudoCodeBlock" class="p-4 rounded text-xs sm:text-sm"><span id="line-0" class="block">// Time Complexity: O(n), where n is length of string</span>
+<span id="line-1" class="block">function lengthOfLongestSubstringTwoDistinct(s):</span>
+<span id="line-2" class="block">  if s.length < 3:</span>
+<span id="line-3" class="block">    return s.length</span>
+<span id="line-4" class="block">  </span>
+<span id="line-5" class="block">  // Initialize sliding window</span>
+<span id="line-6" class="block">  left = 0</span>
+<span id="line-7" class="block">  maxLen = 0</span>
+<span id="line-8" class="block">  countMap = new Map()</span>
+<span id="line-9" class="block">  </span>
+<span id="line-10" class="block">  // Expand window</span>
+<span id="line-11" class="block">  for right from 0 to s.length-1:</span>
+<span id="line-12" class="block">    // Add right character to count map</span>
+<span id="line-13" class="block">    countMap[s[right]] = (countMap[s[right]] || 0) + 1</span>
+<span id="line-14" class="block">    </span>
+<span id="line-15" class="block">    // Shrink window while we have more than 2 distinct chars</span>
+<span id="line-16" class="block">    while countMap.size > 2:</span>
+<span id="line-17" class="block">      countMap[s[left]]--</span>
+<span id="line-18" class="block">      if countMap[s[left]] === 0:</span>
+<span id="line-19" class="block">        delete countMap[s[left]]</span>
+<span id="line-20" class="block">      left++</span>
+<span id="line-21" class="block">    </span>
+<span id="line-22" class="block">    // Update max length</span>
+<span id="line-23" class="block">    maxLen = max(maxLen, right - left + 1)</span>
+<span id="line-24" class="block">  </span>
+<span id="line-25" class="block">  return maxLen</span></pre>
+        </div>
+    </div>
+
+    <script>
+        let inputStr = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        // Helper to convert map to string
+        function mapToString(map) {
+            if (!map || map.size === 0) return "empty";
+            return Array.from(map.entries()).map(([k, v]) => `${k}:${v}`).join(', ');
+        }
+
+        function initializeVisualization() {
+            inputStr = document.getElementById('inputString').value;
+            currentStep = 0;
+            steps = [];
+            if (isPlaying) { 
+                togglePlay();
+            }
+            generateSteps();
+            updateVisualization();
+            // Enable/disable buttons based on generated steps
+            const hasSteps = steps.length > 1;
+            document.getElementById('playBtn').disabled = !hasSteps;
+            document.getElementById('nextBtn').disabled = !hasSteps || currentStep === steps.length -1;
+            document.getElementById('prevBtn').disabled = !hasSteps || currentStep === 0;
+        }
+
+        function generateSteps() {
+            steps = [];
+            const s = inputStr;
+            let explanation = "";
+            let currentLeftVal = 0; // To track previous left for explanations
+            let currentRightVal = -1; // To track previous right for explanations
+
+
+            steps.push({
+                explanation: "Algorithm starts. Function `lengthOfLongestSubstringTwoDistinct` is called.",
+                left: undefined, right: undefined, maxLen: 0, countMap: new Map(),
+                pseudoCodeLineIds: ["line-1"]
+            });
+
+            if (s.length === 0) {
+                 steps.push({
+                    explanation: `Input string is empty. Condition "s.length < 3" (0 < 3) is true. Left: N/A, Right: N/A.`,
+                    left: undefined, right: undefined, maxLen: 0, countMap: new Map(),
+                    pseudoCodeLineIds: ["line-2"]
+                });
+                steps.push({
+                    explanation: `Returning s.length (0). Final result: 0. Left: N/A, Right: N/A.`,
+                    maxLen: 0, countMap: new Map(), left: undefined, right: undefined,
+                    pseudoCodeLineIds: ["line-3"]
+                });
+                return;
+            }
+            
+            if (s.length < 3) {
+                const tempMap = new Map(s.split('').map(char => [char, (s.match(new RegExp(char, "g")) || []).length]));
+                steps.push({
+                    explanation: `Input string length (${s.length}) is less than 3. Condition "s.length < 3" is true. Left: 0, Right: ${s.length - 1}.`,
+                    left: 0, right: s.length -1, maxLen: 0, 
+                    countMap: tempMap,
+                    pseudoCodeLineIds: ["line-2"]
+                });
+                steps.push({
+                    explanation: `Returning s.length (${s.length}). Final result: ${s.length}. Left: 0, Right: ${s.length - 1}.`,
+                    maxLen: s.length,
+                    left: 0, right: s.length -1,
+                    countMap: tempMap,
+                    pseudoCodeLineIds: ["line-3"]
+                });
+                return;
+            }
+
+            steps.push({
+                explanation: `Input string length (${s.length}) is not less than 3. Condition "s.length < 3" is false. Left: N/A, Right: N/A.`,
+                left: undefined, right: undefined, maxLen: 0, countMap: new Map(),
+                pseudoCodeLineIds: ["line-2"] 
+            });
+
+            let left = 0;
+            let maxLen = 0;
+            const countMap = new Map();
+            currentLeftVal = 0; // Initialize tracking variable
+
+            steps.push({
+                explanation: `Initializing variables: left = 0, maxLen = 0, countMap is empty. Right pointer is at -1 (before loop).`,
+                left: 0, right: -1, 
+                maxLen: 0, countMap: new Map(countMap),
+                pseudoCodeLineIds: ["line-6", "line-7", "line-8"]
+            });
+            currentRightVal = -1; // Update tracking variable
+
+            for (let right = 0; right < s.length; right++) {
+                currentRightVal = right; // Update right pointer for current step
+                explanation = `Expanding window. Right pointer moves to index ${right} (character '${s[right]}'). Left pointer is at ${left}.`;
+                steps.push({
+                    left, right, maxLen, countMap: new Map(countMap), explanation,
+                    pseudoCodeLineIds: ["line-11"] 
+                });
+
+                const charRight = s[right];
+                countMap.set(charRight, (countMap.get(charRight) || 0) + 1);
+                explanation = `Added character '${s[right]}' to countMap. Map: {${mapToString(countMap)}}. Left: ${left}, Right: ${right}.`;
+                steps.push({
+                    left, right, maxLen, countMap: new Map(countMap), explanation,
+                    pseudoCodeLineIds: ["line-13"]
+                });
+                
+                explanation = `Checking shrink condition: countMap.size (${countMap.size}) > 2. Left: ${left}, Right: ${right}.`;
+                steps.push({ 
+                    left, right, maxLen, countMap: new Map(countMap), explanation,
+                    pseudoCodeLineIds: ["line-16"]
+                });
+
+                while (countMap.size > 2) {
+                    const charLeft = s[left];
+                    explanation = `Condition countMap.size (${countMap.size}) > 2 is TRUE. Shrinking window. Left char is '${charLeft}' at index ${left}. Right is at ${right}.`;
+                    steps.push({ 
+                        left, right, maxLen, countMap: new Map(countMap), explanation,
+                        pseudoCodeLineIds: ["line-16", "line-17"] 
+                    });
+                    
+                    countMap.set(charLeft, countMap.get(charLeft) - 1);
+                    explanation = `Decremented count of '${charLeft}'. Map: {${mapToString(countMap)}}. Left: ${left}, Right: ${right}.`;
+                     steps.push({ 
+                        left, right, maxLen, countMap: new Map(countMap), explanation,
+                        pseudoCodeLineIds: ["line-17"] 
+                    });
+
+                    if (countMap.get(charLeft) === 0) {
+                        explanation = `Count of '${charLeft}' is 0. Checking if to delete. Left: ${left}, Right: ${right}.`;
+                        steps.push({
+                            left, right, maxLen, countMap: new Map(countMap), explanation,
+                            pseudoCodeLineIds: ["line-18"]
+                        });
+                        
+                        countMap.delete(charLeft);
+                        explanation = `Deleted '${charLeft}' from map. Map: {${mapToString(countMap)}}. Left: ${left}, Right: ${right}.`;
+                        steps.push({
+                            left, right, maxLen, countMap: new Map(countMap), explanation,
+                            pseudoCodeLineIds: ["line-19"]
+                        });
+                    } else {
+                        explanation = `Count of '${charLeft}' is ${countMap.get(charLeft)}. Not deleting. Left: ${left}, Right: ${right}.`;
+                         steps.push({
+                            left, right, maxLen, countMap: new Map(countMap), explanation,
+                            pseudoCodeLineIds: ["line-18"] 
+                        });
+                    }
+                    
+                    currentLeftVal = left; // Store old left value
+                    left++;
+                    explanation = `Incremented left pointer from ${currentLeftVal} to ${left}. Right pointer is at ${right}.`;
+                    steps.push({
+                        left, right, maxLen, countMap: new Map(countMap), explanation,
+                        pseudoCodeLineIds: ["line-20"]
+                    });
+
+                    explanation = `Re-checking shrink condition: countMap.size (${countMap.size}) > 2. Left: ${left}, Right: ${right}.`;
+                    steps.push({ 
+                        left, right, maxLen, countMap: new Map(countMap), explanation,
+                        pseudoCodeLineIds: ["line-16"]
+                    });
+                }
+                
+                explanation = `Condition countMap.size (${countMap.size}) > 2 is FALSE. Window is valid. Left: ${left}, Right: ${right}.`;
+                steps.push({
+                    left, right, maxLen, countMap: new Map(countMap), explanation,
+                    pseudoCodeLineIds: ["line-16"] 
+                });
+
+                const currentLen = right - left + 1;
+                if (currentLen > maxLen) {
+                    explanation = `Current window length (${currentLen}) > maxLen (${maxLen}). Updating maxLen to ${currentLen}. Left: ${left}, Right: ${right}.`;
+                    maxLen = currentLen;
+                } else {
+                    explanation = `Current window length (${currentLen}) not > maxLen (${maxLen}). maxLen remains ${maxLen}. Left: ${left}, Right: ${right}.`;
+                }
+                steps.push({
+                    left, right, maxLen, countMap: new Map(countMap), explanation,
+                    pseudoCodeLineIds: ["line-23"]
+                });
+            }
+
+            explanation = `For-loop finished. Final maxLen is ${maxLen}. Left: ${left}, Right: ${currentRightVal}.`; // Use currentRightVal as 'right' from loop is out of scope
+            steps.push({
+                left, right: currentRightVal, 
+                maxLen, countMap: new Map(countMap), explanation,
+                pseudoCodeLineIds: ["line-11"] 
+            });
+
+            steps.push({
+                explanation: `Returning final maxLen: ${maxLen}. Algorithm finished. Left: ${left}, Right: ${currentRightVal}.`,
+                maxLen, 
+                left: steps[steps.length-1].left, 
+                right: steps[steps.length-1].right,
+                countMap: new Map(steps[steps.length-1].countMap),
+                pseudoCodeLineIds: ["line-25"]
+            });
+        }
+
+        function updateVisualization() {
+            const stringDiv = document.getElementById('stringVisualization');
+            const countMapDiv = document.getElementById('countMapVisualization');
+            const windowLengthDiv = document.getElementById('windowLengthVisualization');
+            const maxLengthDiv = document.getElementById('maxLengthVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            // Get new elements for left and right pointers
+            const currentLeftDiv = document.getElementById('currentLeftVisualization');
+            const currentRightDiv = document.getElementById('currentRightVisualization');
+            
+            if (!steps || steps.length === 0) {
+                 explanationDiv.innerHTML = `<p>Please initialize the visualizer.</p>`;
+                 stringDiv.innerHTML = '';
+                 countMapDiv.innerHTML = '';
+                 windowLengthDiv.textContent = '0';
+                 maxLengthDiv.textContent = '0';
+                 currentLeftDiv.textContent = 'N/A';
+                 currentRightDiv.textContent = 'N/A';
+                const pseudoCodeBlock = document.getElementById('pseudoCodeBlock');
+                if (pseudoCodeBlock) { 
+                    const pseudoCodeLines = pseudoCodeBlock.querySelectorAll('span[id^="line-"]');
+                    pseudoCodeLines.forEach(line => line.classList.remove('highlight-pseudo'));
+                }
+                return;
+            }
+            
+            if (currentStep >= steps.length) currentStep = steps.length - 1;
+            if (currentStep < 0) currentStep = 0;
+            
+            const step = steps[currentStep];
+            
+            stringDiv.innerHTML = '';
+            countMapDiv.innerHTML = '';
+            
+            const pseudoCodeBlock = document.getElementById('pseudoCodeBlock');
+            if (pseudoCodeBlock) {
+                const pseudoCodeLines = pseudoCodeBlock.querySelectorAll('span[id^="line-"]');
+                pseudoCodeLines.forEach(line => line.classList.remove('highlight-pseudo')); 
+
+                if (step.pseudoCodeLineIds && Array.isArray(step.pseudoCodeLineIds)) {
+                    step.pseudoCodeLineIds.forEach(lineId => {
+                        const lineElement = document.getElementById(lineId);
+                        if (lineElement) {
+                            lineElement.classList.add('highlight-pseudo');
+                        }
+                    });
+                }
+            }
+
+            for (let i = 0; i < inputStr.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border rounded text-sm md:text-base';
+                
+                if (step.left !== undefined && step.right !== undefined && 
+                    i >= step.left && i <= step.right) {
+                    element.classList.add('window-element');
+                    
+                    if (step.maxLen === (step.right - step.left + 1) && (step.pseudoCodeLineIds.includes("line-23") || (steps[currentStep-1] && steps[currentStep-1].pseudoCodeLineIds.includes("line-23") && steps[currentStep-1].maxLen === step.maxLen ) )) {
+                         element.classList.add('current-longest');
+                    }
+                }
+                element.textContent = inputStr[i];
+                stringDiv.appendChild(element);
+            }
+            
+            if (step.countMap) {
+                for (let [char, count] of step.countMap) {
+                    if (count > 0) { 
+                        const element = document.createElement('div');
+                        element.className = 'array-element freq-map-item w-16 h-10 md:w-20 md:h-12 flex items-center justify-center border rounded text-xs md:text-sm p-1';
+                        element.textContent = `${char}: ${count}`;
+                        countMapDiv.appendChild(element);
+                    }
+                }
+            }
+            
+            // Update left and right pointer displays
+            currentLeftDiv.textContent = (step.left !== undefined) ? step.left : 'N/A';
+            currentRightDiv.textContent = (step.right !== undefined) ? step.right : 'N/A';
+
+            if (step.left !== undefined && step.right !== undefined && step.left <= step.right) {
+                windowLengthDiv.textContent = `${step.right - step.left + 1}`;
+            } else {
+                windowLengthDiv.textContent = '0'; 
+            }
+            
+            maxLengthDiv.textContent = step.maxLen !== undefined ? step.maxLen : '0';
+            
+            explanationDiv.innerHTML = `
+                <p class="font-semibold">Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === steps.length - 1;
+            document.getElementById('playBtn').disabled = currentStep === steps.length - 1 && steps.length > 0; 
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            } else {
+                 if (isPlaying) togglePlay(); 
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                if (currentStep === steps.length - 1 && steps.length > 0) { 
+                    currentStep = 0; 
+                }
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                updateVisualization(); 
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay(); 
+                    }
+                }, 1200); 
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                clearInterval(playInterval);
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('explanation').innerHTML = `<p>Enter a string and click "Initialize / Reset" to start.</p>`;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+            document.getElementById('prevBtn').disabled = true;
+            // initializeVisualization(); // Uncomment to auto-initialize
+        };
+    </script>
+</body>
+</html>

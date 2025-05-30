@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Peak Element - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .left {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .right {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .mid {
+            background-color: #eab308;
+            border-color: #facc15;
+        }
+        .result {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .peak {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .neighbor {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .visualization-container {
+            position: relative;
+            height: 300px;
+        }
+        .line-chart {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .line {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Find Peak Element</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                A peak element is an element that is strictly greater than its neighbors.<br><br>
+                Given an integer array nums, find a peak element, and return its index. If the array contains multiple peaks, 
+                return the index to any of the peaks.<br><br>
+                You may imagine that nums[-1] = nums[n] = -∞.<br><br>
+                You must write an algorithm that runs in O(log n) time.
+            </p>
+        </div>
+
+        <!-- Solution Approach Tabs -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="binarySearchTab" class="tab active px-4 py-2 rounded" onclick="switchApproach('binarySearch')">
+                    Binary Search (O(log n))
+                </div>
+                <div id="linearSearchTab" class="tab px-4 py-2 rounded" onclick="switchApproach('linearSearch')">
+                    Linear Search (O(n))
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                <input type="text" id="inputArray" placeholder="Enter array values" 
+                    class="border p-2 rounded w-full" value="1,2,1,3,5,6,4">
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="relative h-32 flex items-center justify-center gap-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-orange-400">Left:</h4>
+                        <div id="leftVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-yellow-400">Mid:</h4>
+                        <div id="midVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-indigo-400">Right:</h4>
+                        <div id="rightVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="binarySearchCode" class="approach-code">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(log n), Space Complexity: O(1)
+function findPeakElement(nums):
+    if nums.length == 1:
+        return 0
+    
+    left = 0
+    right = nums.length - 1
+    
+    while left < right:
+        mid = left + (right - left) // 2
+        
+        // Compare with right neighbor
+        if nums[mid] > nums[mid + 1]:
+            // Peak is in left half or at mid
+            right = mid
+        else:
+            // Peak is in right half
+            left = mid + 1
+    
+    // left/right is now at peak
+    return left</pre>
+            </div>
+            <div id="linearSearchCode" class="approach-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(1)
+function findPeakElement(nums):
+    // Check first element
+    if nums.length == 1 || nums[0] > nums[1]:
+        return 0
+    
+    // Check middle elements
+    for i in range(1, nums.length - 1):
+        if nums[i] > nums[i - 1] && nums[i] > nums[i + 1]:
+            return i
+    
+    // Check last element
+    if nums[nums.length - 1] > nums[nums.length - 2]:
+        return nums.length - 1
+    
+    return 0  // Array is sorted in ascending order</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [1,2,1,3,5,6,4]</p>
+                    <p class="text-green-400">Output: 5</p>
+                    <p class="text-gray-400">Explanation: 6 is a peak element and your function should return the index 5.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [1,2,3,1]</p>
+                    <p class="text-green-400">Output: 2</p>
+                    <p class="text-gray-400">Explanation: 3 is a peak element and your function should return the index 2.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [1]</p>
+                    <p class="text-green-400">Output: 0</p>
+                    <p class="text-gray-400">Explanation: 1 is a peak element and your function should return the index 0.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'binarySearch';
+        let resultIndex = -1;
+
+        function switchApproach(approach) {
+            currentApproach = approach;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(approach + 'Tab').classList.add('active');
+            document.querySelectorAll('.approach-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(approach + 'Code').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function generateBinarySearchSteps(nums) {
+            const steps = [];
+            
+            if (nums.length === 1) {
+                steps.push({
+                    array: [...nums],
+                    result: 0,
+                    explanation: "Array has only one element, it is the peak",
+                    done: true
+                });
+                resultIndex = 0;
+                return steps;
+            }
+
+            let left = 0;
+            let right = nums.length - 1;
+
+            steps.push({
+                array: [...nums],
+                left,
+                right,
+                explanation: "Initialize left and right pointers"
+            });
+
+            while (left < right) {
+                const mid = Math.floor(left + (right - left) / 2);
+                
+                steps.push({
+                    array: [...nums],
+                    left,
+                    right,
+                    mid,
+                    explanation: `Calculate mid = ${mid}`
+                });
+
+                if (nums[mid] > nums[mid + 1]) {
+                    steps.push({
+                        array: [...nums],
+                        left,
+                        right,
+                        mid,
+                        neighbor: mid + 1,
+                        explanation: `${nums[mid]} > ${nums[mid + 1]}, peak is in left half or at mid`
+                    });
+                    right = mid;
+                } else {
+                    steps.push({
+                        array: [...nums],
+                        left,
+                        right,
+                        mid,
+                        neighbor: mid + 1,
+                        explanation: `${nums[mid]} <= ${nums[mid + 1]}, peak is in right half`
+                    });
+                    left = mid + 1;
+                }
+            }
+
+            steps.push({
+                array: [...nums],
+                result: left,
+                explanation: `Found peak element at index ${left} (value = ${nums[left]})`,
+                done: true
+            });
+
+            resultIndex = left;
+            return steps;
+        }
+
+        function generateLinearSearchSteps(nums) {
+            const steps = [];
+            
+            steps.push({
+                array: [...nums],
+                explanation: "Start linear search from beginning"
+            });
+
+            // Check first element
+            if (nums.length === 1) {
+                steps.push({
+                    array: [...nums],
+                    result: 0,
+                    explanation: "Array has only one element, it is the peak",
+                    done: true
+                });
+                resultIndex = 0;
+                return steps;
+            }
+
+            if (nums[0] > nums[1]) {
+                steps.push({
+                    array: [...nums],
+                    current: 0,
+                    neighbor: 1,
+                    explanation: `Check if first element ${nums[0]} > ${nums[1]}`
+                });
+                steps.push({
+                    array: [...nums],
+                    result: 0,
+                    explanation: "First element is a peak",
+                    done: true
+                });
+                resultIndex = 0;
+                return steps;
+            }
+
+            // Check middle elements
+            for (let i = 1; i < nums.length - 1; i++) {
+                steps.push({
+                    array: [...nums],
+                    current: i,
+                    neighbor: i - 1,
+                    explanation: `Check if ${nums[i]} > ${nums[i - 1]} (left neighbor)`
+                });
+                steps.push({
+                    array: [...nums],
+                    current: i,
+                    neighbor: i + 1,
+                    explanation: `Check if ${nums[i]} > ${nums[i + 1]} (right neighbor)`
+                });
+
+                if (nums[i] > nums[i - 1] && nums[i] > nums[i + 1]) {
+                    steps.push({
+                        array: [...nums],
+                        result: i,
+                        explanation: `Found peak element at index ${i} (value = ${nums[i]})`,
+                        done: true
+                    });
+                    resultIndex = i;
+                    return steps;
+                }
+            }
+
+            // Check last element
+            steps.push({
+                array: [...nums],
+                current: nums.length - 1,
+                neighbor: nums.length - 2,
+                explanation: `Check if last element ${nums[nums.length - 1]} > ${nums[nums.length - 2]}`
+            });
+
+            if (nums[nums.length - 1] > nums[nums.length - 2]) {
+                steps.push({
+                    array: [...nums],
+                    result: nums.length - 1,
+                    explanation: "Last element is a peak",
+                    done: true
+                });
+                resultIndex = nums.length - 1;
+                return steps;
+            }
+
+            // If we reach here, array is sorted in ascending order
+            steps.push({
+                array: [...nums],
+                result: 0,
+                explanation: "Array is sorted in ascending order, first element is a peak",
+                done: true
+            });
+            resultIndex = 0;
+            return steps;
+        }
+
+        function initializeVisualization() {
+            array = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            currentStep = 0;
+            resultIndex = -1;
+            
+            steps = currentApproach === 'binarySearch' ?
+                generateBinarySearchSteps(array) :
+                generateLinearSearchSteps(array);
+            
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const leftDiv = document.getElementById('leftVisualization');
+            const midDiv = document.getElementById('midVisualization');
+            const rightDiv = document.getElementById('rightVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            arrayDiv.innerHTML = '';
+            
+            // Create array visualization
+            step.array.forEach((num, index) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                
+                if (index === step.result) {
+                    elementDiv.classList.add('result');
+                } else if (index === step.neighbor) {
+                    elementDiv.classList.add('neighbor');
+                } else if (currentApproach === 'binarySearch') {
+                    if (index === step.mid) {
+                        elementDiv.classList.add('mid');
+                    } else if (step.left !== undefined && step.right !== undefined && 
+                             index >= step.left && index <= step.right) {
+                        if (index === step.left) {
+                            elementDiv.classList.add('left');
+                        } else if (index === step.right) {
+                            elementDiv.classList.add('right');
+                        }
+                    }
+                } else if (index === step.current) {
+                    elementDiv.classList.add('current');
+                }
+                
+                elementDiv.textContent = num;
+                arrayDiv.appendChild(elementDiv);
+            });
+            
+            // Update pointers
+            if (currentApproach === 'binarySearch') {
+                leftDiv.textContent = step.left !== undefined ? `Index: ${step.left}` : "Not set";
+                midDiv.textContent = step.mid !== undefined ? `Index: ${step.mid}` : "Not set";
+                rightDiv.textContent = step.right !== undefined ? `Index: ${step.right}` : "Not set";
+            } else {
+                leftDiv.textContent = "N/A";
+                midDiv.textContent = "N/A";
+                rightDiv.textContent = "N/A";
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = `Peak element found at index ${resultIndex} (value = ${array[resultIndex]})`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

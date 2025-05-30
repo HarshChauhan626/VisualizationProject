@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Common Subsequence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+        }
+        .char-element.current {
+            background-color: #eab308;
+        }
+        .char-element.matched {
+            background-color: #22c55e;
+        }
+        .char-element.unmatched {
+            background-color: #ef4444;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .lcs-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .dp-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #374151;
+            font-family: monospace;
+            transition: all 0.3s ease-in-out;
+        }
+        .dp-cell.current {
+            background-color: #eab308;
+        }
+        .dp-cell.processed {
+            background-color: #22c55e;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Longest Common Subsequence</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the longest common subsequence between two strings using dynamic programming.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">String 1</label>
+                            <input type="text" id="str1Input" value="ABCDGH" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter first string">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">String 2</label>
+                            <input type="text" id="str2Input" value="AEDFHR" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter second string">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyCustomStrings()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Strings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- String Visualizations -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">String 1</h3>
+                    <div id="str1Container" class="flex flex-wrap gap-2 mb-6"></div>
+                    <h3 class="text-lg font-medium mb-4">String 2</h3>
+                    <div id="str2Container" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">DP Table</h3>
+                    <div id="dpTable" class="overflow-auto"></div>
+                </div>
+
+                <!-- LCS Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current State</h3>
+                    <div id="lcsInfo" class="lcs-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">LCS Length: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function lcs(str1, str2):</span>
+<span class="code-line" data-line="2">    m, n = len(str1), len(str2)</span>
+<span class="code-line" data-line="3">    dp = [[0] * (n + 1) for _ in range(m + 1)]</span>
+<span class="code-line" data-line="4">    for i = 1 to m:</span>
+<span class="code-line" data-line="5">        for j = 1 to n:</span>
+<span class="code-line" data-line="6">            if str1[i-1] == str2[j-1]:</span>
+<span class="code-line" data-line="7">                dp[i][j] = dp[i-1][j-1] + 1</span>
+<span class="code-line" data-line="8">            else:</span>
+<span class="code-line" data-line="9">                dp[i][j] = max(dp[i-1][j], dp[i][j-1])</span>
+<span class="code-line" data-line="10">    return dp[m][n]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m*n) where m and n are the lengths of the two strings</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m*n) for the dp array, can be optimized to O(n)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Create a DP table of size (m+1) x (n+1)
+                                <br>2. For each character pair:
+                                <br>&nbsp;&nbsp;&nbsp;- If characters match, increment diagonal value
+                                <br>&nbsp;&nbsp;&nbsp;- If characters don't match, take max of left/up
+                                <br>3. Return the value at dp[m][n]
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let str1 = '';
+        let str2 = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyCustomStrings() {
+            const str1Input = document.getElementById('str1Input').value;
+            const str2Input = document.getElementById('str2Input').value;
+            try {
+                if (str1Input.length === 0 || str2Input.length === 0) {
+                    throw new Error('Both strings must be non-empty');
+                }
+                str1 = str1Input;
+                str2 = str2Input;
+                createStringElements();
+                createDPTable();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid strings');
+            }
+        }
+
+        function createStringElements() {
+            const str1Container = document.getElementById('str1Container');
+            const str2Container = document.getElementById('str2Container');
+            str1Container.innerHTML = '';
+            str2Container.innerHTML = '';
+            
+            str1.split('').forEach((char, index) => {
+                const element = document.createElement('div');
+                element.className = 'char-element';
+                element.id = `str1-${index}`;
+                element.textContent = char;
+                str1Container.appendChild(element);
+            });
+
+            str2.split('').forEach((char, index) => {
+                const element = document.createElement('div');
+                element.className = 'char-element';
+                element.id = `str2-${index}`;
+                element.textContent = char;
+                str2Container.appendChild(element);
+            });
+        }
+
+        function createDPTable() {
+            const table = document.getElementById('dpTable');
+            table.innerHTML = '';
+            
+            const m = str1.length;
+            const n = str2.length;
+            
+            // Create table header
+            const headerRow = document.createElement('div');
+            headerRow.className = 'flex';
+            
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'dp-cell';
+            emptyCell.style.width = '50px';
+            headerRow.appendChild(emptyCell);
+            
+            for (let j = 0; j <= n; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.textContent = j === 0 ? '' : str2[j-1];
+                headerRow.appendChild(cell);
+            }
+            table.appendChild(headerRow);
+            
+            // Create table rows
+            for (let i = 0; i <= m; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex';
+                
+                const indexCell = document.createElement('div');
+                indexCell.className = 'dp-cell';
+                indexCell.textContent = i === 0 ? '' : str1[i-1];
+                row.appendChild(indexCell);
+                
+                for (let j = 0; j <= n; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'dp-cell';
+                    cell.id = `dp-${i}-${j}`;
+                    cell.textContent = '0';
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = str1.length;
+            const n = str2.length;
+            const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initializing DP table',
+                codeLine: 3
+            });
+            
+            // Fill DP table
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (str1[i-1] === str2[j-1]) {
+                        dp[i][j] = dp[i-1][j-1] + 1;
+                        steps.push({
+                            type: 'fill',
+                            i: i,
+                            j: j,
+                            match: true,
+                            value: dp[i][j],
+                            description: `Characters match: ${str1[i-1]} == ${str2[j-1]}`,
+                            codeLine: 7
+                        });
+                    } else {
+                        dp[i][j] = Math.max(dp[i-1][j], dp[i][j-1]);
+                        steps.push({
+                            type: 'fill',
+                            i: i,
+                            j: j,
+                            match: false,
+                            value: dp[i][j],
+                            description: `Characters don't match: ${str1[i-1]} != ${str2[j-1]}`,
+                            codeLine: 9
+                        });
+                    }
+                }
+            }
+            
+            steps.push({
+                type: 'complete',
+                value: dp[m][n],
+                description: `LCS length: ${dp[m][n]}`,
+                codeLine: 10
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'LCS Length: 0';
+            document.getElementById('lcsInfo').textContent = '';
+            highlightCodeLine(1);
+            createStringElements();
+            createDPTable();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const str1Elements = document.querySelectorAll('#str1Container .char-element');
+            const str2Elements = document.querySelectorAll('#str2Container .char-element');
+            const cells = document.querySelectorAll('.dp-cell');
+            str1Elements.forEach(element => element.className = 'char-element');
+            str2Elements.forEach(element => element.className = 'char-element');
+            cells.forEach(cell => cell.classList.remove('current', 'processed'));
+
+            // Update current characters
+            if (step.i > 0) {
+                document.getElementById(`str1-${step.i-1}`).classList.add('current');
+            }
+            if (step.j > 0) {
+                document.getElementById(`str2-${step.j-1}`).classList.add('current');
+            }
+
+            // Update DP table
+            if (step.type === 'fill') {
+                const cell = document.getElementById(`dp-${step.i}-${step.j}`);
+                cell.textContent = step.value;
+                cell.classList.add('current');
+                
+                // Mark previous cells as processed
+                if (step.i > 1) {
+                    document.getElementById(`dp-${step.i-1}-${step.j}`).classList.add('processed');
+                }
+                if (step.j > 1) {
+                    document.getElementById(`dp-${step.i}-${step.j-1}`).classList.add('processed');
+                }
+                if (step.match && step.i > 1 && step.j > 1) {
+                    document.getElementById(`dp-${step.i-1}-${step.j-1}`).classList.add('processed');
+                }
+            }
+
+            // Update LCS info
+            let lcsInfo = '';
+            if (step.type === 'fill') {
+                if (step.match) {
+                    lcsInfo = `Characters match: ${str1[step.i-1]} == ${str2[step.j-1]}
+                        \ndp[${step.i}][${step.j}] = dp[${step.i-1}][${step.j-1}] + 1 = ${step.value}`;
+                } else {
+                    lcsInfo = `Characters don't match: ${str1[step.i-1]} != ${str2[step.j-1]}
+                        \ndp[${step.i}][${step.j}] = max(dp[${step.i-1}][${step.j}], dp[${step.i}][${step.j-1}]) = ${step.value}`;
+                }
+            }
+
+            document.getElementById('lcsInfo').textContent = lcsInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `LCS Length: ${step.value}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyCustomStrings();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

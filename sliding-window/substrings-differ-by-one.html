@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Count Substrings That Differ by One Character</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .array-element {
+            transition: all 0.3s ease-in-out;
+        }
+        .window-element {
+            background-color: #4ade80;
+        }
+        .mismatch-element {
+            background-color: #fb923c;
+        }
+        .match-element {
+            background-color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Count Substrings That Differ by One Character</h1>
+        
+        <!-- Problem Statement -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Problem Statement</h2>
+            <p class="text-gray-700">
+                Given two strings s and t, find the number of ways you can choose a non-empty substring of s and replace a single character by a different character such that the resulting substring is a substring of t.<br><br>
+                In other words, find the number of substrings in s that differ by exactly one character from some substring in t.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">String s</label>
+                    <input type="text" id="inputS" placeholder="Enter string s" 
+                        class="border p-2 rounded w-full" value="aba">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">String t</label>
+                    <input type="text" id="inputT" placeholder="Enter string t" 
+                        class="border p-2 rounded w-full" value="baba">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">String s:</h3>
+                <div id="stringVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">String t:</h3>
+                <div id="targetVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Current Comparison:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Substring s:</h4>
+                        <div id="substringVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Substring t:</h4>
+                        <div id="targetSubstringVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Count of Valid Substrings:</h3>
+                <div id="countVisualization" class="text-lg font-mono">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-700 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Pseudo Code</h2>
+            <pre class="bg-gray-100 p-4 rounded">
+// Time Complexity: O(n * m * min(n,m)), where n and m are lengths of s and t
+function countSubstrings(s, t):
+    result = 0
+    
+    // Try each starting position in s
+    for i from 0 to s.length-1:
+        // Try each starting position in t
+        for j from 0 to t.length-1:
+            diff = 0
+            k = 0
+            
+            // Compare characters while within bounds
+            while i + k < s.length and j + k < t.length:
+                if s[i + k] !== t[j + k]:
+                    diff++
+                
+                // If exactly one difference found, increment result
+                if diff === 1:
+                    result++
+                
+                // If more than one difference found, break
+                if diff > 1:
+                    break
+                
+                k++
+    
+    return result</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 1:</p>
+                    <p>s = "aba", t = "baba"</p>
+                    <p>Output: 6</p>
+                    <p>Explanation: The following are the pairs of substrings from s and t that differ by exactly 1 character:
+                        ("aba", "baba"), ("aba", "baba"), ("aba", "baba"),
+                        ("aba", "baba"), ("aba", "baba"), ("aba", "baba")</p>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 2:</p>
+                    <p>s = "ab", t = "bb"</p>
+                    <p>Output: 3</p>
+                    <p>Explanation: The following are the pairs of substrings from s and t that differ by 1 character:
+                        ("ab", "bb"), ("ab", "bb"), ("ab", "bb")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let s = "";
+        let t = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            s = document.getElementById('inputS').value;
+            t = document.getElementById('inputT').value;
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            let result = 0;
+            
+            steps.push({
+                explanation: "Starting comparison of substrings",
+                count: 0
+            });
+
+            // Try each starting position in s
+            for (let i = 0; i < s.length; i++) {
+                // Try each starting position in t
+                for (let j = 0; j < t.length; j++) {
+                    let diff = 0;
+                    let k = 0;
+                    
+                    steps.push({
+                        i,
+                        j,
+                        k: 0,
+                        diff: 0,
+                        count: result,
+                        explanation: `Comparing substrings starting at position ${i} in s and position ${j} in t`
+                    });
+
+                    // Compare characters while within bounds
+                    while (i + k < s.length && j + k < t.length) {
+                        if (s[i + k] !== t[j + k]) {
+                            diff++;
+                            
+                            steps.push({
+                                i,
+                                j,
+                                k,
+                                diff,
+                                count: result,
+                                explanation: `Found mismatch at position ${k}: ${s[i + k]} ≠ ${t[j + k]}`
+                            });
+                        }
+
+                        // If exactly one difference found, increment result
+                        if (diff === 1) {
+                            result++;
+                            
+                            steps.push({
+                                i,
+                                j,
+                                k,
+                                diff,
+                                count: result,
+                                explanation: `Found valid substring pair with exactly one difference: "${s.substring(i, i + k + 1)}" and "${t.substring(j, j + k + 1)}"`
+                            });
+                        }
+
+                        // If more than one difference found, break
+                        if (diff > 1) {
+                            steps.push({
+                                i,
+                                j,
+                                k,
+                                diff,
+                                count: result,
+                                explanation: "Found more than one difference, moving to next substring"
+                            });
+                            break;
+                        }
+
+                        k++;
+                    }
+                }
+            }
+
+            steps.push({
+                count: result,
+                explanation: `Final result: found ${result} substring pairs that differ by exactly one character`
+            });
+        }
+
+        function updateVisualization() {
+            const stringDiv = document.getElementById('stringVisualization');
+            const targetDiv = document.getElementById('targetVisualization');
+            const substringDiv = document.getElementById('substringVisualization');
+            const targetSubstringDiv = document.getElementById('targetSubstringVisualization');
+            const countDiv = document.getElementById('countVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            stringDiv.innerHTML = '';
+            targetDiv.innerHTML = '';
+            
+            // Create string visualization
+            for (let i = 0; i < s.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.i !== undefined && step.k !== undefined) {
+                    if (i >= step.i && i <= step.i + step.k) {
+                        element.classList.add('window-element');
+                        if (step.diff > 0 && i === step.i + step.k) {
+                            element.classList.add('mismatch-element');
+                        }
+                    }
+                }
+                
+                element.textContent = s[i];
+                stringDiv.appendChild(element);
+            }
+            
+            // Create target string visualization
+            for (let i = 0; i < t.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.j !== undefined && step.k !== undefined) {
+                    if (i >= step.j && i <= step.j + step.k) {
+                        element.classList.add('window-element');
+                        if (step.diff > 0 && i === step.j + step.k) {
+                            element.classList.add('mismatch-element');
+                        }
+                    }
+                }
+                
+                element.textContent = t[i];
+                targetDiv.appendChild(element);
+            }
+            
+            // Update current substrings
+            if (step.i !== undefined && step.j !== undefined && step.k !== undefined) {
+                substringDiv.textContent = s.substring(step.i, step.i + step.k + 1);
+                targetSubstringDiv.textContent = t.substring(step.j, step.j + step.k + 1);
+            }
+            
+            // Update count
+            if (step.count !== undefined) {
+                countDiv.textContent = step.count;
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

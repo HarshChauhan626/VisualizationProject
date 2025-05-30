@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trapping Rain Water Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .height-bar {
+            width: 40px;
+            transition: all 0.3s ease-in-out;
+            margin: 0 2px;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            background-color: #6b7280;
+        }
+        .height-bar.pointer-left {
+            border-left: 4px solid #4ade80;
+        }
+        .height-bar.pointer-right {
+            border-right: 4px solid #fb923c;
+        }
+        .water {
+            position: absolute;
+            width: 100%;
+            background-color: #3b82f6;
+            opacity: 0.7;
+            border-radius: 0;
+            bottom: 0;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Trapping Rain Water</h1>
+        <p class="text-gray-300 mb-8">Visualize how to calculate the amount of rainwater trapped between elevation bars using the two pointers technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Heights (comma-separated numbers)</label>
+                        <input type="text" id="inputArray" value="0,1,0,2,1,0,1,3,2,1,2,1" 
+                            class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Elevation Map Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Elevation Map</h3>
+                    <div id="elevationVisualization" class="flex items-end justify-center h-64">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Pointers and Heights</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Left Pointer (Green):</p>
+                            <div id="leftPointerInfo" class="text-lg font-mono"></div>
+                            <p class="text-sm font-medium mt-2 mb-1">Left Max Height:</p>
+                            <div id="leftMaxInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Right Pointer (Orange):</p>
+                            <div id="rightPointerInfo" class="text-lg font-mono"></div>
+                            <p class="text-sm font-medium mt-2 mb-1">Right Max Height:</p>
+                            <div id="rightMaxInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Result -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-sm font-medium mb-2">Total Trapped Water:</p>
+                    <p id="totalWaterInfo" class="text-lg font-mono"></p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function trap(height):</span>
+<span class="code-line" data-line="2">    if height.length < 3:</span>
+<span class="code-line" data-line="3">        return 0</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    left = 0</span>
+<span class="code-line" data-line="6">    right = height.length - 1</span>
+<span class="code-line" data-line="7">    leftMax = rightMax = water = 0</span>
+<span class="code-line" data-line="8">    </span>
+<span class="code-line" data-line="9">    while left < right:</span>
+<span class="code-line" data-line="10">        if height[left] < height[right]:</span>
+<span class="code-line" data-line="11">            if height[left] >= leftMax:</span>
+<span class="code-line" data-line="12">                leftMax = height[left]</span>
+<span class="code-line" data-line="13">            else:</span>
+<span class="code-line" data-line="14">                water += leftMax - height[left]</span>
+<span class="code-line" data-line="15">            left++</span>
+<span class="code-line" data-line="16">        else:</span>
+<span class="code-line" data-line="17">            if height[right] >= rightMax:</span>
+<span class="code-line" data-line="18">                rightMax = height[right]</span>
+<span class="code-line" data-line="19">            else:</span>
+<span class="code-line" data-line="20">                water += rightMax - height[right]</span>
+<span class="code-line" data-line="21">            right--</span>
+<span class="code-line" data-line="22">    </span>
+<span class="code-line" data-line="23">    return water</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the heights array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) - constant extra space</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm calculates trapped water using two pointers:
+                                <br>1. Initialize left and right pointers at the start and end
+                                <br>2. Track maximum heights seen from both left and right
+                                <br>3. At each step, work on the smaller height side:
+                                <br>&nbsp;&nbsp;- If current height > max height, update max height
+                                <br>&nbsp;&nbsp;- Otherwise, add trapped water (max height - current height)
+                                <br>4. Move the respective pointer toward the center
+                                <br>5. Continue until pointers meet
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">height = [0,1,0,2,1,0,1,3,2,1,2,1]</p>
+                            <p class="text-gray-300">Output: 6</p>
+                            <p class="text-gray-300">Explanation: 6 units of rain water are being trapped.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">height = [4,2,0,3,2,5]</p>
+                            <p class="text-gray-300">Output: 9</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let height = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initializeVisualization() {
+            // Get input values
+            height = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            
+            // Reset visualization state
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Enable buttons
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Reset current step
+            currentStepIndex = -1;
+            
+            // Update visualization
+            nextStep();
+        }
+
+        function createElevationVisualization() {
+            const container = document.getElementById('elevationVisualization');
+            container.innerHTML = '';
+            
+            // Find maximum height for scaling
+            const maxHeight = Math.max(...height, 1);
+            const scale = 95 / maxHeight; // Leaving some space at the top (95%)
+            
+            for (let i = 0; i < height.length; i++) {
+                const barHeight = height[i] * scale;
+                const bar = document.createElement('div');
+                bar.className = 'height-bar';
+                bar.style.height = `${barHeight}%`;
+                bar.id = `bar-${i}`;
+                
+                // Add value label
+                const valueLabel = document.createElement('div');
+                valueLabel.className = 'absolute -top-6 w-full text-center text-xs';
+                valueLabel.textContent = height[i];
+                bar.appendChild(valueLabel);
+                
+                container.appendChild(bar);
+            }
+        }
+
+        function resetVisualization() {
+            // Clear visualization
+            document.getElementById('elevationVisualization').innerHTML = '';
+            document.getElementById('leftPointerInfo').innerHTML = '';
+            document.getElementById('rightPointerInfo').innerHTML = '';
+            document.getElementById('leftMaxInfo').innerHTML = '';
+            document.getElementById('rightMaxInfo').innerHTML = '';
+            document.getElementById('totalWaterInfo').innerHTML = '';
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            
+            // Stop playing if active
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Reset state
+            currentStepIndex = -1;
+            steps = [];
+            
+            // Disable buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function generateSteps() {
+            steps = [];
+            let left = 0;
+            let right = height.length - 1;
+            let leftMax = 0;
+            let rightMax = 0;
+            let water = 0;
+            let waterAtPosition = new Array(height.length).fill(0);
+            
+            steps.push({
+                left,
+                right,
+                leftMax,
+                rightMax,
+                water,
+                waterAtPosition: [...waterAtPosition],
+                activeLines: [5, 6, 7],
+                explanation: "Initialize left and right pointers and variables"
+            });
+
+            while (left < right) {
+                steps.push({
+                    left,
+                    right,
+                    leftMax,
+                    rightMax,
+                    water,
+                    waterAtPosition: [...waterAtPosition],
+                    comparing: true,
+                    activeLines: [9, 10],
+                    explanation: `Comparing heights: left (${height[left]}) < right (${height[right]})?`
+                });
+                
+                if (height[left] < height[right]) {
+                    steps.push({
+                        left,
+                        right,
+                        leftMax,
+                        rightMax,
+                        water,
+                        waterAtPosition: [...waterAtPosition],
+                        processingLeft: true,
+                        activeLines: [10, 11],
+                        explanation: `Left height (${height[left]}) < Right height (${height[right]}), process left side`
+                    });
+
+                    if (height[left] >= leftMax) {
+                        leftMax = height[left];
+                        steps.push({
+                            left,
+                            right,
+                            leftMax,
+                            rightMax,
+                            water,
+                            waterAtPosition: [...waterAtPosition],
+                            newLeftMax: true,
+                            activeLines: [11, 12],
+                            explanation: `Update left max height to ${leftMax}`
+                        });
+                    } else {
+                        const addedWater = leftMax - height[left];
+                        water += addedWater;
+                        waterAtPosition[left] = addedWater;
+                        steps.push({
+                            left,
+                            right,
+                            leftMax,
+                            rightMax,
+                            water,
+                            waterAtPosition: [...waterAtPosition],
+                            addedWater: true,
+                            activeLines: [13, 14],
+                            explanation: `Add ${addedWater} units of water at position ${left}`
+                        });
+                    }
+                    
+                    left++;
+                    steps.push({
+                        left,
+                        right,
+                        leftMax,
+                        rightMax,
+                        water,
+                        waterAtPosition: [...waterAtPosition],
+                        movedLeft: true,
+                        activeLines: [15],
+                        explanation: `Move left pointer to position ${left}`
+                    });
+                } else {
+                    steps.push({
+                        left,
+                        right,
+                        leftMax,
+                        rightMax,
+                        water,
+                        waterAtPosition: [...waterAtPosition],
+                        processingRight: true,
+                        activeLines: [16, 17],
+                        explanation: `Left height (${height[left]}) >= Right height (${height[right]}), process right side`
+                    });
+
+                    if (height[right] >= rightMax) {
+                        rightMax = height[right];
+                        steps.push({
+                            left,
+                            right,
+                            leftMax,
+                            rightMax,
+                            water,
+                            waterAtPosition: [...waterAtPosition],
+                            newRightMax: true,
+                            activeLines: [17, 18],
+                            explanation: `Update right max height to ${rightMax}`
+                        });
+                    } else {
+                        const addedWater = rightMax - height[right];
+                        water += addedWater;
+                        waterAtPosition[right] = addedWater;
+                        steps.push({
+                            left,
+                            right,
+                            leftMax,
+                            rightMax,
+                            water,
+                            waterAtPosition: [...waterAtPosition],
+                            addedWater: true,
+                            activeLines: [19, 20],
+                            explanation: `Add ${addedWater} units of water at position ${right}`
+                        });
+                    }
+                    
+                    right--;
+                    steps.push({
+                        left,
+                        right,
+                        leftMax,
+                        rightMax,
+                        water,
+                        waterAtPosition: [...waterAtPosition],
+                        movedRight: true,
+                        activeLines: [21],
+                        explanation: `Move right pointer to position ${right}`
+                    });
+                }
+            }
+
+            steps.push({
+                left,
+                right,
+                leftMax,
+                rightMax,
+                water,
+                waterAtPosition: [...waterAtPosition],
+                complete: true,
+                activeLines: [23],
+                explanation: `Algorithm completed. Total trapped water: ${water} units`
+            });
+        }
+
+        function updateVisualization() {
+            if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+            
+            const step = steps[currentStepIndex];
+            
+            // Update current step display
+            document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+            
+            // Create elevation visualization if not created yet
+            if (document.getElementById('elevationVisualization').children.length === 0) {
+                createElevationVisualization();
+            }
+            
+            // Reset all bars to default state
+            for (let i = 0; i < height.length; i++) {
+                const bar = document.getElementById(`bar-${i}`);
+                bar.classList.remove('pointer-left', 'pointer-right');
+                
+                // Remove any existing water
+                const existingWater = bar.querySelector('.water');
+                if (existingWater) {
+                    bar.removeChild(existingWater);
+                }
+            }
+            
+            // Update the bars based on current step
+            // Add pointers
+            document.getElementById(`bar-${step.left}`).classList.add('pointer-left');
+            document.getElementById(`bar-${step.right}`).classList.add('pointer-right');
+            
+            // Add water at each position
+            const maxHeight = Math.max(...height, 1);
+            const scale = 95 / maxHeight;
+            
+            for (let i = 0; i < height.length; i++) {
+                if (step.waterAtPosition[i] > 0) {
+                    const bar = document.getElementById(`bar-${i}`);
+                    const waterHeight = step.waterAtPosition[i] * scale;
+                    const barHeight = height[i] * scale;
+                    
+                    const water = document.createElement('div');
+                    water.className = 'water';
+                    water.style.height = `${waterHeight}%`;
+                    bar.appendChild(water);
+                }
+            }
+            
+            // Update pointer info
+            document.getElementById('leftPointerInfo').textContent = 
+                `Position ${step.left}: Height ${height[step.left]}`;
+            
+            document.getElementById('rightPointerInfo').textContent = 
+                `Position ${step.right}: Height ${height[step.right]}`;
+            
+            document.getElementById('leftMaxInfo').textContent = 
+                `Max: ${step.leftMax}`;
+            
+            document.getElementById('rightMaxInfo').textContent = 
+                `Max: ${step.rightMax}`;
+            
+            // Update total water
+            document.getElementById('totalWaterInfo').textContent = 
+                `${step.water} units`;
+            
+            // Highlight active code lines
+            if (step.activeLines) {
+                document.querySelectorAll('.code-line').forEach(line => {
+                    line.classList.remove('active');
+                });
+                
+                step.activeLines.forEach(lineNum => {
+                    document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+                });
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+            document.getElementById('playBtn').className = isPlaying 
+                ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+                : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+            
+            if (isPlaying) {
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(document.getElementById('speedSlider').value));
+            } else {
+                clearInterval(animationInterval);
+            }
+        }
+
+        // Update speed value display when slider changes
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = `${this.value}ms`;
+            
+            // Update interval if playing
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(this.value));
+            }
+        });
+    </script>
+</body>
+</html> 

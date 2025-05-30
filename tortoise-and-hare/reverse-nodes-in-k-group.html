@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Nodes in k-Group - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .group-start {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .group-end {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .reversed {
+            background-color: #4c1d95;
+            border-color: #8b5cf6;
+        }
+        .processing {
+            background-color: #0369a1;
+            border-color: #38bdf8;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .phase {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .phase.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Reverse Nodes in k-Group</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given the head of a linked list, reverse the nodes of the list k at a time, and return the modified list.<br><br>
+                k is a positive integer and is less than or equal to the length of the linked list. If the number of nodes 
+                is not a multiple of k then left-out nodes, in the end, should remain as it is.<br><br>
+                For example, given 1->2->3->4->5 and k = 2, the result should be 2->1->4->3->5.
+            </p>
+        </div>
+
+        <!-- Phase Selection -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="countPhase" class="phase active px-4 py-2 rounded" onclick="switchPhase('count')">
+                    Count Nodes
+                </div>
+                <div id="reversePhase" class="phase px-4 py-2 rounded" onclick="switchPhase('reverse')">
+                    Reverse Groups
+                </div>
+                <div id="connectPhase" class="phase px-4 py-2 rounded" onclick="switchPhase('connect')">
+                    Connect Groups
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Linked List Values (comma-separated)</label>
+                    <input type="text" id="inputValues" placeholder="Enter values" 
+                        class="border p-2 rounded w-full" value="1,2,3,4,5">
+                </div>
+                <div class="w-32">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Group Size (k)</label>
+                    <input type="number" id="inputK" placeholder="k" 
+                        class="border p-2 rounded w-full" value="2" min="1">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="space-y-8">
+                <!-- Original List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Original List:</h3>
+                    <div id="originalListVisualization" class="relative h-24">
+                    </div>
+                </div>
+                <!-- Working Area -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Working Area:</h3>
+                    <div id="workingAreaVisualization" class="relative h-48">
+                    </div>
+                </div>
+                <!-- Result List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Result List:</h3>
+                    <div id="resultListVisualization" class="relative h-24">
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mt-6">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time: O(n), Space: O(1)
+function reverseKGroup(head, k):
+    if k == 1 or !head:
+        return head
+
+    // Count total nodes
+    count = 0
+    current = head
+    while current and count < k:
+        count++
+        current = current.next
+
+    // If we have k nodes, reverse them
+    if count == k:
+        // Reverse k nodes
+        prev = null
+        current = head
+        for i = 0 to k-1:
+            next = current.next
+            current.next = prev
+            prev = current
+            current = next
+
+        // Recursively reverse next group
+        head.next = reverseKGroup(current, k)
+        return prev
+    
+    return head</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">head = [1,2,3,4,5], k = 2</p>
+                    <p class="text-green-400">Output: [2,1,4,3,5]</p>
+                    <p class="text-gray-400">Explanation: Reverse in groups of 2. The last node remains as is.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">head = [1,2,3,4,5,6], k = 3</p>
+                    <p class="text-green-400">Output: [3,2,1,6,5,4]</p>
+                    <p class="text-gray-400">Explanation: Reverse in groups of 3. All nodes are reversed.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">head = [1,2,3,4,5], k = 3</p>
+                    <p class="text-green-400">Output: [3,2,1,4,5]</p>
+                    <p class="text-gray-400">Explanation: Last two nodes remain unchanged as they don't form a complete group.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        let values = [];
+        let k = 2;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentPhase = 'count';
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function switchPhase(phase) {
+            currentPhase = phase;
+            document.querySelectorAll('.phase').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(phase + 'Phase').classList.add('active');
+            initializeVisualization();
+        }
+
+        function generateCountSteps(head, k) {
+            const steps = [];
+            if (!head || k === 1) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [],
+                    result: getListNodes(head),
+                    explanation: k === 1 ? "No reversal needed when k = 1" : "Empty list",
+                    done: true
+                });
+                return steps;
+            }
+
+            let count = 0;
+            let current = head;
+            let groupStart = head;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    current: head,
+                    groupStart
+                }],
+                explanation: "Start counting nodes in first group"
+            });
+
+            while (current && count < k) {
+                count++;
+                current = current.next;
+
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        current,
+                        groupStart,
+                        count,
+                        groupEnd: count === k ? current : null
+                    }],
+                    explanation: `Count node ${count} in current group`
+                });
+            }
+
+            if (count === k) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        groupStart,
+                        groupEnd: current,
+                        readyToReverse: true
+                    }],
+                    explanation: "Found complete group of k nodes",
+                    done: true
+                });
+            } else {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        groupStart,
+                        incomplete: true
+                    }],
+                    result: getListNodes(head),
+                    explanation: "Incomplete group - keep as is",
+                    done: true
+                });
+            }
+
+            return steps;
+        }
+
+        function generateReverseSteps(head, k) {
+            const steps = [];
+            if (!head || k === 1) return steps;
+
+            let prev = null;
+            let current = head;
+            let next = null;
+            let count = 0;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    current,
+                    processing: true
+                }],
+                explanation: "Start reversing current group"
+            });
+
+            while (current && count < k) {
+                next = current.next;
+                current.next = prev;
+                
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: [...getListNodes(prev || head), ...(next ? getListNodes(next) : [])],
+                        y: 0,
+                        current,
+                        next,
+                        prev,
+                        reversed: true
+                    }],
+                    explanation: `Reverse node ${count + 1}`
+                });
+
+                prev = current;
+                current = next;
+                count++;
+            }
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(prev),
+                    y: 0,
+                    reversed: true,
+                    done: true
+                }],
+                result: getListNodes(prev),
+                explanation: "Group reversal complete",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateConnectSteps(head, k) {
+            const steps = [];
+            if (!head || k === 1) return steps;
+
+            let dummy = new ListNode(0);
+            dummy.next = head;
+            let prevTail = dummy;
+            let current = head;
+            let groupCount = 0;
+
+            while (current) {
+                let count = 0;
+                let groupStart = current;
+                let temp = current;
+
+                // Count k nodes
+                while (temp && count < k) {
+                    temp = temp.next;
+                    count++;
+                }
+
+                if (count === k) {
+                    groupCount++;
+                    // Reverse k nodes
+                    let prev = temp;
+                    let curr = current;
+                    
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: getListNodes(head),
+                            y: 0,
+                            groupStart: current,
+                            groupEnd: temp,
+                            processing: true
+                        }],
+                        explanation: `Processing group ${groupCount}`
+                    });
+
+                    for (let i = 0; i < k; i++) {
+                        let next = curr.next;
+                        curr.next = prev;
+                        prev = curr;
+                        curr = next;
+
+                        steps.push({
+                            original: getListNodes(head),
+                            working: [{
+                                nodes: getListNodes(dummy.next),
+                                y: 0,
+                                current: curr,
+                                reversed: true
+                            }],
+                            explanation: `Reverse node ${i + 1} in group ${groupCount}`
+                        });
+                    }
+
+                    // Connect with previous group
+                    prevTail.next = prev;
+                    prevTail = groupStart;
+                    current = temp;
+
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: getListNodes(dummy.next),
+                            y: 0,
+                            connected: true
+                        }],
+                        result: getListNodes(dummy.next),
+                        explanation: `Connected group ${groupCount} with previous groups`
+                    });
+                } else {
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: getListNodes(dummy.next),
+                            y: 0,
+                            incomplete: true
+                        }],
+                        result: getListNodes(dummy.next),
+                        explanation: "Remaining nodes form incomplete group - keep as is",
+                        done: true
+                    });
+                    break;
+                }
+            }
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            values = document.getElementById('inputValues').value.split(',').map(x => parseInt(x.trim()));
+            k = parseInt(document.getElementById('inputK').value);
+            currentStep = 0;
+            const head = createLinkedList(values);
+            
+            switch (currentPhase) {
+                case 'count':
+                    steps = generateCountSteps(head, k);
+                    break;
+                case 'reverse':
+                    steps = generateReverseSteps(head, k);
+                    break;
+                case 'connect':
+                    steps = generateConnectSteps(head, k);
+                    break;
+            }
+            
+            updateVisualization();
+        }
+
+        function createNodeElement(node, x, y, className = '') {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg ${className}`;
+            nodeDiv.style.left = `${x}px`;
+            nodeDiv.style.top = `${y}px`;
+            nodeDiv.textContent = node.val;
+            return nodeDiv;
+        }
+
+        function createArrow(startX, startY, endX, endY) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            arrow.style.left = `${startX + 24}px`;
+            arrow.style.top = `${startY + 24}px`;
+            arrow.style.width = `${length - 48}px`;
+            arrow.style.transform = `rotate(${angle}deg)`;
+            
+            return arrow;
+        }
+
+        function updateVisualization() {
+            const originalListDiv = document.getElementById('originalListVisualization');
+            const workingAreaDiv = document.getElementById('workingAreaVisualization');
+            const resultListDiv = document.getElementById('resultListVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            originalListDiv.innerHTML = '';
+            workingAreaDiv.innerHTML = '';
+            resultListDiv.innerHTML = '';
+            
+            // Draw original list
+            if (step.original) {
+                let x = 50;
+                const y = 12;
+                
+                step.original.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    originalListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.original.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        originalListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Draw working area
+            if (step.working) {
+                step.working.forEach(list => {
+                    let x = 50;
+                    const y = list.y + 12;
+                    
+                    list.nodes.forEach((node, index) => {
+                        let className = '';
+                        if (node === list.current) className += ' current';
+                        if (node === list.groupStart) className += ' group-start';
+                        if (node === list.groupEnd) className += ' group-end';
+                        if (list.reversed) className += ' reversed';
+                        if (list.processing) className += ' processing';
+                        
+                        const nodeDiv = createNodeElement(node, x, y, className);
+                        workingAreaDiv.appendChild(nodeDiv);
+                        
+                        if (index < list.nodes.length - 1) {
+                            const arrow = createArrow(x, y, x + 100, y);
+                            workingAreaDiv.appendChild(arrow);
+                        }
+                        
+                        x += 100;
+                    });
+                });
+            }
+            
+            // Draw result list
+            if (step.result) {
+                let x = 50;
+                const y = 12;
+                
+                step.result.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    resultListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.result.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        resultListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Phase complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

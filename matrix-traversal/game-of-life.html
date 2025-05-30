@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game of Life</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .grid {
+            display: grid;
+            gap: 1px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .cell {
+            width: 20px;
+            height: 20px;
+            background-color: #1e293b;
+            transition: background-color 0.3s ease;
+        }
+        .cell.alive {
+            background-color: #3b82f6;
+        }
+        .cell.dead {
+            background-color: #1e293b;
+        }
+        .cell.changing {
+            background-color: #eab308;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Game of Life</h1>
+        <p class="text-gray-300 mb-8">Visualize Conway's Game of Life, a cellular automaton that follows specific rules for cell survival and death.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Grid Size (n x n)</label>
+                            <input type="number" id="sizeInput" value="20" min="5" max="50"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter grid size">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Initial Alive Cells (%)</label>
+                            <input type="range" min="10" max="50" value="25" class="w-full" id="densitySlider">
+                            <span id="densityValue" class="text-sm">25%</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initializeGrid()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize Grid
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton">
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton">
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Grid Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Game of Life Grid</h3>
+                    <div id="gridContainer" class="grid"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="generationCount" class="text-gray-300">Generation: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function gameOfLife(board):</span>
+<span class="code-line" data-line="2">    m, n = len(board), len(board[0])</span>
+<span class="code-line" data-line="3">    </span>
+<span class="code-line" data-line="4">    # First pass: mark cells that will change</span>
+<span class="code-line" data-line="5">    for i from 0 to m-1:</span>
+<span class="code-line" data-line="6">        for j from 0 to n-1:</span>
+<span class="code-line" data-line="7">            live_neighbors = countLiveNeighbors(board, i, j)</span>
+<span class="code-line" data-line="8">            </span>
+<span class="code-line" data-line="9">            # Rule 1: Any live cell with fewer than 2 live neighbors dies</span>
+<span class="code-line" data-line="10">            # Rule 2: Any live cell with 2 or 3 live neighbors lives</span>
+<span class="code-line" data-line="11">            # Rule 3: Any live cell with more than 3 live neighbors dies</span>
+<span class="code-line" data-line="12">            # Rule 4: Any dead cell with exactly 3 live neighbors becomes alive</span>
+<span class="code-line" data-line="13">            </span>
+<span class="code-line" data-line="14">            if board[i][j] == 1 and (live_neighbors < 2 or live_neighbors > 3):</span>
+<span class="code-line" data-line="15">                board[i][j] = -1  # Mark for death</span>
+<span class="code-line" data-line="16">            elif board[i][j] == 0 and live_neighbors == 3:</span>
+<span class="code-line" data-line="17">                board[i][j] = 2   # Mark for birth</span>
+<span class="code-line" data-line="18">    </span>
+<span class="code-line" data-line="19">    # Second pass: update the board</span>
+<span class="code-line" data-line="20">    for i from 0 to m-1:</span>
+<span class="code-line" data-line="21">        for j from 0 to n-1:</span>
+<span class="code-line" data-line="22">            if board[i][j] == -1:</span>
+<span class="code-line" data-line="23">                board[i][j] = 0</span>
+<span class="code-line" data-line="24">            elif board[i][j] == 2:</span>
+<span class="code-line" data-line="25">                board[i][j] = 1</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Conway's Game of Life is a cellular automaton that follows four rules:
+                                <br>1. Any live cell with fewer than 2 live neighbors dies (underpopulation)
+                                <br>2. Any live cell with 2 or 3 live neighbors lives on
+                                <br>3. Any live cell with more than 3 live neighbors dies (overpopulation)
+                                <br>4. Any dead cell with exactly 3 live neighbors becomes alive (reproduction)
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m * n) where m and n are the dimensions of the grid</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) as we modify the board in-place using special markers</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works in two passes:
+                                <br>1. First pass: Mark cells that will change state using special markers (-1 for death, 2 for birth)
+                                <br>2. Second pass: Update the board based on the markers
+                                <br>
+                                <br>This approach allows us to update the board in-place without using extra space.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let grid = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let generation = 0;
+
+        function initializeGrid() {
+            const size = parseInt(document.getElementById('sizeInput').value);
+            const density = parseInt(document.getElementById('densitySlider').value) / 100;
+            
+            if (isNaN(size) || size < 5 || size > 50) {
+                alert('Please enter a valid grid size between 5 and 50');
+                return;
+            }
+            
+            const gridContainer = document.getElementById('gridContainer');
+            gridContainer.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            gridContainer.innerHTML = '';
+            
+            grid = [];
+            for (let i = 0; i < size; i++) {
+                grid[i] = [];
+                for (let j = 0; j < size; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${i}-${j}`;
+                    cell.onclick = () => toggleCell(i, j);
+                    gridContainer.appendChild(cell);
+                    
+                    // Randomly initialize cells based on density
+                    const isAlive = Math.random() < density;
+                    grid[i][j] = isAlive ? 1 : 0;
+                    cell.className = `cell ${isAlive ? 'alive' : 'dead'}`;
+                }
+            }
+            
+            generation = 0;
+            document.getElementById('generationCount').textContent = `Generation: ${generation}`;
+            toggleControls(true);
+        }
+
+        function toggleCell(i, j) {
+            grid[i][j] = grid[i][j] === 1 ? 0 : 1;
+            const cell = document.getElementById(`cell-${i}-${j}`);
+            cell.className = `cell ${grid[i][j] === 1 ? 'alive' : 'dead'}`;
+        }
+
+        function countLiveNeighbors(i, j) {
+            const m = grid.length;
+            const n = grid[0].length;
+            let count = 0;
+            
+            for (let di = -1; di <= 1; di++) {
+                for (let dj = -1; dj <= 1; dj++) {
+                    if (di === 0 && dj === 0) continue;
+                    
+                    const ni = i + di;
+                    const nj = j + dj;
+                    
+                    if (ni >= 0 && ni < m && nj >= 0 && nj < n) {
+                        if (Math.abs(grid[ni][nj]) === 1) {
+                            count++;
+                        }
+                    }
+                }
+            }
+            
+            return count;
+        }
+
+        function nextGeneration() {
+            const m = grid.length;
+            const n = grid[0].length;
+            
+            // First pass: mark cells that will change
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const liveNeighbors = countLiveNeighbors(i, j);
+                    
+                    if (grid[i][j] === 1 && (liveNeighbors < 2 || liveNeighbors > 3)) {
+                        grid[i][j] = -1; // Mark for death
+                    } else if (grid[i][j] === 0 && liveNeighbors === 3) {
+                        grid[i][j] = 2; // Mark for birth
+                    }
+                }
+            }
+            
+            // Second pass: update the board
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    
+                    if (grid[i][j] === -1) {
+                        grid[i][j] = 0;
+                        cell.className = 'cell dead';
+                    } else if (grid[i][j] === 2) {
+                        grid[i][j] = 1;
+                        cell.className = 'cell alive';
+                    }
+                }
+            }
+            
+            generation++;
+            document.getElementById('generationCount').textContent = `Generation: ${generation}`;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    nextGeneration();
+                }
+            }, speed);
+        }
+
+        // Handle sliders
+        document.getElementById('densitySlider').addEventListener('input', function() {
+            document.getElementById('densityValue').textContent = this.value + '%';
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initializeGrid();
+        };
+    </script>
+</body>
+</html> 

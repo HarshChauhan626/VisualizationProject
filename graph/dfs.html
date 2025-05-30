@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depth-First Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .graph {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            background-color: #2d3748;
+            border-radius: 4px;
+        }
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+        }
+        .node.visited {
+            background-color: #10b981;
+        }
+        .node.current {
+            background-color: #fbbf24;
+            transform: scale(1.2);
+        }
+        .node.in-stack {
+            background-color: #f43f5e;
+        }
+        .edge {
+            position: absolute;
+            height: 2px;
+            background-color: #64748b;
+            transform-origin: 0 0;
+            transition: all 0.3s ease-in-out;
+        }
+        .edge.visited {
+            background-color: #10b981;
+        }
+        .edge.current {
+            background-color: #fbbf24;
+        }
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px;
+            background-color: #2d3748;
+            border-radius: 4px;
+            min-height: 40px;
+        }
+        .stack-item {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .stack-item.visited {
+            background-color: #10b981;
+        }
+        .stack-item.current {
+            background-color: #fbbf24;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Depth-First Search</h1>
+        <p class="text-gray-300 mb-8">Visualize how to traverse a graph by exploring as far as possible along each branch before backtracking.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Number of Nodes</label>
+                            <input type="number" id="nodeCount" value="6" min="3" max="10"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Start Node</label>
+                            <input type="number" id="startNode" value="0" min="0" max="5"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Graph -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Graph</h3>
+                    <div id="graph" class="graph"></div>
+                </div>
+
+                <!-- Stack -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Stack</h3>
+                    <div id="stack" class="stack"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def dfs(graph, start):</span>
+<span class="code-line" data-line="2">    visited = set()</span>
+<span class="code-line" data-line="3">    stack = [start]</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    while stack:</span>
+<span class="code-line" data-line="6">        current = stack.pop()</span>
+<span class="code-line" data-line="7">        if current not in visited:</span>
+<span class="code-line" data-line="8">            visited.add(current)</span>
+<span class="code-line" data-line="9">            </span>
+<span class="code-line" data-line="10">            for neighbor in graph[current]:</span>
+<span class="code-line" data-line="11">                if neighbor not in visited:</span>
+<span class="code-line" data-line="12">                    stack.append(neighbor)</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Depth-First Search (DFS) is an algorithm for traversing or searching tree or graph data structures. It starts at the root node and explores as far as possible along each branch before backtracking.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(V + E) - where V is the number of vertices and E is the number of edges</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(V) - where V is the number of vertices</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works as follows:
+                                <br>1. Start from the given node and push it onto the stack
+                                <br>2. While the stack is not empty:
+                                <br>   - Pop a node from the stack
+                                <br>   - If it's not visited:
+                                <br>     * Mark it as visited
+                                <br>     * Push all its unvisited neighbors onto the stack
+                                <br>3. Repeat until the stack is empty
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graph = [];
+        let nodes = [];
+        let edges = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initialize() {
+            const nodeCount = parseInt(document.getElementById('nodeCount').value);
+            const startNode = parseInt(document.getElementById('startNode').value);
+
+            if (isNaN(nodeCount) || nodeCount < 3 || nodeCount > 10) {
+                alert('Please enter a valid number of nodes between 3 and 10');
+                return;
+            }
+
+            if (isNaN(startNode) || startNode < 0 || startNode >= nodeCount) {
+                alert('Please enter a valid start node');
+                return;
+            }
+
+            // Generate random graph
+            graph = Array(nodeCount).fill().map(() => []);
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    if (Math.random() < 0.5) {
+                        graph[i].push(j);
+                        graph[j].push(i);
+                    }
+                }
+            }
+
+            // Position nodes in a circle
+            const graphElement = document.getElementById('graph');
+            graphElement.innerHTML = '';
+            nodes = [];
+            edges = [];
+
+            const centerX = graphElement.offsetWidth / 2;
+            const centerY = graphElement.offsetHeight / 2;
+            const radius = Math.min(centerX, centerY) * 0.8;
+
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (i * 2 * Math.PI) / nodeCount;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.id = `node-${i}`;
+                node.textContent = i;
+                node.style.left = `${x - 20}px`;
+                node.style.top = `${y - 20}px`;
+                graphElement.appendChild(node);
+                nodes.push(node);
+
+                // Create edges
+                for (const neighbor of graph[i]) {
+                    if (neighbor > i) {
+                        const neighborAngle = (neighbor * 2 * Math.PI) / nodeCount;
+                        const neighborX = centerX + radius * Math.cos(neighborAngle);
+                        const neighborY = centerY + radius * Math.sin(neighborAngle);
+
+                        const edge = document.createElement('div');
+                        edge.className = 'edge';
+                        edge.id = `edge-${i}-${neighbor}`;
+                        edge.style.left = `${x}px`;
+                        edge.style.top = `${y}px`;
+                        edge.style.width = `${Math.sqrt(Math.pow(neighborX - x, 2) + Math.pow(neighborY - y, 2))}px`;
+                        edge.style.transform = `rotate(${Math.atan2(neighborY - y, neighborX - x)}rad)`;
+                        graphElement.appendChild(edge);
+                        edges.push(edge);
+                    }
+                }
+            }
+
+            generateSteps(startNode);
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function generateSteps(startNode) {
+            steps = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            const visited = new Set();
+            const stack = [startNode];
+
+            steps.push({
+                type: 'push',
+                description: `Push start node ${startNode} onto stack`,
+                node: startNode,
+                codeLine: 3
+            });
+
+            while (stack.length > 0) {
+                const current = stack.pop();
+
+                steps.push({
+                    type: 'pop',
+                    description: `Pop node ${current} from stack`,
+                    node: current,
+                    codeLine: 6
+                });
+
+                if (!visited.has(current)) {
+                    visited.add(current);
+
+                    steps.push({
+                        type: 'mark_visited',
+                        description: `Mark node ${current} as visited`,
+                        node: current,
+                        codeLine: 8
+                    });
+
+                    for (const neighbor of graph[current]) {
+                        if (!visited.has(neighbor)) {
+                            steps.push({
+                                type: 'visit_neighbor',
+                                description: `Visit neighbor ${neighbor} of node ${current}`,
+                                node: current,
+                                neighbor: neighbor,
+                                codeLine: 10
+                            });
+
+                            stack.push(neighbor);
+
+                            steps.push({
+                                type: 'push',
+                                description: `Push node ${neighbor} onto stack`,
+                                node: neighbor,
+                                codeLine: 12
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all nodes and edges
+            nodes.forEach(node => {
+                node.className = node.className.replace(' visited', '').replace(' current', '').replace(' in-stack', '');
+            });
+            edges.forEach(edge => {
+                edge.className = edge.className.replace(' visited', '').replace(' current', '');
+            });
+
+            // Update stack display
+            const stackElement = document.getElementById('stack');
+            stackElement.innerHTML = '';
+
+            if (step.type === 'push') {
+                const node = document.getElementById(`node-${step.node}`);
+                node.className += ' in-stack';
+                
+                const stackItem = document.createElement('div');
+                stackItem.className = 'stack-item';
+                stackItem.textContent = step.node;
+                stackElement.appendChild(stackItem);
+            } else if (step.type === 'pop') {
+                const node = document.getElementById(`node-${step.node}`);
+                node.className += ' current';
+            } else if (step.type === 'mark_visited') {
+                const node = document.getElementById(`node-${step.node}`);
+                node.className += ' visited';
+            } else if (step.type === 'visit_neighbor') {
+                const edge = document.getElementById(`edge-${Math.min(step.node, step.neighbor)}-${Math.max(step.node, step.neighbor)}`);
+                edge.className += ' current';
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

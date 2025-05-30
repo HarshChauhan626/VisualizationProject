@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Depth of Binary Tree</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .visualization-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .tree-container {
+            flex: 2;
+            min-width: 600px;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .info-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        .result-display {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .current-node {
+            fill: #4ecdc4 !important;
+            transition: fill 0.3s ease;
+        }
+        .visited-node {
+            fill: #ff6b6b !important;
+            transition: fill 0.3s ease;
+        }
+        .path-node {
+            fill: #ffd166 !important;
+            transition: fill 0.3s ease;
+        }
+        .level-highlight {
+            stroke: #ff6b6b !important;
+            stroke-width: 4px !important;
+            transition: stroke 0.3s ease;
+        }
+        .code-container {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .node circle {
+            fill: #fff;
+            stroke: steelblue;
+            stroke-width: 3px;
+        }
+        .node text {
+            font: 12px sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .level-indicator {
+            position: absolute;
+            left: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        .trace-container {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .trace-step {
+            margin: 5px 0;
+            font-family: monospace;
+        }
+        .current-step {
+            background-color: #e6f7ff;
+            border-left: 3px solid #1890ff;
+            padding-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Maximum Depth of Binary Tree</h1>
+        
+        <div class="visualization-container">
+            <div class="tree-container" id="tree-display"></div>
+            
+            <div class="info-container">
+                <h3>Maximum Depth of Binary Tree</h3>
+                <p>The maximum depth of a binary tree is the number of nodes along the longest path from the root node down to the farthest leaf node.</p>
+                
+                <div class="code-container">
+function maxDepth(root) {
+    // Base case: if root is null, depth is 0
+    if (root === null) return 0;
+    
+    // Recursive case: calculate depth of left and right subtrees
+    const leftDepth = maxDepth(root.left);
+    const rightDepth = maxDepth(root.right);
+    
+    // Return the maximum of left and right depth + 1 (for current node)
+    return Math.max(leftDepth, rightDepth) + 1;
+}
+                </div>
+                
+                <div class="result-display">
+                    <div>Maximum Depth: <span id="max-depth-result">-</span></div>
+                </div>
+                
+                <div class="trace-container" id="trace-container">
+                    <h4>Algorithm Trace:</h4>
+                    <div id="trace-steps"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="start-btn" onclick="startVisualization()">Start Visualization</button>
+            <button id="pause-btn" onclick="pauseVisualization()" disabled>Pause</button>
+            <button id="reset-btn" onclick="resetVisualization()">Reset</button>
+        </div>
+        
+        <div class="speed-control">
+            <label for="speed">Animation Speed:</label>
+            <input type="range" id="speed" min="1" max="10" value="5">
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: steelblue;"></div>
+                <span>Normal Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4ecdc4;"></div>
+                <span>Current Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ff6b6b;"></div>
+                <span>Processed Node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #ffd166;"></div>
+                <span>Deepest Path</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <script>
+        // Sample tree data - you can modify this to test different trees
+        const treeData = {
+            val: 1,
+            left: {
+                val: 2,
+                left: {
+                    val: 4,
+                    left: null,
+                    right: null
+                },
+                right: {
+                    val: 5,
+                    left: null,
+                    right: null
+                }
+            },
+            right: {
+                val: 3,
+                left: null,
+                right: {
+                    val: 7,
+                    left: {
+                        val: 8,
+                        left: null,
+                        right: null
+                    },
+                    right: null
+                }
+            }
+        };
+
+        let animationState = {
+            running: false,
+            interval: null,
+            stepIndex: 0,
+            steps: [],
+            nodeDepths: {},
+            maxDepthPath: [],
+            maxDepth: 0
+        };
+
+        // Set up D3 visualization
+        const margin = {top: 40, right: 90, bottom: 50, left: 90};
+        const width = 600 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+        let treeLayout, root;
+
+        function drawTree() {
+            // Clear any existing tree
+            d3.select("#tree-display").selectAll("*").remove();
+
+            // Create the SVG container for the tree
+            const svg = d3.select("#tree-display")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Create the tree layout
+            treeLayout = d3.tree().size([width, height]);
+
+            // Convert the JSON tree to hierarchy
+            root = d3.hierarchy(treeData);
+            
+            // Assign positions to each node
+            treeLayout(root);
+
+            // Add level indicators
+            const maxDepth = getMaxDepth(treeData);
+            const levelHeight = height / maxDepth;
+            
+            for (let i = 0; i <= maxDepth; i++) {
+                svg.append("text")
+                    .attr("class", "level-indicator")
+                    .attr("x", -30)
+                    .attr("y", i * levelHeight)
+                    .attr("dy", "0.3em")
+                    .text(`Level ${i}`);
+                
+                // Add a horizontal line for each level
+                svg.append("line")
+                    .attr("x1", 0)
+                    .attr("y1", i * levelHeight)
+                    .attr("x2", width)
+                    .attr("y2", i * levelHeight)
+                    .attr("stroke", "#e0e0e0")
+                    .attr("stroke-dasharray", "3,3")
+                    .attr("id", `level-line-${i}`);
+            }
+
+            // Add links between nodes
+            svg.selectAll(".link")
+                .data(root.links())
+                .enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkVertical()
+                    .x(d => d.x)
+                    .y(d => d.y));
+
+            // Add nodes
+            const nodes = svg.selectAll(".node")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("id", d => `node-${d.data.val}`)
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+
+            // Add circles to nodes
+            nodes.append("circle")
+                .attr("r", 20);
+
+            // Add labels to nodes
+            nodes.append("text")
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .text(d => d.data.val);
+                
+            // Store the depth information for each node
+            root.descendants().forEach(node => {
+                const nodeElement = document.getElementById(`node-${node.data.val}`);
+                if (nodeElement) {
+                    nodeElement.setAttribute('data-depth', node.depth);
+                }
+                // Store node depths in our animation state
+                animationState.nodeDepths[node.data.val] = node.depth;
+            });
+        }
+
+        function getMaxDepth(node, depth = 0) {
+            if (!node) return depth - 1;
+            return Math.max(
+                getMaxDepth(node.left, depth + 1),
+                getMaxDepth(node.right, depth + 1)
+            );
+        }
+
+        function generateMaxDepthSteps(node, path = [], depth = 0) {
+            if (!node) return { steps: [], depth: 0 };
+            
+            const currentPath = [...path, node.val];
+            
+            // Step 1: Visit the node
+            const steps = [{
+                type: 'visit',
+                node: node.val,
+                depth: depth,
+                message: `Visiting node ${node.val} at depth ${depth}`
+            }];
+            
+            // If leaf node, return depth directly
+            if (!node.left && !node.right) {
+                steps.push({
+                    type: 'leaf',
+                    node: node.val,
+                    depth: depth,
+                    message: `Node ${node.val} is a leaf node, returning depth ${depth}`
+                });
+                
+                return { steps, depth, path: currentPath };
+            }
+            
+            // Recursive case: process left subtree
+            let leftResult = { steps: [], depth: 0, path: [] };
+            if (node.left) {
+                steps.push({
+                    type: 'go-left',
+                    node: node.val,
+                    depth: depth,
+                    message: `Going to left child of node ${node.val}`
+                });
+                
+                leftResult = generateMaxDepthSteps(node.left, currentPath, depth + 1);
+                
+                // Add left subtree steps to our steps
+                steps.push(...leftResult.steps);
+                
+                steps.push({
+                    type: 'return-from-left',
+                    node: node.val,
+                    depth: depth,
+                    leftDepth: leftResult.depth,
+                    message: `Returned from left subtree of ${node.val} with depth ${leftResult.depth}`
+                });
+            } else {
+                steps.push({
+                    type: 'no-left',
+                    node: node.val,
+                    depth: depth,
+                    message: `Node ${node.val} has no left child, left depth is 0`
+                });
+            }
+            
+            // Process right subtree
+            let rightResult = { steps: [], depth: 0, path: [] };
+            if (node.right) {
+                steps.push({
+                    type: 'go-right',
+                    node: node.val,
+                    depth: depth,
+                    message: `Going to right child of node ${node.val}`
+                });
+                
+                rightResult = generateMaxDepthSteps(node.right, currentPath, depth + 1);
+                
+                // Add right subtree steps to our steps
+                steps.push(...rightResult.steps);
+                
+                steps.push({
+                    type: 'return-from-right',
+                    node: node.val,
+                    depth: depth,
+                    rightDepth: rightResult.depth,
+                    message: `Returned from right subtree of ${node.val} with depth ${rightResult.depth}`
+                });
+            } else {
+                steps.push({
+                    type: 'no-right',
+                    node: node.val,
+                    depth: depth,
+                    message: `Node ${node.val} has no right child, right depth is 0`
+                });
+            }
+            
+            // Determine max depth
+            const leftDepth = node.left ? leftResult.depth : 0;
+            const rightDepth = node.right ? rightResult.depth : 0;
+            const maxDepth = Math.max(leftDepth, rightDepth);
+            
+            // Decide which path to return based on max depth
+            let resultPath;
+            if (leftDepth > rightDepth) {
+                resultPath = leftResult.path;
+            } else if (rightDepth > leftDepth) {
+                resultPath = rightResult.path;
+            } else {
+                // If equal, prioritize the left path
+                resultPath = leftResult.path.length > 0 ? leftResult.path : rightResult.path;
+            }
+            
+            steps.push({
+                type: 'compute',
+                node: node.val,
+                depth: depth,
+                leftDepth: leftDepth,
+                rightDepth: rightDepth,
+                resultDepth: maxDepth + 1,
+                message: `Max depth from node ${node.val} = max(${leftDepth}, ${rightDepth}) + 1 = ${maxDepth + 1}`
+            });
+            
+            return { 
+                steps, 
+                depth: maxDepth + 1,
+                path: resultPath
+            };
+        }
+
+        function startVisualization() {
+            if (animationState.running) return;
+            
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            
+            startBtn.disabled = true;
+            pauseBtn.disabled = false;
+            
+            // Generate steps if not already done
+            if (animationState.steps.length === 0) {
+                const result = generateMaxDepthSteps(treeData);
+                animationState.steps = result.steps;
+                animationState.maxDepth = result.depth;
+                animationState.maxDepthPath = result.path;
+            }
+            
+            animationState.running = true;
+            
+            // Start the animation
+            const speed = 11 - document.getElementById('speed').value; // Invert so higher value = faster
+            animationState.interval = setInterval(() => {
+                if (animationState.stepIndex < animationState.steps.length) {
+                    visualizeNextStep();
+                } else {
+                    pauseVisualization();
+                    startBtn.disabled = true;
+                    
+                    // Highlight the deepest path
+                    highlightDeepestPath();
+                    
+                    // Display final result
+                    document.getElementById('max-depth-result').textContent = animationState.maxDepth;
+                }
+            }, speed * 300);
+        }
+
+        function pauseVisualization() {
+            if (!animationState.running) return;
+            
+            clearInterval(animationState.interval);
+            animationState.running = false;
+            
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+        }
+
+        function resetVisualization() {
+            // Clear any running animation
+            if (animationState.running) {
+                clearInterval(animationState.interval);
+                animationState.running = false;
+            }
+            
+            // Reset animation state
+            animationState.stepIndex = 0;
+            animationState.steps = [];
+            animationState.nodeDepths = {};
+            animationState.maxDepthPath = [];
+            animationState.maxDepth = 0;
+            
+            // Reset UI
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+            document.getElementById('max-depth-result').textContent = '-';
+            document.getElementById('trace-steps').innerHTML = '';
+            
+            // Reset node colors
+            d3.selectAll('.node circle')
+                .classed('visited-node', false)
+                .classed('current-node', false)
+                .classed('path-node', false);
+
+            // Reset level highlights
+            d3.selectAll('line').classed('level-highlight', false);
+            
+            // Redraw the tree
+            drawTree();
+        }
+
+        function highlightDeepestPath() {
+            // Clear all path highlighting first
+            d3.selectAll('.node circle').classed('path-node', false);
+            
+            // Highlight each node in the deepest path
+            animationState.maxDepthPath.forEach(nodeVal => {
+                const nodeElement = document.getElementById(`node-${nodeVal}`);
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle').classed('path-node', true);
+                }
+            });
+            
+            // Highlight the deepest level
+            const deepestLevel = getMaxDepth(treeData);
+            const levelLine = document.getElementById(`level-line-${deepestLevel}`);
+            if (levelLine) {
+                d3.select(levelLine).classed('level-highlight', true);
+            }
+        }
+
+        function addTraceStep(step, isActive = true) {
+            const traceSteps = document.getElementById('trace-steps');
+            const stepElement = document.createElement('div');
+            stepElement.className = `trace-step ${isActive ? 'current-step' : ''}`;
+            stepElement.textContent = step.message;
+            
+            // Clear current-step from all other steps
+            if (isActive) {
+                document.querySelectorAll('.trace-step').forEach(el => {
+                    el.classList.remove('current-step');
+                });
+            }
+            
+            traceSteps.appendChild(stepElement);
+            traceSteps.scrollTop = traceSteps.scrollHeight;
+        }
+
+        function visualizeNextStep() {
+            const step = animationState.steps[animationState.stepIndex];
+            const nodeElement = document.getElementById(`node-${step.node}`);
+            
+            // Add this step to the trace
+            addTraceStep(step);
+            
+            // Reset current node highlighting
+            d3.selectAll('.node circle').classed('current-node', false);
+            
+            // Process the step based on its type
+            if (step.type === 'visit') {
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle').classed('current-node', true);
+                }
+            } 
+            else if (step.type === 'leaf' || step.type === 'compute') {
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle').classed('visited-node', true);
+                }
+                
+                // If this is a compute step, show the calculated depth
+                if (step.type === 'compute') {
+                    document.getElementById('max-depth-result').textContent = step.resultDepth;
+                }
+            }
+            else if (step.type === 'go-left' || step.type === 'go-right' || 
+                     step.type === 'return-from-left' || step.type === 'return-from-right' ||
+                     step.type === 'no-left' || step.type === 'no-right') {
+                if (nodeElement) {
+                    d3.select(nodeElement).select('circle').classed('current-node', true);
+                }
+            }
+            
+            animationState.stepIndex++;
+        }
+
+        // Initialize the visualization
+        window.onload = function() {
+            drawTree();
+        };
+    </script>
+</body>
+</html> 

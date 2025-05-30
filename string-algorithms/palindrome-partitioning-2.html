@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palindrome Partitioning II Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-box {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .char-box.comparing {
+            background-color: #eab308;
+        }
+        .char-box.matched {
+            background-color: #22c55e;
+        }
+        .char-box.cut {
+            background-color: #ef4444;
+        }
+        .dp-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 1px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #475569;
+            color: white;
+        }
+        .dp-cell.active {
+            background-color: #eab308;
+        }
+        .dp-cell.optimal {
+            background-color: #22c55e;
+        }
+        .dp-cell.comparing {
+            background-color: #8b5cf6;
+        }
+        .dp-row {
+            display: flex;
+            justify-content: center;
+        }
+        .dp-label {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Palindrome Partitioning II</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum number of cuts needed to partition a string into palindromes.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input String</label>
+                            <input type="text" id="stringInput" value="aabaa" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="startVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- String Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">String Visualization</h3>
+                    <div class="flex flex-wrap justify-center" id="stringContainer"></div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Dynamic Programming Table</h3>
+                    <div class="overflow-x-auto">
+                        <div id="dpTable" class="flex flex-col items-center"></div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function minCut(s: string):</span>
+<span class="code-line" data-line="2">    n = s.length</span>
+<span class="code-line" data-line="3">    // dp[i] = min cuts needed for s[0..i]</span>
+<span class="code-line" data-line="4">    dp = new Array(n).fill(0)</span>
+<span class="code-line" data-line="5">    // isPalindrome[i][j] = true if s[i..j] is palindrome</span>
+<span class="code-line" data-line="6">    isPalindrome = Array(n).fill().map(() => Array(n).fill(false))</span>
+<span class="code-line" data-line="7">    // Fill palindrome table</span>
+<span class="code-line" data-line="8">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="9">        isPalindrome[i][i] = true</span>
+<span class="code-line" data-line="10">    for len = 2 to n:</span>
+<span class="code-line" data-line="11">        for i = 0 to n-len:</span>
+<span class="code-line" data-line="12">            j = i + len - 1</span>
+<span class="code-line" data-line="13">            if len == 2:</span>
+<span class="code-line" data-line="14">                isPalindrome[i][j] = (s[i] == s[j])</span>
+<span class="code-line" data-line="15">            else:</span>
+<span class="code-line" data-line="16">                isPalindrome[i][j] = (s[i] == s[j] and isPalindrome[i+1][j-1])</span>
+<span class="code-line" data-line="17">    // Fill dp table</span>
+<span class="code-line" data-line="18">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="19">        if isPalindrome[0][i]:</span>
+<span class="code-line" data-line="20">            dp[i] = 0</span>
+<span class="code-line" data-line="21">        else:</span>
+<span class="code-line" data-line="22">            dp[i] = i</span>
+<span class="code-line" data-line="23">            for j = 0 to i-1:</span>
+<span class="code-line" data-line="24">                if isPalindrome[j+1][i]:</span>
+<span class="code-line" data-line="25">                    dp[i] = min(dp[i], dp[j] + 1)</span>
+<span class="code-line" data-line="26">    return dp[n-1]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n²) where n is the length of the input string</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n²) for the palindrome lookup table</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm finds the minimum number of cuts by:
+                                <br>1. Building a palindrome lookup table
+                                <br>2. Using dynamic programming to find minimum cuts
+                                <br>3. For each position i, trying all possible cuts j before i
+                                <br>4. If substring (j+1,i) is palindrome, considering dp[j] + 1 as potential answer
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inputString = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let dpArray = [];
+        let isPalindrome = [];
+
+        function createStringVisualization() {
+            const container = document.getElementById('stringContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < inputString.length; i++) {
+                const box = document.createElement('div');
+                box.className = 'char-box';
+                box.textContent = inputString[i];
+                box.id = `char-${i}`;
+                container.appendChild(box);
+            }
+        }
+
+        function createDPTable() {
+            const container = document.getElementById('dpTable');
+            container.innerHTML = '';
+            
+            // Create header row with string characters
+            const headerRow = document.createElement('div');
+            headerRow.className = 'dp-row';
+            headerRow.appendChild(createLabel(''));
+            for (let i = 0; i < inputString.length; i++) {
+                headerRow.appendChild(createLabel(inputString[i]));
+            }
+            container.appendChild(headerRow);
+            
+            // Create DP table rows
+            for (let i = 0; i < inputString.length; i++) {
+                const row = document.createElement('div');
+                row.className = 'dp-row';
+                row.appendChild(createLabel(i));
+                
+                for (let j = 0; j < inputString.length; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'dp-cell';
+                    cell.id = `dp-${i}-${j}`;
+                    cell.textContent = dpArray[i] === undefined ? '' : dpArray[i];
+                    row.appendChild(cell);
+                }
+                container.appendChild(row);
+            }
+        }
+
+        function createLabel(text) {
+            const label = document.createElement('div');
+            label.className = 'dp-label';
+            label.textContent = text;
+            return label;
+        }
+
+        function updateDPCell(i, j, value, className = '') {
+            const cell = document.getElementById(`dp-${i}-${j}`);
+            if (cell) {
+                cell.textContent = value;
+                cell.className = 'dp-cell ' + className;
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = inputString.length;
+            dpArray = new Array(n).fill(0);
+            isPalindrome = Array(n).fill().map(() => Array(n).fill(false));
+
+            steps.push({
+                type: 'init',
+                description: 'Initializing palindrome lookup table',
+                codeLine: 6
+            });
+
+            // Initialize palindrome table for single characters
+            for (let i = 0; i < n; i++) {
+                isPalindrome[i][i] = true;
+                steps.push({
+                    type: 'palindrome_init',
+                    i: i,
+                    j: i,
+                    description: `Single character at position ${i} is a palindrome`,
+                    codeLine: 9
+                });
+            }
+
+            // Fill palindrome table
+            for (let len = 2; len <= n; len++) {
+                for (let i = 0; i <= n - len; i++) {
+                    const j = i + len - 1;
+                    
+                    steps.push({
+                        type: 'palindrome_check',
+                        i: i,
+                        j: j,
+                        comparing: [i, j],
+                        description: `Checking if substring "${inputString.substring(i, j + 1)}" is a palindrome`,
+                        codeLine: len === 2 ? 14 : 16
+                    });
+
+                    if (len === 2) {
+                        isPalindrome[i][j] = (inputString[i] === inputString[j]);
+                    } else {
+                        isPalindrome[i][j] = (inputString[i] === inputString[j] && isPalindrome[i + 1][j - 1]);
+                    }
+
+                    if (isPalindrome[i][j]) {
+                        steps.push({
+                            type: 'palindrome_found',
+                            i: i,
+                            j: j,
+                            substring: inputString.substring(i, j + 1),
+                            description: `Found palindrome: "${inputString.substring(i, j + 1)}"`,
+                            codeLine: len === 2 ? 14 : 16
+                        });
+                    }
+                }
+            }
+
+            // Fill dp array
+            for (let i = 0; i < n; i++) {
+                steps.push({
+                    type: 'dp_init',
+                    position: i,
+                    description: `Calculating minimum cuts needed for prefix "${inputString.substring(0, i + 1)}"`,
+                    codeLine: 18
+                });
+
+                if (isPalindrome[0][i]) {
+                    dpArray[i] = 0;
+                    steps.push({
+                        type: 'dp_palindrome',
+                        position: i,
+                        value: 0,
+                        description: `Entire prefix is palindrome, no cuts needed`,
+                        codeLine: 20
+                    });
+                } else {
+                    dpArray[i] = i;
+                    steps.push({
+                        type: 'dp_default',
+                        position: i,
+                        value: i,
+                        description: `Setting initial value to ${i} cuts`,
+                        codeLine: 22
+                    });
+
+                    for (let j = 0; j < i; j++) {
+                        steps.push({
+                            type: 'dp_check',
+                            position: i,
+                            cut: j,
+                            currentValue: dpArray[i],
+                            checkValue: dpArray[j] + 1,
+                            description: `Checking cut at position ${j}: min(${dpArray[i]}, ${dpArray[j]} + 1)`,
+                            codeLine: 24
+                        });
+
+                        if (isPalindrome[j + 1][i]) {
+                            const newValue = dpArray[j] + 1;
+                            if (newValue < dpArray[i]) {
+                                dpArray[i] = newValue;
+                                steps.push({
+                                    type: 'dp_update',
+                                    position: i,
+                                    cut: j,
+                                    value: newValue,
+                                    description: `Found better solution: ${newValue} cuts with cut at position ${j}`,
+                                    codeLine: 25
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                result: dpArray[n - 1],
+                description: `Minimum number of cuts needed: ${dpArray[n - 1]}`,
+                codeLine: 26
+            });
+        }
+
+        function startVisualization() {
+            inputString = document.getElementById('stringInput').value;
+            
+            if (!inputString) {
+                alert('Please enter a string');
+                return;
+            }
+
+            createStringVisualization();
+            generateSteps();
+            createDPTable();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            dpArray = [];
+            isPalindrome = [];
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            highlightCodeLine(1);
+            createStringVisualization();
+            createDPTable();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all character boxes
+            const charBoxes = document.querySelectorAll('.char-box');
+            charBoxes.forEach(box => {
+                box.classList.remove('comparing', 'matched', 'cut');
+            });
+
+            // Reset all DP cells
+            const dpCells = document.querySelectorAll('.dp-cell');
+            dpCells.forEach(cell => {
+                cell.classList.remove('active', 'optimal', 'comparing');
+            });
+
+            switch (step.type) {
+                case 'palindrome_check':
+                case 'palindrome_found':
+                    if (step.comparing) {
+                        step.comparing.forEach(idx => {
+                            const box = document.getElementById(`char-${idx}`);
+                            if (box) box.classList.add('comparing');
+                        });
+                    }
+                    break;
+                case 'dp_init':
+                case 'dp_palindrome':
+                case 'dp_default':
+                    updateDPCell(step.position, step.position, step.value, 'active');
+                    break;
+                case 'dp_check':
+                    updateDPCell(step.position, step.position, step.currentValue, 'active');
+                    if (step.cut >= 0) {
+                        updateDPCell(step.cut, step.cut, dpArray[step.cut], 'comparing');
+                        document.getElementById(`char-${step.cut}`).classList.add('cut');
+                    }
+                    break;
+                case 'dp_update':
+                    updateDPCell(step.position, step.position, step.value, 'optimal');
+                    if (step.cut >= 0) {
+                        updateDPCell(step.cut, step.cut, dpArray[step.cut], 'comparing');
+                        document.getElementById(`char-${step.cut}`).classList.add('cut');
+                    }
+                    break;
+            }
+
+            // Update description and highlight code
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            createStringVisualization();
+            createDPTable();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

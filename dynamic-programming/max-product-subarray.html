@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Product Subarray</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .array-element.current {
+            background-color: #eab308;
+        }
+        .array-element.processed {
+            background-color: #22c55e;
+        }
+        .array-element.negative {
+            background-color: #ef4444;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .product-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .dp-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #374151;
+            font-family: monospace;
+            transition: all 0.3s ease-in-out;
+        }
+        .dp-cell.current {
+            background-color: #eab308;
+        }
+        .dp-cell.processed {
+            background-color: #22c55e;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Maximum Product Subarray</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the contiguous subarray with the largest product.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Array Values</label>
+                            <input type="text" id="valuesInput" value="2,3,-2,4" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter array values (comma-separated)">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyCustomValues()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Values
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array</h3>
+                    <div id="arrayContainer" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- DP Tables -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">DP Tables</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-sm font-medium mb-2">Max Product</h4>
+                            <div id="maxTable" class="overflow-auto"></div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium mb-2">Min Product</h4>
+                            <div id="minTable" class="overflow-auto"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current State</h3>
+                    <div id="productInfo" class="product-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Maximum Product: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function maxProduct(nums):</span>
+<span class="code-line" data-line="2">    n = len(nums)</span>
+<span class="code-line" data-line="3">    if n == 0: return 0</span>
+<span class="code-line" data-line="4">    max_dp = [0] * n</span>
+<span class="code-line" data-line="5">    min_dp = [0] * n</span>
+<span class="code-line" data-line="6">    max_dp[0] = min_dp[0] = nums[0]</span>
+<span class="code-line" data-line="7">    result = nums[0]</span>
+<span class="code-line" data-line="8">    for i = 1 to n-1:</span>
+<span class="code-line" data-line="9">        if nums[i] < 0:</span>
+<span class="code-line" data-line="10">            max_dp[i] = max(nums[i], min_dp[i-1] * nums[i])</span>
+<span class="code-line" data-line="11">            min_dp[i] = min(nums[i], max_dp[i-1] * nums[i])</span>
+<span class="code-line" data-line="12">        else:</span>
+<span class="code-line" data-line="13">            max_dp[i] = max(nums[i], max_dp[i-1] * nums[i])</span>
+<span class="code-line" data-line="14">            min_dp[i] = min(nums[i], min_dp[i-1] * nums[i])</span>
+<span class="code-line" data-line="15">        result = max(result, max_dp[i])</span>
+<span class="code-line" data-line="16">    return result</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the dp arrays, can be optimized to O(1)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Maintain two dp arrays: max_dp and min_dp
+                                <br>2. For each element:
+                                <br>&nbsp;&nbsp;&nbsp;- If positive: multiply with previous max/min
+                                <br>&nbsp;&nbsp;&nbsp;- If negative: multiply with previous min/max
+                                <br>3. Track the maximum product found
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let values = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyCustomValues() {
+            const valuesInput = document.getElementById('valuesInput').value;
+            try {
+                values = valuesInput.split(',').map(Number);
+                if (values.some(isNaN)) {
+                    throw new Error('All values must be numbers');
+                }
+                createArrayElements();
+                createDPTables();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid numbers');
+            }
+        }
+
+        function createArrayElements() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            values.forEach((value, index) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                if (value < 0) element.classList.add('negative');
+                element.id = `element-${index}`;
+                element.textContent = value;
+                container.appendChild(element);
+            });
+        }
+
+        function createDPTables() {
+            const maxTable = document.getElementById('maxTable');
+            const minTable = document.getElementById('minTable');
+            maxTable.innerHTML = '';
+            minTable.innerHTML = '';
+            
+            const n = values.length;
+            
+            // Create table headers
+            const maxHeader = document.createElement('div');
+            const minHeader = document.createElement('div');
+            maxHeader.className = 'flex';
+            minHeader.className = 'flex';
+            
+            for (let i = 0; i < n; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.textContent = `i=${i}`;
+                maxHeader.appendChild(cell.cloneNode(true));
+                minHeader.appendChild(cell.cloneNode(true));
+            }
+            maxTable.appendChild(maxHeader);
+            minTable.appendChild(minHeader);
+            
+            // Create table rows
+            const maxRow = document.createElement('div');
+            const minRow = document.createElement('div');
+            maxRow.className = 'flex';
+            minRow.className = 'flex';
+            
+            for (let i = 0; i < n; i++) {
+                const maxCell = document.createElement('div');
+                const minCell = document.createElement('div');
+                maxCell.className = 'dp-cell';
+                minCell.className = 'dp-cell';
+                maxCell.id = `max-${i}`;
+                minCell.id = `min-${i}`;
+                maxCell.textContent = '0';
+                minCell.textContent = '0';
+                maxRow.appendChild(maxCell);
+                minRow.appendChild(minCell);
+            }
+            maxTable.appendChild(maxRow);
+            minTable.appendChild(minRow);
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = values.length;
+            const max_dp = Array(n).fill(0);
+            const min_dp = Array(n).fill(0);
+            let result = 0;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initializing DP tables',
+                codeLine: 4
+            });
+            
+            // Base case
+            if (n > 0) {
+                max_dp[0] = min_dp[0] = values[0];
+                result = values[0];
+                steps.push({
+                    type: 'base',
+                    i: 0,
+                    max: max_dp[0],
+                    min: min_dp[0],
+                    description: `Base case: max_dp[0] = min_dp[0] = ${values[0]}`,
+                    codeLine: 6
+                });
+            }
+            
+            // Fill DP tables
+            for (let i = 1; i < n; i++) {
+                const num = values[i];
+                let newMax, newMin;
+                
+                if (num < 0) {
+                    newMax = Math.max(num, min_dp[i-1] * num);
+                    newMin = Math.min(num, max_dp[i-1] * num);
+                    steps.push({
+                        type: 'fill',
+                        i: i,
+                        max: newMax,
+                        min: newMin,
+                        isNegative: true,
+                        prevMax: max_dp[i-1],
+                        prevMin: min_dp[i-1],
+                        description: `Element ${i} (${num}) is negative`,
+                        codeLine: 9
+                    });
+                } else {
+                    newMax = Math.max(num, max_dp[i-1] * num);
+                    newMin = Math.min(num, min_dp[i-1] * num);
+                    steps.push({
+                        type: 'fill',
+                        i: i,
+                        max: newMax,
+                        min: newMin,
+                        isNegative: false,
+                        prevMax: max_dp[i-1],
+                        prevMin: min_dp[i-1],
+                        description: `Element ${i} (${num}) is positive`,
+                        codeLine: 12
+                    });
+                }
+                
+                max_dp[i] = newMax;
+                min_dp[i] = newMin;
+                result = Math.max(result, newMax);
+                
+                steps.push({
+                    type: 'update',
+                    i: i,
+                    max: newMax,
+                    min: newMin,
+                    result: result,
+                    description: `Updated max_dp[${i}] = ${newMax}, min_dp[${i}] = ${newMin}`,
+                    codeLine: 15
+                });
+            }
+            
+            steps.push({
+                type: 'complete',
+                result: result,
+                description: `Maximum product: ${result}`,
+                codeLine: 16
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Maximum Product: 0';
+            document.getElementById('productInfo').textContent = '';
+            highlightCodeLine(1);
+            createArrayElements();
+            createDPTables();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const elements = document.querySelectorAll('.array-element');
+            const maxCells = document.querySelectorAll('#maxTable .dp-cell');
+            const minCells = document.querySelectorAll('#minTable .dp-cell');
+            elements.forEach(el => el.classList.remove('current', 'processed'));
+            maxCells.forEach(cell => cell.classList.remove('current', 'processed'));
+            minCells.forEach(cell => cell.classList.remove('current', 'processed'));
+
+            // Update current element
+            if (step.i !== undefined) {
+                document.getElementById(`element-${step.i}`).classList.add('current');
+            }
+
+            // Update DP tables
+            if (step.type === 'base' || step.type === 'fill' || step.type === 'update') {
+                const maxCell = document.getElementById(`max-${step.i}`);
+                const minCell = document.getElementById(`min-${step.i}`);
+                maxCell.textContent = step.max;
+                minCell.textContent = step.min;
+                maxCell.classList.add('current');
+                minCell.classList.add('current');
+                
+                // Mark previous cells as processed
+                if (step.i > 0) {
+                    document.getElementById(`max-${step.i-1}`).classList.add('processed');
+                    document.getElementById(`min-${step.i-1}`).classList.add('processed');
+                }
+            }
+
+            // Update product info
+            let productInfo = '';
+            if (step.type === 'base') {
+                productInfo = `Base case: max_dp[0] = min_dp[0] = ${step.max}`;
+            } else if (step.type === 'fill') {
+                productInfo = `Element ${step.i} (${values[step.i]}) is ${step.isNegative ? 'negative' : 'positive'}
+                    \nPrevious max: ${step.prevMax}
+                    \nPrevious min: ${step.prevMin}
+                    \nNew max: ${step.max}
+                    \nNew min: ${step.min}`;
+            } else if (step.type === 'update') {
+                productInfo = `Updated max_dp[${step.i}] = ${step.max}
+                    \nUpdated min_dp[${step.i}] = ${step.min}
+                    \nCurrent maximum product: ${step.result}`;
+            }
+
+            document.getElementById('productInfo').textContent = productInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Maximum Product: ${step.result}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyCustomValues();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

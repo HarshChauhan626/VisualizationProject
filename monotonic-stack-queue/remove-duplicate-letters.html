@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Duplicate Letters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-box {
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: monospace;
+            margin: 2px;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+        }
+        .char-box.current {
+            background-color: #eab308;
+        }
+        .char-box.in-stack {
+            background-color: #8b5cf6;
+        }
+        .char-box.duplicate {
+            background-color: #ef4444;
+        }
+        .char-box.processed {
+            background-color: #22c55e;
+        }
+        .char-box.skipped {
+            opacity: 0.3;
+        }
+        .char-box::after {
+            content: attr(data-count);
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            background-color: #4b5563;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stack-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+        }
+        .stack-item.current {
+            background-color: #eab308;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Remove Duplicate Letters</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the lexicographically smallest subsequence of a string containing all unique characters using a monotonic stack.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input String</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="stringInput" value="bcabc" 
+                                    class="flex-1 px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400"
+                                    placeholder="Enter a string">
+                                <button onclick="applyCustomString()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="generateNewString()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            New String
+                        </button>
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- String Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Characters</h3>
+                    <div id="charsContainer" class="flex flex-wrap justify-center gap-2"></div>
+                </div>
+
+                <!-- Stack Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Monotonic Stack</h3>
+                    <div class="flex flex-col items-center">
+                        <div id="stackContainer" class="flex flex-col-reverse items-center border-2 border-gray-600 p-2 min-h-[200px] w-[100px]"></div>
+                        <div class="mt-2 text-gray-400">Stack Bottom</div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Result: </p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function removeDuplicateLetters(s):</span>
+<span class="code-line" data-line="2">    count = {}  // count of each character</span>
+<span class="code-line" data-line="3">    for char in s:</span>
+<span class="code-line" data-line="4">        count[char] = count.get(char, 0) + 1</span>
+<span class="code-line" data-line="5">    stack = []</span>
+<span class="code-line" data-line="6">    seen = set()</span>
+<span class="code-line" data-line="7">    for char in s:</span>
+<span class="code-line" data-line="8">        count[char] -= 1</span>
+<span class="code-line" data-line="9">        if char in seen:</span>
+<span class="code-line" data-line="10">            continue</span>
+<span class="code-line" data-line="11">        while stack and char < stack[-1] and count[stack[-1]] > 0:</span>
+<span class="code-line" data-line="12">            seen.remove(stack.pop())</span>
+<span class="code-line" data-line="13">        stack.append(char)</span>
+<span class="code-line" data-line="14">        seen.add(char)</span>
+<span class="code-line" data-line="15">    return ''.join(stack)</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the string</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(k) where k is the number of unique characters</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Counting frequency of each character
+                                <br>2. Using a stack to build the result string
+                                <br>3. For each character:
+                                <br>&nbsp;&nbsp;&nbsp;- Skip if already in result
+                                <br>&nbsp;&nbsp;&nbsp;- Remove larger characters from top if they appear later
+                                <br>&nbsp;&nbsp;&nbsp;- Add current character to result
+                                <br>4. The stack maintains lexicographical order while keeping all characters
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inputString = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function generateNewString() {
+            const length = Math.floor(Math.random() * 5) + 5; // 5-10 characters
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            inputString = Array(length).fill()
+                .map(() => chars[Math.floor(Math.random() * 6)])
+                .join('');
+            document.getElementById('stringInput').value = inputString;
+            createCharacters();
+            resetVisualization();
+        }
+
+        function applyCustomString() {
+            const input = document.getElementById('stringInput').value.toLowerCase();
+            if (input.length < 2 || !/^[a-z]+$/.test(input)) {
+                alert('Please enter at least 2 lowercase letters');
+                return;
+            }
+            
+            inputString = input;
+            createCharacters();
+            resetVisualization();
+        }
+
+        function createCharacters() {
+            const container = document.getElementById('charsContainer');
+            container.innerHTML = '';
+            
+            // Count character frequencies
+            const count = {};
+            for (let char of inputString) {
+                count[char] = (count[char] || 0) + 1;
+            }
+            
+            inputString.split('').forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'char-box';
+                box.textContent = char;
+                box.id = `char-${idx}`;
+                box.setAttribute('data-count', count[char]);
+                container.appendChild(box);
+            });
+        }
+
+        function updateStack(stack) {
+            const container = document.getElementById('stackContainer');
+            container.innerHTML = '';
+            
+            stack.forEach(char => {
+                const item = document.createElement('div');
+                item.className = 'stack-item';
+                item.textContent = char;
+                container.appendChild(item);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            const count = {};
+            const stack = [];
+            const seen = new Set();
+
+            // Count character frequencies
+            for (let char of inputString) {
+                count[char] = (count[char] || 0) + 1;
+            }
+
+            steps.push({
+                type: 'init',
+                stack: [...stack],
+                seen: new Set(seen),
+                count: {...count},
+                description: 'Counting character frequencies',
+                codeLine: 4
+            });
+
+            for (let i = 0; i < inputString.length; i++) {
+                const char = inputString[i];
+                count[char]--;
+
+                steps.push({
+                    type: 'process',
+                    currentIndex: i,
+                    stack: [...stack],
+                    seen: new Set(seen),
+                    count: {...count},
+                    description: `Processing character '${char}' at index ${i}`,
+                    codeLine: 7
+                });
+
+                if (seen.has(char)) {
+                    steps.push({
+                        type: 'skip',
+                        currentIndex: i,
+                        stack: [...stack],
+                        seen: new Set(seen),
+                        count: {...count},
+                        description: `Character '${char}' already in result, skipping`,
+                        codeLine: 10
+                    });
+                    continue;
+                }
+
+                while (stack.length > 0 && char < stack[stack.length - 1] && count[stack[stack.length - 1]] > 0) {
+                    const removed = stack.pop();
+                    seen.delete(removed);
+                    
+                    steps.push({
+                        type: 'pop',
+                        currentIndex: i,
+                        stack: [...stack],
+                        seen: new Set(seen),
+                        count: {...count},
+                        removed: removed,
+                        description: `Removed '${removed}' from stack as '${char}' is smaller and '${removed}' appears later`,
+                        codeLine: 12
+                    });
+                }
+
+                stack.push(char);
+                seen.add(char);
+
+                steps.push({
+                    type: 'push',
+                    currentIndex: i,
+                    stack: [...stack],
+                    seen: new Set(seen),
+                    count: {...count},
+                    description: `Added '${char}' to result`,
+                    codeLine: 13
+                });
+            }
+
+            steps.push({
+                type: 'complete',
+                stack: [...stack],
+                seen: new Set(seen),
+                count: {...count},
+                description: `Algorithm complete. Result: ${stack.join('')}`,
+                codeLine: 15
+            });
+        }
+
+        function startVisualization() {
+            if (inputString.length === 0) {
+                alert('Please generate or enter a string first');
+                return;
+            }
+
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Result: ';
+            highlightCodeLine(1);
+            createCharacters();
+            updateStack([]);
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all character boxes
+            const charBoxes = document.querySelectorAll('.char-box');
+            charBoxes.forEach(box => {
+                box.className = 'char-box';
+            });
+
+            // Update stack visualization
+            updateStack(step.stack);
+
+            // Update character counts
+            for (let i = 0; i < inputString.length; i++) {
+                const char = inputString[i];
+                document.getElementById(`char-${i}`).setAttribute('data-count', step.count[char]);
+            }
+
+            // Update visualization based on step type
+            switch (step.type) {
+                case 'process':
+                    document.getElementById(`char-${step.currentIndex}`).classList.add('current');
+                    step.stack.forEach((char, idx) => {
+                        const indices = [...inputString].map((c, i) => c === char ? i : -1).filter(i => i !== -1);
+                        indices.forEach(i => document.getElementById(`char-${i}`).classList.add('in-stack'));
+                    });
+                    break;
+                case 'skip':
+                    document.getElementById(`char-${step.currentIndex}`).classList.add('skipped');
+                    step.stack.forEach((char, idx) => {
+                        const indices = [...inputString].map((c, i) => c === char ? i : -1).filter(i => i !== -1);
+                        indices.forEach(i => document.getElementById(`char-${i}`).classList.add('in-stack'));
+                    });
+                    break;
+                case 'pop':
+                    document.getElementById(`char-${step.currentIndex}`).classList.add('current');
+                    const removedIndices = [...inputString].map((c, i) => c === step.removed ? i : -1).filter(i => i !== -1);
+                    removedIndices.forEach(i => document.getElementById(`char-${i}`).classList.add('duplicate'));
+                    step.stack.forEach((char, idx) => {
+                        const indices = [...inputString].map((c, i) => c === char ? i : -1).filter(i => i !== -1);
+                        indices.forEach(i => document.getElementById(`char-${i}`).classList.add('in-stack'));
+                    });
+                    break;
+                case 'push':
+                    document.getElementById(`char-${step.currentIndex}`).classList.add('processed');
+                    step.stack.forEach((char, idx) => {
+                        const indices = [...inputString].map((c, i) => c === char ? i : -1).filter(i => i !== -1);
+                        indices.forEach(i => document.getElementById(`char-${i}`).classList.add('in-stack'));
+                    });
+                    break;
+                case 'complete':
+                    step.stack.forEach((char, idx) => {
+                        const indices = [...inputString].map((c, i) => c === char ? i : -1).filter(i => i !== -1);
+                        indices.forEach(i => document.getElementById(`char-${i}`).classList.add('processed'));
+                    });
+                    break;
+            }
+
+            // Update description and highlight code
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            document.getElementById('result').textContent = `Result: ${step.stack.join('')}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            generateNewString();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subarray Product Less Than K Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            color: #e2e8f0;
+        }
+        .window-element {
+            background-color: #059669;
+            color: white;
+        }
+        .current-product {
+            background-color: #fb923c;
+            color: white;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Subarray Product Less Than K</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an array of positive numbers nums and a positive number k, find the number of contiguous subarrays where the product of all the elements in the subarray is strictly less than k.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <input type="text" id="arrayInput" placeholder="Enter array (comma-separated)" 
+                    class="border p-2 rounded flex-1" value="10,5,2,6">
+                <input type="number" id="kInput" placeholder="Enter K" 
+                    class="border p-2 rounded w-32" value="100">
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Next
+                </button>
+            </div>
+
+            <!-- Algorithm Selection -->
+            <div class="flex justify-center gap-4 mb-6">
+                <button onclick="switchAlgorithm('bruteforce')" 
+                    class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Brute Force
+                </button>
+                <button onclick="switchAlgorithm('optimized')" 
+                    class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                    Sliding Window
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Visualization</h2>
+            <div id="arrayVisualization" class="flex flex-wrap gap-2 mb-6">
+            </div>
+            <div id="productVisualization" class="mb-4 text-lg font-semibold">
+            </div>
+            <div id="explanation" class="text-gray-700 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Pseudo Code</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Brute Force Approach</h3>
+                    <pre class="bg-gray-100 p-4 rounded">
+// Time Complexity: O(n²)
+function bruteForce(nums, k):
+    count = 0
+    n = nums.length
+    
+    // Try all possible subarrays
+    for start from 0 to n-1:
+        product = 1
+        // For each start, try all possible ends
+        for end from start to n-1:
+            product *= nums[end]
+            // If product < k, this subarray works
+            if product < k:
+                count++
+            else:
+                break  // No need to continue this start
+    
+    return count</pre>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Sliding Window Approach</h3>
+                    <pre class="bg-gray-100 p-4 rounded">
+// Time Complexity: O(n)
+function slidingWindow(nums, k):
+    if k <= 1: return 0
+    
+    count = 0
+    product = 1
+    left = 0
+    
+    // Expand window with right pointer
+    for right from 0 to n-1:
+        product *= nums[right]
+        
+        // Shrink window while product >= k
+        while product >= k && left <= right:
+            product /= nums[left]
+            left++
+        
+        // Add count of valid subarrays
+        count += right - left + 1
+    
+    return count</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 1:</p>
+                    <p>Input: nums = [10,5,2,6], k = 100</p>
+                    <p>Output: 8</p>
+                    <p>Explanation: The 8 subarrays are: [10], [5], [2], [6], [10,5], [5,2], [2,6], [5,2,6]</p>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 2:</p>
+                    <p>Input: nums = [1,2,3], k = 0</p>
+                    <p>Output: 0</p>
+                    <p>Explanation: No subarray has product less than 0</p>
+                </div>
+                <div>
+                    <p class="font-semibold">Test Case 3:</p>
+                    <p>Input: nums = [1,1,1], k = 2</p>
+                    <p>Output: 6</p>
+                    <p>Explanation: All possible subarrays have product less than 2</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentArray = [];
+        let k = 100;
+        let currentStep = 0;
+        let count = 0;
+        let currentAlgorithm = 'bruteforce';
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            const arrayInput = document.getElementById('arrayInput').value;
+            currentArray = arrayInput.split(',').map(x => parseInt(x.trim()));
+            k = parseInt(document.getElementById('kInput').value);
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            count = 0;
+            
+            // Generate steps based on current algorithm
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            if (currentAlgorithm === 'bruteforce') {
+                generateBruteForceSteps();
+            } else {
+                generateSlidingWindowSteps();
+            }
+        }
+
+        function generateBruteForceSteps() {
+            count = 0;
+            for (let start = 0; start < currentArray.length; start++) {
+                let product = 1;
+                for (let end = start; end < currentArray.length; end++) {
+                    product *= currentArray[end];
+                    steps.push({
+                        windowStart: start,
+                        windowEnd: end,
+                        currentProduct: product,
+                        count: product < k ? count + 1 : count,
+                        explanation: `Checking subarray [${start}..${end}] with product ${product}`
+                    });
+                    if (product < k) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+
+        function generateSlidingWindowSteps() {
+            if (k <= 1) {
+                steps.push({
+                    count: 0,
+                    explanation: 'k <= 1, no valid subarrays possible'
+                });
+                return;
+            }
+
+            count = 0;
+            let product = 1;
+            let left = 0;
+
+            for (let right = 0; right < currentArray.length; right++) {
+                product *= currentArray[right];
+                steps.push({
+                    windowStart: left,
+                    windowEnd: right,
+                    currentProduct: product,
+                    count: count,
+                    explanation: `Added ${currentArray[right]} to window, product = ${product}`
+                });
+
+                while (product >= k && left <= right) {
+                    product /= currentArray[left];
+                    left++;
+                    steps.push({
+                        windowStart: left,
+                        windowEnd: right,
+                        currentProduct: product,
+                        count: count,
+                        explanation: `Shrinking window: removed ${currentArray[left-1]}, new product = ${product}`
+                    });
+                }
+
+                count += right - left + 1;
+                steps.push({
+                    windowStart: left,
+                    windowEnd: right,
+                    currentProduct: product,
+                    count: count,
+                    explanation: `Found ${right - left + 1} new valid subarrays ending at index ${right}`
+                });
+            }
+        }
+
+        function updateVisualization() {
+            const visualizationDiv = document.getElementById('arrayVisualization');
+            const productDiv = document.getElementById('productVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            visualizationDiv.innerHTML = '';
+            
+            // Create array visualization
+            currentArray.forEach((num, index) => {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded';
+                
+                if (step.windowStart !== undefined && 
+                    index >= step.windowStart && 
+                    index <= step.windowEnd) {
+                    element.classList.add('window-element');
+                }
+                
+                element.textContent = num;
+                visualizationDiv.appendChild(element);
+            });
+            
+            // Update product visualization
+            if (step.currentProduct !== undefined) {
+                productDiv.textContent = `Current Product: ${step.currentProduct}`;
+            } else {
+                productDiv.textContent = '';
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                <p>Current Count: ${step.count}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        function switchAlgorithm(algorithm) {
+            currentAlgorithm = algorithm;
+            initializeVisualization();
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

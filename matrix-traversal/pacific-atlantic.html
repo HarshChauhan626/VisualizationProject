@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacific Atlantic Water Flow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .matrix {
+            display: grid;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .cell.pacific {
+            background-color: #3b82f6;
+        }
+        .cell.atlantic {
+            background-color: #ef4444;
+        }
+        .cell.both {
+            background-color: #8b5cf6;
+        }
+        .cell.visited {
+            background-color: #10b981;
+        }
+        .cell.current {
+            background-color: #eab308;
+            transform: scale(1.1);
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .matrix-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        .matrix-label {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Pacific Atlantic Water Flow</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find cells that can flow to both the Pacific and Atlantic oceans based on their heights.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Matrix Size (rows, columns)</label>
+                            <input type="text" id="sizeInput" value="5,5" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter matrix size as rows,columns">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Height Range (min, max)</label>
+                            <input type="text" id="heightInput" value="1,9" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter height range as min,max">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Input
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Matrix Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Water Flow Visualization</h3>
+                    <div class="matrix-container">
+                        <div>
+                            <div class="matrix-label">Height Matrix</div>
+                            <div id="heightMatrix" class="matrix"></div>
+                        </div>
+                        <div>
+                            <div class="matrix-label">Flow Matrix</div>
+                            <div id="flowMatrix" class="matrix"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function pacificAtlantic(heights):</span>
+<span class="code-line" data-line="2">    m, n = len(heights), len(heights[0])</span>
+<span class="code-line" data-line="3">    pacific = [[False] * n for _ in range(m)]</span>
+<span class="code-line" data-line="4">    atlantic = [[False] * n for _ in range(m)]</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    # DFS from Pacific (top and left edges)</span>
+<span class="code-line" data-line="7">    for i in range(m):</span>
+<span class="code-line" data-line="8">        dfs(heights, pacific, i, 0)</span>
+<span class="code-line" data-line="9">    for j in range(n):</span>
+<span class="code-line" data-line="10">        dfs(heights, pacific, 0, j)</span>
+<span class="code-line" data-line="11">    </span>
+<span class="code-line" data-line="12">    # DFS from Atlantic (bottom and right edges)</span>
+<span class="code-line" data-line="13">    for i in range(m):</span>
+<span class="code-line" data-line="14">        dfs(heights, atlantic, i, n-1)</span>
+<span class="code-line" data-line="15">    for j in range(n):</span>
+<span class="code-line" data-line="16">        dfs(heights, atlantic, m-1, j)</span>
+<span class="code-line" data-line="17">    </span>
+<span class="code-line" data-line="18">    # Find cells that can reach both oceans</span>
+<span class="code-line" data-line="19">    result = []</span>
+<span class="code-line" data-line="20">    for i in range(m):</span>
+<span class="code-line" data-line="21">        for j in range(n):</span>
+<span class="code-line" data-line="22">            if pacific[i][j] and atlantic[i][j]:</span>
+<span class="code-line" data-line="23">                result.append([i, j])</span>
+<span class="code-line" data-line="24">    return result</span>
+<span class="code-line" data-line="25">    </span>
+<span class="code-line" data-line="26">function dfs(heights, visited, i, j):</span>
+<span class="code-line" data-line="27">    m, n = len(heights), len(heights[0])</span>
+<span class="code-line" data-line="28">    visited[i][j] = True</span>
+<span class="code-line" data-line="29">    </span>
+<span class="code-line" data-line="30">    for di, dj in [(0,1), (1,0), (0,-1), (-1,0)]:</span>
+<span class="code-line" data-line="31">        ni, nj = i + di, j + dj</span>
+<span class="code-line" data-line="32">        if 0 <= ni < m and 0 <= nj < n:</span>
+<span class="code-line" data-line="33">            if not visited[ni][nj] and heights[ni][nj] >= heights[i][j]:</span>
+<span class="code-line" data-line="34">                dfs(heights, visited, ni, nj)</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given an m x n matrix of non-negative integers representing the height of each cell, find all cells that can flow to both the Pacific and Atlantic oceans. Water can only flow to adjacent cells with equal or lower height.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m * n) where m and n are the dimensions of the matrix</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m * n) for the visited matrices</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works in three steps:
+                                <br>1. Perform DFS from Pacific Ocean (top and left edges)
+                                <br>2. Perform DFS from Atlantic Ocean (bottom and right edges)
+                                <br>3. Find cells that can reach both oceans
+                                <br>
+                                <br>Water can flow from a cell to adjacent cells (up, down, left, right) if the adjacent cell's height is less than or equal to the current cell's height.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let heights = [];
+        let pacific = [];
+        let atlantic = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createMatrix(rows, cols, minHeight, maxHeight) {
+            const heightMatrix = document.getElementById('heightMatrix');
+            const flowMatrix = document.getElementById('flowMatrix');
+            
+            heightMatrix.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            flowMatrix.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            heightMatrix.innerHTML = '';
+            flowMatrix.innerHTML = '';
+            
+            heights = [];
+            pacific = Array(rows).fill().map(() => Array(cols).fill(false));
+            atlantic = Array(rows).fill().map(() => Array(cols).fill(false));
+            
+            for (let i = 0; i < rows; i++) {
+                heights[i] = [];
+                for (let j = 0; j < cols; j++) {
+                    const height = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+                    heights[i][j] = height;
+                    
+                    // Create cell for height matrix
+                    const heightCell = document.createElement('div');
+                    heightCell.className = 'cell';
+                    heightCell.id = `height-cell-${i}-${j}`;
+                    heightCell.textContent = height;
+                    heightMatrix.appendChild(heightCell);
+                    
+                    // Create cell for flow matrix
+                    const flowCell = document.createElement('div');
+                    flowCell.className = 'cell';
+                    flowCell.id = `flow-cell-${i}-${j}`;
+                    flowMatrix.appendChild(flowCell);
+                }
+            }
+        }
+
+        function applyInputs() {
+            const sizeInput = document.getElementById('sizeInput').value;
+            const heightInput = document.getElementById('heightInput').value;
+            
+            try {
+                const [rows, cols] = sizeInput.split(',').map(Number);
+                const [minHeight, maxHeight] = heightInput.split(',').map(Number);
+                
+                if (isNaN(rows) || isNaN(cols) || rows <= 0 || cols <= 0) {
+                    throw new Error('Please enter valid matrix dimensions');
+                }
+                
+                if (isNaN(minHeight) || isNaN(maxHeight) || minHeight < 0 || maxHeight < minHeight) {
+                    throw new Error('Please enter valid height range');
+                }
+                
+                createMatrix(rows, cols, minHeight, maxHeight);
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function dfs(matrix, visited, i, j, ocean) {
+            const m = matrix.length;
+            const n = matrix[0].length;
+            visited[i][j] = true;
+            
+            steps.push({
+                type: 'visit',
+                description: `Visiting cell (${i},${j}) from ${ocean} ocean`,
+                i,
+                j,
+                ocean,
+                matrix: JSON.parse(JSON.stringify(matrix)),
+                visited: JSON.parse(JSON.stringify(visited)),
+                codeLine: 28
+            });
+            
+            const directions = [[0,1], [1,0], [0,-1], [-1,0]];
+            for (const [di, dj] of directions) {
+                const ni = i + di;
+                const nj = j + dj;
+                
+                if (ni >= 0 && ni < m && nj >= 0 && nj < n) {
+                    if (!visited[ni][nj] && matrix[ni][nj] >= matrix[i][j]) {
+                        dfs(matrix, visited, ni, nj, ocean);
+                    }
+                }
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = heights.length;
+            const n = heights[0].length;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial matrix state',
+                matrix: JSON.parse(JSON.stringify(heights)),
+                visited: JSON.parse(JSON.stringify(pacific)),
+                codeLine: 2
+            });
+            
+            // DFS from Pacific Ocean
+            for (let i = 0; i < m; i++) {
+                dfs(heights, pacific, i, 0, 'Pacific');
+            }
+            for (let j = 0; j < n; j++) {
+                dfs(heights, pacific, 0, j, 'Pacific');
+            }
+            
+            // DFS from Atlantic Ocean
+            for (let i = 0; i < m; i++) {
+                dfs(heights, atlantic, i, n-1, 'Atlantic');
+            }
+            for (let j = 0; j < n; j++) {
+                dfs(heights, atlantic, m-1, j, 'Atlantic');
+            }
+            
+            // Find cells that can reach both oceans
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (pacific[i][j] && atlantic[i][j]) {
+                        steps.push({
+                            type: 'result',
+                            description: `Cell (${i},${j}) can reach both oceans`,
+                            i,
+                            j,
+                            matrix: JSON.parse(JSON.stringify(heights)),
+                            visited: JSON.parse(JSON.stringify(pacific)),
+                            codeLine: 23
+                        });
+                    }
+                }
+            }
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = cell.className.replace(' current', '').replace(' visited', '')
+                    .replace(' pacific', '').replace(' atlantic', '').replace(' both', '');
+            });
+            
+            // Update matrix visualization
+            const m = heights.length;
+            const n = heights[0].length;
+            
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const heightCell = document.getElementById(`height-cell-${i}-${j}`);
+                    const flowCell = document.getElementById(`flow-cell-${i}-${j}`);
+                    
+                    heightCell.textContent = step.matrix[i][j];
+                    
+                    if (step.type === 'visit' && i === step.i && j === step.j) {
+                        flowCell.className = 'cell current';
+                    } else if (step.visited[i][j]) {
+                        if (step.ocean === 'Pacific') {
+                            flowCell.className = 'cell pacific';
+                        } else {
+                            flowCell.className = 'cell atlantic';
+                        }
+                    }
+                    
+                    if (step.type === 'result' && i === step.i && j === step.j) {
+                        flowCell.className = 'cell both';
+                    }
+                }
+            }
+            
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

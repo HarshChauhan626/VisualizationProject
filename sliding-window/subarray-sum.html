@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Max Sum of Subarray Size K</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs"></script>
+  <style>
+    body {
+      background-color: #0f1729;
+      color: #e2e8f0;
+    }
+    .array-element {
+      transition: all 0.3s ease-in-out;
+      background-color: #1e293b;
+      border: 2px solid #3b82f6;
+      color: #e2e8f0;
+    }
+    .window-element {
+      background-color: #059669;
+      color: white;
+    }
+    .max-window {
+      background-color: #ea580c;
+      color: white;
+    }
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #2d3748;
+    }
+    pre {
+      background-color: #0f172a !important;
+      border: 1px solid #2d3748;
+      color: #e2e8f0;
+    }
+    input, select {
+      background-color: #1e293b !important;
+      border-color: #3b82f6 !important;
+      color: #e2e8f0 !important;
+    }
+    input::placeholder {
+      color: #64748b !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen p-8" x-data="subarrayApp()">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6 text-blue-400">Max Sum of Subarray Size K</h1>
+
+    <!-- Problem Statement -->
+    <div class="card p-6 rounded-lg shadow-lg mb-6">
+      <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+      <p class="text-gray-300">Given an array of integers and a number K, find the maximum sum of any contiguous subarray of size K.</p>
+    </div>
+
+    <!-- Input -->
+    <div class="card p-6 rounded-lg shadow-lg mb-6">
+      <label class="block mb-2 text-gray-300">Enter Array (comma separated):</label>
+      <input x-model="inputArray" class="w-full p-2 border rounded mb-2" placeholder="e.g., 2,1,5,1,3,2">
+
+      <label class="block mb-2 text-gray-300">Enter K:</label>
+      <input type="number" x-model.number="k" class="w-full p-2 border rounded mb-2">
+
+      <button @click="initialize" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Initialize</button>
+    </div>
+
+    <!-- Visualization Controls -->
+    <div class="card p-6 rounded-lg shadow-lg mb-6">
+      <div class="flex gap-4 mb-4">
+        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" @click="play">Play</button>
+        <button class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700" @click="pause">Pause</button>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" @click="prevStep">Prev</button>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" @click="nextStep">Next</button>
+        <div class="flex items-center space-x-2">
+          <select x-model="mode" @change="initialize" class="border p-2 rounded">
+            <option>Optimized</option>
+            <option>Brute-force</option>
+            <option>Deque</option>
+          </select>
+          <span class="text-sm text-gray-300">(Current: <b x-text="mode"></b>)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Array Visualization -->
+    <div class="card p-6 rounded-lg shadow-lg mb-6">
+      <div class="flex space-x-2 justify-center mb-4">
+        <template x-for="(val, index) in array" :key="index">
+          <div :class="highlightClass(index)" class="w-12 h-12 flex items-center justify-center border text-lg font-semibold rounded">
+            <span x-text="val"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Deque Visualization -->
+    <template x-if="mode === 'Deque'">
+      <div class="card p-6 rounded-lg shadow-lg mb-6">
+        <h2 class="text-xl font-semibold mb-4 text-blue-400">Deque Visualization</h2>
+        <div class="flex space-x-2 justify-center">
+          <template x-for="i in dequeState">
+            <div class="w-12 h-12 flex items-center justify-center border-2 border-blue-500 bg-blue-900 rounded">
+              <span x-text="array[i]"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- Explanation & Pseudocode -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="card p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-blue-400">Explanation</h2>
+        <p x-text="explanation" class="text-gray-300"></p>
+      </div>
+      <div class="card p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudocode (<span x-text="mode"></span>)</h2>
+        <pre class="text-sm whitespace-pre-wrap text-gray-300">
+<span x-show="mode === 'Brute-force'">
+// Iterate over the array
+for i from 0 to length - K:
+  sum = 0
+  for j from 0 to K-1:
+    sum += arr[i + j]  // Add each element in subarray of size K
+  maxSum = max(maxSum, sum)  // Update max sum
+</span>
+
+<span x-show="mode === 'Optimized'">
+// Initialize sum of first K elements
+windowSum = sum of first K elements
+maxSum = windowSum
+
+// Slide the window
+for i from K to length - 1:
+  windowSum += arr[i] - arr[i - K]  // Add next, remove first of previous window
+  maxSum = max(maxSum, windowSum)
+</span>
+
+<span x-show="mode === 'Deque'">
+// Use Deque to maintain elements of current window
+Initialize deque, windowSum = 0
+
+for i in 0 to length-1:
+  Add arr[i] to windowSum
+  Add i to deque
+
+  if deque.size > K:
+    Subtract arr[deque.front()] from windowSum
+    Remove front element from deque
+
+  if deque.size == K:
+    Update maxSum
+</span>
+        </pre>
+      </div>
+    </div>
+
+    <!-- Test Cases -->
+    <div class="card p-6 mt-4 rounded-lg shadow-lg">
+      <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+      <ul class="list-disc ml-6 text-gray-300">
+        <li>Input: [2,1,5,1,3,2], K = 3 → Output: 9</li>
+        <li>Input: [1,9,-1,-2,7,3,-1,2], K = 4 → Output: 17</li>
+        <li>Input: [5], K = 1 → Output: 5</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function subarrayApp() {
+      return {
+        inputArray: '',
+        k: 3,
+        array: [2, 1, 5, 1, 3, 2],
+        mode: 'Optimized',
+        step: 0,
+        explanation: '',
+        timer: null,
+        states: [],
+        dequeState: [],
+
+        initialize() {
+          this.array = this.inputArray ? this.inputArray.split(',').map(Number) : [2, 1, 5, 1, 3, 2];
+          this.step = 0;
+          this.generateStates();
+          this.setExplanation();
+        },
+
+        generateStates() {
+          this.states = [];
+          this.dequeState = [];
+          let arr = this.array, k = this.k;
+
+          if (this.mode === 'Brute-force') {
+            let maxSum = -Infinity;
+            for (let i = 0; i <= arr.length - k; i++) {
+              let sum = 0;
+              for (let j = 0; j < k; j++) {
+                sum += arr[i + j];
+              }
+              maxSum = Math.max(maxSum, sum);
+              this.states.push({ window: [i, i + k - 1], sum });
+            }
+          } else if (this.mode === 'Optimized') {
+            let sum = 0;
+            for (let i = 0; i < k; i++) sum += arr[i];
+            let maxSum = sum;
+            this.states.push({ window: [0, k - 1], sum });
+
+            for (let i = k; i < arr.length; i++) {
+              sum = sum + arr[i] - arr[i - k];
+              maxSum = Math.max(maxSum, sum);
+              this.states.push({ window: [i - k + 1, i], sum });
+            }
+          } else if (this.mode === 'Deque') {
+            let deque = [];
+            let sum = 0;
+            let maxSum = -Infinity;
+            for (let i = 0; i < arr.length; i++) {
+              sum += arr[i];
+              deque.push(i);
+
+              if (deque.length > k) {
+                sum -= arr[deque.shift()];
+              }
+
+              if (deque.length === k) {
+                maxSum = Math.max(maxSum, sum);
+                this.states.push({ window: [deque[0], deque[deque.length - 1]], sum, deque: [...deque] });
+              } else {
+                this.states.push({ window: [deque[0], deque[deque.length - 1]], sum, deque: [...deque] });
+              }
+            }
+          }
+          this.updateDeque();
+        },
+
+        updateDeque() {
+          if (this.mode === 'Deque') {
+            this.dequeState = this.states[this.step]?.deque || [];
+          }
+        },
+
+        highlightClass(index) {
+          let [start, end] = this.states[this.step]?.window || [];
+          return index >= start && index <= end ? 'bg-yellow-300 border-yellow-500' : 'bg-white border-gray-300';
+        },
+
+        setExplanation() {
+          const current = this.states[this.step];
+          if (!current) return;
+          const [start, end] = current.window;
+          this.explanation = `Considering subarray from index ${start} to ${end}. Sum = ${current.sum}`;
+          this.updateDeque();
+        },
+
+        play() {
+          if (this.timer) return;
+          this.timer = setInterval(() => {
+            if (this.step < this.states.length - 1) {
+              this.step++;
+              this.setExplanation();
+            } else {
+              clearInterval(this.timer);
+              this.timer = null;
+            }
+          }, 1000);
+        },
+
+        pause() {
+          clearInterval(this.timer);
+          this.timer = null;
+        },
+
+        nextStep() {
+          if (this.step < this.states.length - 1) {
+            this.step++;
+            this.setExplanation();
+          }
+        },
+
+        prevStep() {
+          if (this.step > 0) {
+            this.step--;
+            this.setExplanation();
+          }
+        },
+      }
+    }
+  </script>
+</body>
+
+</html>

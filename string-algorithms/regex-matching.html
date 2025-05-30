@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regular Expression Matching Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .dp-cell {
+            transition: all 0.3s ease-in-out;
+            border: 1px solid #2d3748;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+        }
+        .dp-cell.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .dp-cell.true {
+            background-color: #22c55e;
+        }
+        .dp-cell.false {
+            background-color: #ef4444;
+        }
+        .char-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Regular Expression Matching</h1>
+        <p class="text-gray-300 mb-8">Visualize how regular expression pattern matching works using dynamic programming, including special characters * and .</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Text String</label>
+                            <input type="text" id="textInput" value="aab" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Pattern</label>
+                            <input type="text" id="patternInput" value="c*a*b" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="startVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start Matching
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- DP Table Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Dynamic Programming Table</h3>
+                    <div class="overflow-x-auto">
+                        <div id="dpTable" class="inline-block"></div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function isMatch(text, pattern):</span>
+<span class="code-line" data-line="2">    m = text.length, n = pattern.length</span>
+<span class="code-line" data-line="3">    dp[m+1][n+1] = false</span>
+<span class="code-line" data-line="4">    dp[0][0] = true</span>
+<span class="code-line" data-line="5">    for j = 1 to n:</span>
+<span class="code-line" data-line="6">        if pattern[j-1] == '*':</span>
+<span class="code-line" data-line="7">            dp[0][j] = dp[0][j-2]</span>
+<span class="code-line" data-line="8">    for i = 1 to m:</span>
+<span class="code-line" data-line="9">        for j = 1 to n:</span>
+<span class="code-line" data-line="10">            if pattern[j-1] == '*':</span>
+<span class="code-line" data-line="11">                dp[i][j] = dp[i][j-2] or</span>
+<span class="code-line" data-line="12">                    (dp[i-1][j] and (text[i-1] == pattern[j-2] or pattern[j-2] == '.'))</span>
+<span class="code-line" data-line="13">            else:</span>
+<span class="code-line" data-line="14">                dp[i][j] = dp[i-1][j-1] and</span>
+<span class="code-line" data-line="15">                    (text[i-1] == pattern[j-1] or pattern[j-1] == '.')</span>
+<span class="code-line" data-line="16">    return dp[m][n]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(mn) where m is text length and n is pattern length</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(mn) for the DP table</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Special Characters</h3>
+                            <p class="text-gray-300">
+                                - . (dot): Matches any single character<br>
+                                - * (star): Matches zero or more occurrences of the preceding character
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dpTable = [];
+        let text = '';
+        let pattern = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createDPTable() {
+            const container = document.getElementById('dpTable');
+            container.innerHTML = '';
+
+            // Create header row for pattern
+            const headerRow = document.createElement('div');
+            headerRow.className = 'flex';
+            headerRow.appendChild(createCell(''));  // Empty corner cell
+            
+            // Pattern characters
+            for (let j = 0; j <= pattern.length; j++) {
+                headerRow.appendChild(createCell(j === 0 ? 'ε' : pattern[j-1]));
+            }
+            container.appendChild(headerRow);
+
+            // Create rows for text
+            for (let i = 0; i <= text.length; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex';
+                
+                // Text character
+                row.appendChild(createCell(i === 0 ? 'ε' : text[i-1]));
+                
+                // DP cells
+                for (let j = 0; j <= pattern.length; j++) {
+                    const cell = createCell('F');
+                    cell.classList.add('dp-cell');
+                    cell.id = `dp-${i}-${j}`;
+                    row.appendChild(cell);
+                }
+                container.appendChild(row);
+            }
+        }
+
+        function createCell(content) {
+            const cell = document.createElement('div');
+            cell.className = 'char-cell';
+            cell.textContent = content;
+            return cell;
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = text.length;
+            const n = pattern.length;
+            dpTable = Array(m + 1).fill().map(() => Array(n + 1).fill(false));
+
+            // Base case
+            steps.push({
+                i: 0,
+                j: 0,
+                value: true,
+                description: 'Initialize dp[0][0] = true (empty pattern matches empty string)',
+                codeLine: 4
+            });
+            dpTable[0][0] = true;
+
+            // Handle patterns with *
+            for (let j = 2; j <= n; j++) {
+                if (pattern[j-1] === '*') {
+                    dpTable[0][j] = dpTable[0][j-2];
+                    steps.push({
+                        i: 0,
+                        j: j,
+                        value: dpTable[0][j],
+                        description: `Check if empty string matches pattern ending with *: dp[0][${j}] = dp[0][${j-2}]`,
+                        codeLine: 7
+                    });
+                }
+            }
+
+            // Fill the table
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (pattern[j-1] === '*') {
+                        const noMatch = dpTable[i][j-2];
+                        const match = dpTable[i-1][j] && 
+                            (text[i-1] === pattern[j-2] || pattern[j-2] === '.');
+                        
+                        steps.push({
+                            i: i,
+                            j: j,
+                            value: noMatch || match,
+                            description: `Checking * at position ${j}: Using previous pattern (${noMatch}) or matching current character (${match})`,
+                            codeLine: 11
+                        });
+                        dpTable[i][j] = noMatch || match;
+                    } else {
+                        const match = text[i-1] === pattern[j-1] || pattern[j-1] === '.';
+                        dpTable[i][j] = match && dpTable[i-1][j-1];
+                        
+                        steps.push({
+                            i: i,
+                            j: j,
+                            value: dpTable[i][j],
+                            description: `Comparing '${text[i-1]}' with '${pattern[j-1]}': ${match ? 'Characters match' : 'Characters do not match'}`,
+                            codeLine: 14
+                        });
+                    }
+                }
+            }
+
+            // Add final result step
+            steps.push({
+                i: m,
+                j: n,
+                value: dpTable[m][n],
+                description: `Final result: Pattern ${dpTable[m][n] ? 'matches' : 'does not match'} the text`,
+                codeLine: 16
+            });
+        }
+
+        function startVisualization() {
+            text = document.getElementById('textInput').value;
+            pattern = document.getElementById('patternInput').value;
+            
+            if (!text || !pattern) {
+                alert('Please enter both text and pattern');
+                return;
+            }
+
+            createDPTable();
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            highlightCodeLine(1);
+            createDPTable();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            const cells = document.querySelectorAll('.dp-cell');
+            cells.forEach(cell => {
+                cell.classList.remove('active', 'true', 'false');
+            });
+
+            // Update current cell
+            const cell = document.getElementById(`dp-${step.i}-${step.j}`);
+            cell.textContent = step.value ? 'T' : 'F';
+            cell.classList.add('active');
+            cell.classList.add(step.value ? 'true' : 'false');
+
+            // Update description and highlight code
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            createDPTable();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monotone Increasing Digits</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .digit {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 24px;
+            position: relative;
+        }
+        .digit.current {
+            background-color: #eab308;
+        }
+        .digit.marker {
+            background-color: #ef4444;
+        }
+        .digit.nines {
+            background-color: #8b5cf6;
+        }
+        .digit.decremented {
+            background-color: #22c55e;
+        }
+        .digit-position {
+            position: absolute;
+            top: -20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .number-visualization {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Monotone Increasing Digits</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the largest number less than or equal to N such that all digits are in non-decreasing order.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input Number</label>
+                            <input type="number" id="numberInput" value="332" min="1" max="999999999"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter a positive integer">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Input
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Digit Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Number Visualization</h3>
+                    <div id="numberDisplay" class="number-visualization"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Result: </p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function monotoneIncreasingDigits(n):</span>
+<span class="code-line" data-line="2">    # Convert number to array of digits</span>
+<span class="code-line" data-line="3">    digits = str(n).split('')</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    # Find the first digit that violates monotonicity</span>
+<span class="code-line" data-line="6">    marker = digits.length  # No violation by default</span>
+<span class="code-line" data-line="7">    </span>
+<span class="code-line" data-line="8">    for i from digits.length-2 down to 0:</span>
+<span class="code-line" data-line="9">        if digits[i] > digits[i+1]:</span>
+<span class="code-line" data-line="10">            digits[i] = digits[i] - 1  # Decrement the digit</span>
+<span class="code-line" data-line="11">            marker = i + 1</span>
+<span class="code-line" data-line="12">    </span>
+<span class="code-line" data-line="13">    # Replace all digits after marker with 9</span>
+<span class="code-line" data-line="14">    for i from marker to digits.length-1:</span>
+<span class="code-line" data-line="15">        digits[i] = 9</span>
+<span class="code-line" data-line="16">    </span>
+<span class="code-line" data-line="17">    # Convert back to integer</span>
+<span class="code-line" data-line="18">    return parseInt(digits.join(''))</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given a non-negative integer N, find the largest number that is less than or equal to N 
+                                with monotone increasing digits. A number has monotone increasing digits if and only if 
+                                each pair of adjacent digits x and y satisfy x ≤ y.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(d) where d is the number of digits in the input number</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(d) for storing the digit array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The greedy algorithm works by:
+                                <br>1. Processing the number from right to left (least to most significant digit)
+                                <br>2. When we find a digit that's larger than the one to its right:
+                                <br>&nbsp;&nbsp;&nbsp;- Decrement that digit by 1
+                                <br>&nbsp;&nbsp;&nbsp;- Set all digits to the right to 9
+                                <br>3. This ensures the result is always monotone increasing
+                                <br><br>For example, with input 332:
+                                <br>- Looking at "32", the 3 > 2, so we decrement 3 to 2
+                                <br>- Then we set all digits after that position to 9
+                                <br>- Result: 329
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inputNumber = 0;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createDigitElement(digit, position, className = '') {
+            const digitDiv = document.createElement('div');
+            digitDiv.className = `digit ${className}`;
+            digitDiv.textContent = digit;
+            
+            const positionSpan = document.createElement('span');
+            positionSpan.className = 'digit-position';
+            positionSpan.textContent = position;
+            digitDiv.appendChild(positionSpan);
+            
+            return digitDiv;
+        }
+
+        function applyInputs() {
+            const numberInput = document.getElementById('numberInput').value;
+            try {
+                inputNumber = parseInt(numberInput);
+                
+                if (isNaN(inputNumber) || inputNumber <= 0) {
+                    throw new Error('Please enter a positive integer');
+                }
+                
+                createNumberVisualization(inputNumber);
+                generateSteps(inputNumber);
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function createNumberVisualization(number) {
+            const displayDiv = document.getElementById('numberDisplay');
+            displayDiv.innerHTML = '';
+            
+            const digits = number.toString().split('');
+            digits.forEach((digit, index) => {
+                displayDiv.appendChild(createDigitElement(digit, index));
+            });
+        }
+
+        function generateSteps(number) {
+            steps = [];
+            
+            const digits = number.toString().split('').map(Number);
+            
+            steps.push({
+                type: 'init',
+                description: `Initialize with input number ${number}`,
+                digits: [...digits],
+                marker: digits.length,
+                highlightIndices: [],
+                codeLine: 3
+            });
+            
+            steps.push({
+                type: 'marker_init',
+                description: `Set marker to ${digits.length} (no violation by default)`,
+                digits: [...digits],
+                marker: digits.length,
+                highlightIndices: [],
+                codeLine: 6
+            });
+            
+            // Find monotonicity violations from right to left
+            let marker = digits.length;
+            
+            for (let i = digits.length - 2; i >= 0; i--) {
+                steps.push({
+                    type: 'compare',
+                    description: `Comparing digit at position ${i} (${digits[i]}) with position ${i+1} (${digits[i+1]})`,
+                    digits: [...digits],
+                    marker: marker,
+                    highlightIndices: [i, i+1],
+                    currentIndex: i,
+                    codeLine: 9
+                });
+                
+                if (digits[i] > digits[i+1]) {
+                    // Decrement the digit
+                    const originalDigit = digits[i];
+                    digits[i]--;
+                    
+                    steps.push({
+                        type: 'decrement',
+                        description: `Digit at position ${i} (${originalDigit}) is greater than digit at position ${i+1} (${digits[i+1]}), decrementing to ${digits[i]}`,
+                        digits: [...digits],
+                        marker: marker,
+                        highlightIndices: [i],
+                        currentIndex: i,
+                        codeLine: 10
+                    });
+                    
+                    // Set marker
+                    marker = i + 1;
+                    
+                    steps.push({
+                        type: 'update_marker',
+                        description: `Set marker to position ${marker}`,
+                        digits: [...digits],
+                        marker: marker,
+                        highlightIndices: [],
+                        currentIndex: i,
+                        codeLine: 11
+                    });
+                }
+            }
+            
+            // Set digits after marker to 9
+            const beforeNines = [...digits];
+            for (let i = marker; i < digits.length; i++) {
+                digits[i] = 9;
+                
+                steps.push({
+                    type: 'set_nine',
+                    description: `Setting digit at position ${i} to 9`,
+                    digits: [...digits],
+                    marker: marker,
+                    highlightIndices: [i],
+                    nineIndices: Array.from({length: i - marker + 1}, (_, idx) => marker + idx),
+                    codeLine: 15
+                });
+            }
+            
+            // Final result
+            const result = parseInt(digits.join(''));
+            
+            steps.push({
+                type: 'result',
+                description: `Final result: ${result}`,
+                digits: [...digits],
+                marker: marker,
+                result: result,
+                highlightIndices: [],
+                nineIndices: marker < digits.length ? Array.from({length: digits.length - marker}, (_, idx) => marker + idx) : [],
+                codeLine: 18
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Update number visualization
+            const displayDiv = document.getElementById('numberDisplay');
+            displayDiv.innerHTML = '';
+            
+            step.digits.forEach((digit, index) => {
+                let className = '';
+                if (step.highlightIndices.includes(index)) {
+                    className = 'current';
+                }
+                if (step.marker === index) {
+                    className = 'marker';
+                }
+                if (step.nineIndices && step.nineIndices.includes(index)) {
+                    className = 'nines';
+                }
+                if (step.type === 'decrement' && index === step.currentIndex) {
+                    className = 'decremented';
+                }
+                
+                displayDiv.appendChild(createDigitElement(digit, index, className));
+            });
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'result') {
+                document.getElementById('result').textContent = `Result: ${step.result}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

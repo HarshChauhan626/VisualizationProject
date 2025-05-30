@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Distance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+        }
+        .char-element.current {
+            background-color: #eab308;
+        }
+        .char-element.match {
+            background-color: #22c55e;
+        }
+        .char-element.mismatch {
+            background-color: #ef4444;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .operation-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .dp-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #374151;
+            font-family: monospace;
+            transition: all 0.3s ease-in-out;
+        }
+        .dp-cell.current {
+            background-color: #eab308;
+        }
+        .dp-cell.processed {
+            background-color: #22c55e;
+        }
+        .dp-cell.min {
+            background-color: #3b82f6;
+        }
+        .arrow {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #eab308;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Edit Distance</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum number of operations (insert, delete, replace) needed to transform one string into another.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Source String</label>
+                            <input type="text" id="sourceInput" value="horse" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter source string">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Target String</label>
+                            <input type="text" id="targetInput" value="ros" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter target string">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyStrings()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Strings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- String Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Strings</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-sm font-medium mb-2">Source</h4>
+                            <div id="sourceContainer" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium mb-2">Target</h4>
+                            <div id="targetContainer" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">DP Table</h3>
+                    <div id="dpTable" class="overflow-auto"></div>
+                </div>
+
+                <!-- Operation Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Operation</h3>
+                    <div id="operationInfo" class="operation-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Minimum Operations: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function minDistance(word1, word2):</span>
+<span class="code-line" data-line="2">    m, n = len(word1), len(word2)</span>
+<span class="code-line" data-line="3">    dp = [[0] * (n+1) for _ in range(m+1)]</span>
+<span class="code-line" data-line="4">    for i in range(m+1):</span>
+<span class="code-line" data-line="5">        dp[i][0] = i</span>
+<span class="code-line" data-line="6">    for j in range(n+1):</span>
+<span class="code-line" data-line="7">        dp[0][j] = j</span>
+<span class="code-line" data-line="8">    for i in range(1, m+1):</span>
+<span class="code-line" data-line="9">        for j in range(1, n+1):</span>
+<span class="code-line" data-line="10">            if word1[i-1] == word2[j-1]:</span>
+<span class="code-line" data-line="11">                dp[i][j] = dp[i-1][j-1]</span>
+<span class="code-line" data-line="12">            else:</span>
+<span class="code-line" data-line="13">                dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])</span>
+<span class="code-line" data-line="14">    return dp[m][n]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m*n) where m and n are the lengths of the strings</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m*n) for the dp array, can be optimized to O(n)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Initialize dp[i][0] = i (delete all characters)
+                                <br>2. Initialize dp[0][j] = j (insert all characters)
+                                <br>3. For each cell dp[i][j]:
+                                <br>&nbsp;&nbsp;&nbsp;- If characters match: dp[i][j] = dp[i-1][j-1]
+                                <br>&nbsp;&nbsp;&nbsp;- If characters differ: take minimum of:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* dp[i-1][j] + 1 (delete)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* dp[i][j-1] + 1 (insert)
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* dp[i-1][j-1] + 1 (replace)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let source = '';
+        let target = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyStrings() {
+            const sourceInput = document.getElementById('sourceInput').value;
+            const targetInput = document.getElementById('targetInput').value;
+            try {
+                if (sourceInput.length === 0 || targetInput.length === 0) {
+                    throw new Error('Both strings must be non-empty');
+                }
+                source = sourceInput;
+                target = targetInput;
+                createStringElements();
+                createDPTable();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid strings');
+            }
+        }
+
+        function createStringElements() {
+            const sourceContainer = document.getElementById('sourceContainer');
+            const targetContainer = document.getElementById('targetContainer');
+            sourceContainer.innerHTML = '';
+            targetContainer.innerHTML = '';
+            
+            source.split('').forEach((char, index) => {
+                const element = document.createElement('div');
+                element.className = 'char-element';
+                element.id = `source-${index}`;
+                element.textContent = char;
+                sourceContainer.appendChild(element);
+            });
+            
+            target.split('').forEach((char, index) => {
+                const element = document.createElement('div');
+                element.className = 'char-element';
+                element.id = `target-${index}`;
+                element.textContent = char;
+                targetContainer.appendChild(element);
+            });
+        }
+
+        function createDPTable() {
+            const table = document.getElementById('dpTable');
+            table.innerHTML = '';
+            
+            const m = source.length;
+            const n = target.length;
+            
+            // Create table header
+            const headerRow = document.createElement('div');
+            headerRow.className = 'flex';
+            
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'dp-cell';
+            emptyCell.style.width = '50px';
+            headerRow.appendChild(emptyCell);
+            
+            // Add empty string
+            const emptyStrCell = document.createElement('div');
+            emptyStrCell.className = 'dp-cell';
+            emptyStrCell.textContent = 'ε';
+            headerRow.appendChild(emptyStrCell);
+            
+            for (let j = 0; j < n; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.textContent = target[j];
+                headerRow.appendChild(cell);
+            }
+            table.appendChild(headerRow);
+            
+            // Create table rows
+            // First row (empty string)
+            const firstRow = document.createElement('div');
+            firstRow.className = 'flex';
+            
+            const firstEmptyCell = document.createElement('div');
+            firstEmptyCell.className = 'dp-cell';
+            firstEmptyCell.textContent = 'ε';
+            firstRow.appendChild(firstEmptyCell);
+            
+            for (let j = 0; j <= n; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.id = `dp-0-${j}`;
+                cell.textContent = j;
+                firstRow.appendChild(cell);
+            }
+            table.appendChild(firstRow);
+            
+            // Remaining rows
+            for (let i = 1; i <= m; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex';
+                
+                const indexCell = document.createElement('div');
+                indexCell.className = 'dp-cell';
+                indexCell.textContent = source[i-1];
+                row.appendChild(indexCell);
+                
+                for (let j = 0; j <= n; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'dp-cell';
+                    cell.id = `dp-${i}-${j}`;
+                    if (j === 0) {
+                        cell.textContent = i;
+                    } else {
+                        cell.textContent = '0';
+                    }
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = source.length;
+            const n = target.length;
+            const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initializing DP table',
+                codeLine: 3
+            });
+            
+            // Initialize first row and column
+            for (let i = 0; i <= m; i++) {
+                dp[i][0] = i;
+                steps.push({
+                    type: 'init_row',
+                    i: i,
+                    j: 0,
+                    value: i,
+                    description: `Initialize dp[${i}][0] = ${i} (delete all characters)`,
+                    codeLine: 5
+                });
+            }
+            
+            for (let j = 1; j <= n; j++) {
+                dp[0][j] = j;
+                steps.push({
+                    type: 'init_col',
+                    i: 0,
+                    j: j,
+                    value: j,
+                    description: `Initialize dp[0][${j}] = ${j} (insert all characters)`,
+                    codeLine: 7
+                });
+            }
+            
+            // Fill DP table
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (source[i-1] === target[j-1]) {
+                        dp[i][j] = dp[i-1][j-1];
+                        steps.push({
+                            type: 'match',
+                            i: i,
+                            j: j,
+                            value: dp[i][j],
+                            description: `Characters match: ${source[i-1]} = ${target[j-1]}`,
+                            codeLine: 11
+                        });
+                    } else {
+                        const min = Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+                        dp[i][j] = min + 1;
+                        steps.push({
+                            type: 'mismatch',
+                            i: i,
+                            j: j,
+                            value: dp[i][j],
+                            min: min,
+                            description: `Characters differ: ${source[i-1]} ≠ ${target[j-1]}`,
+                            codeLine: 13
+                        });
+                    }
+                }
+            }
+            
+            steps.push({
+                type: 'complete',
+                value: dp[m][n],
+                description: `Minimum edit distance: ${dp[m][n]}`,
+                codeLine: 14
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Minimum Operations: 0';
+            document.getElementById('operationInfo').textContent = '';
+            highlightCodeLine(1);
+            createStringElements();
+            createDPTable();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const chars = document.querySelectorAll('.char-element');
+            const cells = document.querySelectorAll('.dp-cell');
+            chars.forEach(char => char.className = 'char-element');
+            cells.forEach(cell => cell.classList.remove('current', 'processed', 'min'));
+
+            // Update current characters
+            if (step.type === 'match' || step.type === 'mismatch') {
+                document.getElementById(`source-${step.i-1}`).classList.add('current');
+                document.getElementById(`target-${step.j-1}`).classList.add('current');
+            }
+
+            // Update DP table
+            const cell = document.getElementById(`dp-${step.i}-${step.j}`);
+            if (cell) {
+                cell.textContent = step.value;
+                cell.classList.add('current');
+                
+                if (step.type === 'mismatch') {
+                    // Highlight minimum value cells
+                    const left = document.getElementById(`dp-${step.i-1}-${step.j}`);
+                    const top = document.getElementById(`dp-${step.i}-${step.j-1}`);
+                    const diagonal = document.getElementById(`dp-${step.i-1}-${step.j-1}`);
+                    
+                    if (step.min === step.value - 1) {
+                        if (left && parseInt(left.textContent) === step.min) left.classList.add('min');
+                        if (top && parseInt(top.textContent) === step.min) top.classList.add('min');
+                        if (diagonal && parseInt(diagonal.textContent) === step.min) diagonal.classList.add('min');
+                    }
+                }
+            }
+
+            // Update operation info
+            let operationInfo = '';
+            if (step.type === 'match') {
+                operationInfo = `Characters match: ${source[step.i-1]} = ${target[step.j-1]}\nNo operation needed`;
+            } else if (step.type === 'mismatch') {
+                operationInfo = `Characters differ: ${source[step.i-1]} ≠ ${target[step.j-1]}\nMinimum operations: ${step.min} + 1`;
+            }
+
+            document.getElementById('operationInfo').textContent = operationInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Minimum Operations: ${step.value}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyStrings();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

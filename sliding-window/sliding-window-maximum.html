@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sliding Window Maximum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .array-element {
+            transition: all 0.3s ease-in-out;
+        }
+        .window-element {
+            background-color: #4ade80;
+        }
+        .deque-element {
+            background-color: #60a5fa;
+        }
+        .max-element {
+            background-color: #fb923c;
+            font-weight: bold;
+        }
+        .result-element {
+            background-color: #a78bfa;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Sliding Window Maximum</h1>
+        
+        <!-- Problem Statement -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Problem Statement</h2>
+            <p class="text-gray-700">
+                You are given an array of integers nums, there is a sliding window of size k which is moving from the very left of the array to the very right. 
+                You can only see the k numbers in the window. Each time the sliding window moves right by one position.<br><br>
+                Return the array of maximum elements from each sliding window position.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">Array (comma-separated numbers)</label>
+                    <input type="text" id="inputArray" placeholder="Enter array" 
+                        class="border p-2 rounded w-full" value="1,3,-1,-3,5,3,6,7">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">Window Size (k)</label>
+                    <input type="number" id="inputK" placeholder="Enter k" 
+                        class="border p-2 rounded w-full" value="3">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Input Array:</h3>
+                <div id="arrayVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Monotonic Deque (Indices):</h3>
+                <div id="dequeVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Result Array:</h3>
+                <div id="resultVisualization" class="flex flex-wrap gap-2">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-700 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Pseudo Code</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Using Monotonic Deque</h3>
+                    <pre class="bg-gray-100 p-4 rounded">
+// Time Complexity: O(n), where n is length of array
+function maxSlidingWindow(nums, k):
+    if nums.length === 0 || k === 0:
+        return []
+        
+    result = []
+    deque = []  // stores indices
+    
+    // Process first k elements
+    for i from 0 to k-1:
+        // Remove smaller elements from back
+        while deque.length > 0 and nums[i] >= nums[deque[deque.length-1]]:
+            deque.pop()
+        deque.push(i)
+    
+    // Process rest of the elements
+    for i from k to nums.length-1:
+        // Add maximum of previous window
+        result.push(nums[deque[0]])
+        
+        // Remove elements outside current window
+        while deque.length > 0 and deque[0] <= i-k:
+            deque.shift()
+            
+        // Remove smaller elements from back
+        while deque.length > 0 and nums[i] >= nums[deque[deque.length-1]]:
+            deque.pop()
+            
+        deque.push(i)
+    
+    // Add maximum of last window
+    result.push(nums[deque[0]])
+    
+    return result</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 1:</p>
+                    <p>Input: nums = [1,3,-1,-3,5,3,6,7], k = 3</p>
+                    <p>Output: [3,3,5,5,6,7]</p>
+                    <p>Explanation:<br>
+                        Window position &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Max<br>
+                        [1 3 -1] -3 5 3 6 7 &nbsp; &nbsp; &nbsp; 3<br>
+                        1 [3 -1 -3] 5 3 6 7 &nbsp; &nbsp; &nbsp; 3<br>
+                        1 3 [-1 -3 5] 3 6 7 &nbsp; &nbsp; &nbsp; 5<br>
+                        1 3 -1 [-3 5 3] 6 7 &nbsp; &nbsp; &nbsp; 5<br>
+                        1 3 -1 -3 [5 3 6] 7 &nbsp; &nbsp; &nbsp; 6<br>
+                        1 3 -1 -3 5 [3 6 7] &nbsp; &nbsp; &nbsp; 7</p>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 2:</p>
+                    <p>Input: nums = [1], k = 1</p>
+                    <p>Output: [1]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let k = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            const input = document.getElementById('inputArray').value;
+            nums = input.split(',').map(x => parseInt(x.trim()));
+            k = parseInt(document.getElementById('inputK').value);
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            if (nums.length === 0 || k === 0) {
+                steps.push({
+                    explanation: "Empty array or k=0, returning empty result",
+                    result: []
+                });
+                return;
+            }
+
+            const result = [];
+            const deque = [];  // stores indices
+            
+            steps.push({
+                explanation: "Initialized empty deque and result array",
+                deque: [],
+                result: []
+            });
+
+            // Process first k elements
+            for (let i = 0; i < k; i++) {
+                // Remove smaller elements from back
+                while (deque.length > 0 && nums[i] >= nums[deque[deque.length - 1]]) {
+                    const removed = deque.pop();
+                    steps.push({
+                        i,
+                        deque: [...deque],
+                        result: [...result],
+                        explanation: `Removed index ${removed} from deque as ${nums[i]} >= ${nums[removed]}`
+                    });
+                }
+                
+                deque.push(i);
+                steps.push({
+                    i,
+                    deque: [...deque],
+                    result: [...result],
+                    explanation: `Added index ${i} to deque`
+                });
+            }
+
+            // Process rest of the elements
+            for (let i = k; i < nums.length; i++) {
+                // Add maximum of previous window
+                result.push(nums[deque[0]]);
+                steps.push({
+                    i,
+                    deque: [...deque],
+                    result: [...result],
+                    explanation: `Added maximum ${nums[deque[0]]} from previous window to result`
+                });
+
+                // Remove elements outside current window
+                while (deque.length > 0 && deque[0] <= i - k) {
+                    const removed = deque.shift();
+                    steps.push({
+                        i,
+                        deque: [...deque],
+                        result: [...result],
+                        explanation: `Removed index ${removed} from deque as it's outside current window`
+                    });
+                }
+
+                // Remove smaller elements from back
+                while (deque.length > 0 && nums[i] >= nums[deque[deque.length - 1]]) {
+                    const removed = deque.pop();
+                    steps.push({
+                        i,
+                        deque: [...deque],
+                        result: [...result],
+                        explanation: `Removed index ${removed} from deque as ${nums[i]} >= ${nums[removed]}`
+                    });
+                }
+
+                deque.push(i);
+                steps.push({
+                    i,
+                    deque: [...deque],
+                    result: [...result],
+                    explanation: `Added index ${i} to deque`
+                });
+            }
+
+            // Add maximum of last window
+            result.push(nums[deque[0]]);
+            steps.push({
+                deque: [...deque],
+                result: [...result],
+                explanation: `Added maximum ${nums[deque[0]]} from last window to result`
+            });
+
+            steps.push({
+                result: [...result],
+                explanation: `Final result: [${result.join(', ')}]`
+            });
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const dequeDiv = document.getElementById('dequeVisualization');
+            const resultDiv = document.getElementById('resultVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            arrayDiv.innerHTML = '';
+            dequeDiv.innerHTML = '';
+            resultDiv.innerHTML = '';
+            
+            // Create array visualization
+            for (let i = 0; i < nums.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.i !== undefined) {
+                    // Highlight current window
+                    if (i >= Math.max(0, step.i - k + 1) && i <= step.i) {
+                        element.classList.add('window-element');
+                    }
+                    
+                    // Highlight maximum in current window
+                    if (step.deque && step.deque.length > 0 && i === step.deque[0]) {
+                        element.classList.add('max-element');
+                    }
+                }
+                
+                element.textContent = nums[i];
+                arrayDiv.appendChild(element);
+            }
+            
+            // Create deque visualization
+            if (step.deque) {
+                for (let index of step.deque) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element deque-element w-24 h-12 flex items-center justify-center border rounded text-lg';
+                    element.textContent = `${index}(${nums[index]})`;
+                    dequeDiv.appendChild(element);
+                }
+            }
+            
+            // Create result visualization
+            if (step.result) {
+                for (let num of step.result) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element result-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                    element.textContent = num;
+                    resultDiv.appendChild(element);
+                }
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

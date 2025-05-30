@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partition Equal Subset Sum - Recursion + Memoization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .array-element {
+            width: 60px;
+            height: 60px;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e2e8f0;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .array-element.current {
+            background-color: #3b82f6;
+        }
+        .array-element.included {
+            background-color: #10b981;
+        }
+        .array-element.excluded {
+            background-color: #ef4444;
+            opacity: 0.6;
+        }
+        .set-container {
+            padding: 15px;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .set-title {
+            position: relative;
+            top: -25px;
+            background-color: #0f1729;
+            padding: 0 10px;
+            font-weight: bold;
+            color: #3b82f6;
+            display: inline-block;
+        }
+        .memo-table {
+            border-collapse: collapse;
+            margin: 20px auto;
+            width: 100%;
+        }
+        .memo-table td, .memo-table th {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            text-align: center;
+        }
+        .memo-table th {
+            background-color: #1e293b;
+        }
+        .highlight {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .sum-display {
+            padding: 10px;
+            margin-top: 10px;
+            background-color: #1e293b;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .tree-node {
+            fill: #1e293b;
+            stroke: #3b82f6;
+            stroke-width: 2;
+        }
+        .tree-node.current {
+            fill: #3b82f6;
+        }
+        .tree-node.success {
+            fill: #10b981;
+        }
+        .tree-node.failure {
+            fill: #ef4444;
+        }
+        .tree-link {
+            stroke: #3b82f6;
+            stroke-width: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../../index.html" class="text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Partition Equal Subset Sum</h1>
+        <p class="text-gray-400 mb-8">Visualize the recursion and memoization approach to determine if an array can be partitioned into two equal sum subsets.</p>
+
+        <!-- Input Section -->
+        <div class="mb-8 p-6 bg-gray-800 rounded-lg">
+            <div class="flex flex-wrap gap-4">
+                <div class="w-full md:w-2/3">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Array (comma-separated numbers)</label>
+                    <input type="text" id="arrayInput" value="1,5,11,5" 
+                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div class="w-full md:w-1/4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Animation Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="100" max="2000" value="500" step="100"
+                        class="w-full">
+                    <span id="speedValue" class="ml-2 text-gray-300">500ms</span>
+                </div>
+                <div class="w-full flex justify-end">
+                    <button onclick="initialize()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Initialize
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Array Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Array Elements</h2>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <!-- Subset Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Current Subsets</h2>
+                <div class="set-container">
+                    <div class="set-title">Subset 1</div>
+                    <div class="array-container" id="subset1Container"></div>
+                    <div class="sum-display" id="subset1Sum">Sum: 0</div>
+                </div>
+                <div class="set-container mt-8">
+                    <div class="set-title">Subset 2</div>
+                    <div class="array-container" id="subset2Container"></div>
+                    <div class="sum-display" id="subset2Sum">Sum: 0</div>
+                </div>
+            </div>
+
+            <!-- Memoization Table -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Memoization Table</h2>
+                <div class="overflow-x-auto">
+                    <p class="text-gray-400 mb-2">Key format: (index, targetSum)</p>
+                    <table class="memo-table" id="memoTable"></table>
+                </div>
+            </div>
+
+            <!-- Controls and Info -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Controls</h2>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="startAnimation()" id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Play
+                    </button>
+                    <button onclick="pauseAnimation()" id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 hidden">
+                        Pause
+                    </button>
+                    <button onclick="nextStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Next Step
+                    </button>
+                    <button onclick="prevStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Previous Step
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-300">Current Step: <span id="currentStep" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Total Steps: <span id="totalSteps" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Current Index: <span id="currentIndex" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Current Target: <span id="currentTarget" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Current Decision: <span id="currentDecision" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Result: <span id="resultSpan" class="font-bold">-</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 overflow-x-auto" id="pseudoCode">
+function canPartition(nums) {
+    const sum = nums.reduce((a, b) => a + b, 0);
+    
+    // If sum is odd, it can't be partitioned into equal subsets
+    if (sum % 2 !== 0) return false;
+    
+    const target = sum / 2;
+    const memo = {};
+    
+    function dfs(index, currentSum) {
+        // Base case: we've found a subset with the target sum
+        if (currentSum === target) return true;
+        
+        // Base case: we've gone beyond target or array bounds
+        if (currentSum > target || index >= nums.length) return false;
+        
+        // Check if we've already computed this state
+        const key = `${index},${currentSum}`;
+        if (key in memo) return memo[key];
+        
+        // Two choices: include current number or skip it
+        const include = dfs(index + 1, currentSum + nums[index]);
+        const exclude = dfs(index + 1, currentSum);
+        
+        // Store result in memo and return
+        memo[key] = include || exclude;
+        return memo[key];
+    }
+    
+    return dfs(0, 0);
+}</pre>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4 text-gray-300">
+                <p><strong>Problem Description:</strong> Given an array of numbers, determine if it can be partitioned into two subsets such that the sum of elements in both subsets is equal.</p>
+                <p><strong>Time Complexity:</strong> O(n * sum) with memoization, O(2^n) without memoization</p>
+                <p><strong>Space Complexity:</strong> O(n * sum) for memoization table</p>
+                <p><strong>How it works:</strong></p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>First, check if the total sum is odd - if so, it's impossible to partition equally</li>
+                    <li>Calculate the target sum (half of the total sum)</li>
+                    <li>Use a recursive approach to find a subset that sums to the target</li>
+                    <li>For each element, we have two choices: include it in subset 1 or exclude it (putting it in subset 2)</li>
+                    <li>Use memoization to avoid redundant calculations</li>
+                    <li>If we can find a subset that sums to target, then the remaining elements will also sum to target</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let steps = [];
+        let currentStepIndex = 0;
+        let animationInterval;
+        let memo = {};
+        let speed = 500;
+        let nums = [];
+        let target = 0;
+        let canPartitionResult = false;
+
+        function initialize() {
+            try {
+                nums = document.getElementById('arrayInput').value.split(',').map(x => parseInt(x.trim()));
+                
+                if (nums.length > 10) {
+                    alert('Please enter at most 10 numbers for better visualization');
+                    return;
+                }
+                
+                if (nums.some(isNaN)) {
+                    alert('Please enter valid numbers');
+                    return;
+                }
+                
+                // Reset state
+                steps = [];
+                currentStepIndex = 0;
+                memo = {};
+                
+                // Calculate sum and check if it's divisible by 2
+                const sum = nums.reduce((a, b) => a + b, 0);
+                if (sum % 2 !== 0) {
+                    document.getElementById('resultSpan').textContent = "False (Sum is odd)";
+                    document.getElementById('resultSpan').classList.add('text-red-500');
+                    alert('The sum of the array is odd, so it cannot be partitioned into equal subsets.');
+                    return;
+                }
+                
+                target = sum / 2;
+                
+                // Generate steps
+                generateSteps(nums, target);
+                
+                // Update UI
+                updateArrayVisualization();
+                updateSubsetVisualization();
+                updateMemoTable();
+                updateControls();
+                
+                document.getElementById('totalSteps').textContent = steps.length;
+                document.getElementById('resultSpan').textContent = canPartitionResult ? "True" : "False";
+                document.getElementById('resultSpan').className = canPartitionResult ? "font-bold text-green-500" : "font-bold text-red-500";
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred. Please check your input.');
+            }
+        }
+
+        function generateSteps(nums, target) {
+            function dfs(index, currentSum, included = []) {
+                // Base case: we've found a subset with the target sum
+                if (currentSum === target) {
+                    steps.push({
+                        type: 'success',
+                        index,
+                        currentSum,
+                        included: [...included],
+                        decision: 'Found a valid partition'
+                    });
+                    return true;
+                }
+                
+                // Base case: we've gone beyond target or array bounds
+                if (currentSum > target || index >= nums.length) {
+                    steps.push({
+                        type: 'failure',
+                        index,
+                        currentSum,
+                        included: [...included],
+                        decision: currentSum > target ? 'Sum exceeded target' : 'End of array'
+                    });
+                    return false;
+                }
+                
+                // Check if we've already computed this state
+                const key = `${index},${currentSum}`;
+                if (key in memo) {
+                    steps.push({
+                        type: 'memo',
+                        index,
+                        currentSum,
+                        included: [...included],
+                        decision: 'Using memoized result',
+                        result: memo[key]
+                    });
+                    return memo[key];
+                }
+                
+                // Current state
+                steps.push({
+                    type: 'process',
+                    index,
+                    currentSum,
+                    included: [...included],
+                    decision: 'Evaluating options'
+                });
+                
+                // Include current number
+                const includeOption = [...included, index];
+                steps.push({
+                    type: 'include',
+                    index,
+                    currentSum,
+                    included: [...included],
+                    decision: 'Including current element'
+                });
+                
+                const include = dfs(index + 1, currentSum + nums[index], includeOption);
+                
+                // If including gives true, we're done
+                if (include) {
+                    memo[key] = true;
+                    steps.push({
+                        type: 'result',
+                        index,
+                        currentSum,
+                        included: [...included],
+                        decision: 'Found valid path with inclusion',
+                        result: true
+                    });
+                    return true;
+                }
+                
+                // Exclude current number
+                steps.push({
+                    type: 'exclude',
+                    index,
+                    currentSum,
+                    included: [...included],
+                    decision: 'Excluding current element'
+                });
+                
+                const exclude = dfs(index + 1, currentSum, [...included]);
+                
+                // Store result in memo
+                memo[key] = include || exclude;
+                
+                steps.push({
+                    type: 'result',
+                    index,
+                    currentSum,
+                    included: [...included],
+                    decision: 'Returning final result',
+                    result: memo[key]
+                });
+                
+                return memo[key];
+            }
+            
+            canPartitionResult = dfs(0, 0);
+        }
+
+        function updateArrayVisualization() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            nums.forEach((num, i) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                element.textContent = num;
+                element.id = `element-${i}`;
+                
+                if (currentStep.index === i) {
+                    element.classList.add('current');
+                } else if (i < currentStep.index) {
+                    if (currentStep.included.includes(i)) {
+                        element.classList.add('included');
+                    } else {
+                        element.classList.add('excluded');
+                    }
+                }
+                
+                container.appendChild(element);
+            });
+        }
+
+        function updateSubsetVisualization() {
+            const subset1Container = document.getElementById('subset1Container');
+            const subset2Container = document.getElementById('subset2Container');
+            const subset1Sum = document.getElementById('subset1Sum');
+            const subset2Sum = document.getElementById('subset2Sum');
+            
+            subset1Container.innerHTML = '';
+            subset2Container.innerHTML = '';
+            
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            let sum1 = 0;
+            let sum2 = 0;
+            
+            nums.forEach((num, i) => {
+                if (i < currentStep.index) {
+                    if (currentStep.included.includes(i)) {
+                        const element = document.createElement('div');
+                        element.className = 'array-element included';
+                        element.textContent = num;
+                        subset1Container.appendChild(element);
+                        sum1 += num;
+                    } else {
+                        const element = document.createElement('div');
+                        element.className = 'array-element excluded';
+                        element.textContent = num;
+                        subset2Container.appendChild(element);
+                        sum2 += num;
+                    }
+                }
+            });
+            
+            subset1Sum.textContent = `Sum: ${sum1}`;
+            subset2Sum.textContent = `Sum: ${sum2}`;
+            
+            // Highlight which subset is getting closer to target
+            if (sum1 <= target) {
+                subset1Sum.style.color = '#10b981';
+            } else {
+                subset1Sum.style.color = '#ef4444';
+            }
+        }
+
+        function updateMemoTable() {
+            const table = document.getElementById('memoTable');
+            table.innerHTML = '';
+            
+            const keys = Object.keys(memo);
+            if (keys.length === 0) {
+                table.innerHTML = '<tr><td class="text-gray-400">Memoization values will appear here...</td></tr>';
+                return;
+            }
+            
+            // Create header row
+            const headerRow = table.insertRow();
+            headerRow.insertCell().textContent = 'Key (index, sum)';
+            headerRow.insertCell().textContent = 'Result';
+            
+            // Add data rows
+            keys.forEach(key => {
+                const row = table.insertRow();
+                row.id = `memo-row-${key.replace(',', '-')}`;
+                row.insertCell().textContent = key;
+                row.insertCell().textContent = memo[key] ? 'True' : 'False';
+                row.cells[1].style.color = memo[key] ? '#10b981' : '#ef4444';
+            });
+            
+            // Highlight current step in memo table if it's using memoization
+            const currentStep = steps[currentStepIndex];
+            if (currentStep && (currentStep.type === 'memo' || currentStep.type === 'result')) {
+                const key = `${currentStep.index},${currentStep.currentSum}`;
+                const row = document.getElementById(`memo-row-${currentStep.index}-${currentStep.currentSum}`);
+                if (row) {
+                    row.classList.add('highlight');
+                }
+            }
+        }
+
+        function updateControls() {
+            document.getElementById('currentStep').textContent = currentStepIndex;
+            
+            const currentStep = steps[currentStepIndex];
+            if (currentStep) {
+                document.getElementById('currentIndex').textContent = currentStep.index !== undefined ? currentStep.index : '-';
+                document.getElementById('currentTarget').textContent = currentStep.currentSum !== undefined ? `${currentStep.currentSum} / ${target}` : '-';
+                document.getElementById('currentDecision').textContent = currentStep.decision || '-';
+                
+                // Update pseudo code highlighting
+                updatePseudoCodeHighlight(currentStep);
+            }
+        }
+
+        function updatePseudoCodeHighlight(step) {
+            const code = document.getElementById('pseudoCode');
+            code.innerHTML = code.innerHTML.replace(/class="highlight"/g, '');
+            
+            const lines = code.textContent.split('\n');
+            let highlightLine = -1;
+            
+            switch(step.type) {
+                case 'success':
+                    highlightLine = 8; // if (currentSum === target) return true;
+                    break;
+                case 'failure':
+                    highlightLine = 11; // if (currentSum > target || index >= nums.length) return false;
+                    break;
+                case 'memo':
+                    highlightLine = 15; // if (key in memo) return memo[key];
+                    break;
+                case 'include':
+                    highlightLine = 18; // const include = dfs(index + 1, currentSum + nums[index]);
+                    break;
+                case 'exclude':
+                    highlightLine = 19; // const exclude = dfs(index + 1, currentSum);
+                    break;
+                case 'result':
+                    highlightLine = 22; // memo[key] = include || exclude;
+                    break;
+                case 'process':
+                    highlightLine = 17; // Two choices: include current number or skip it
+                    break;
+            }
+            
+            if (highlightLine !== -1) {
+                lines[highlightLine] = `<span class="highlight">${lines[highlightLine]}</span>`;
+                code.innerHTML = lines.join('\n');
+            }
+        }
+
+        function startAnimation() {
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    updateArrayVisualization();
+                    updateSubsetVisualization();
+                    updateMemoTable();
+                    updateControls();
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateArrayVisualization();
+                updateSubsetVisualization();
+                updateMemoTable();
+                updateControls();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateArrayVisualization();
+                updateSubsetVisualization();
+                updateMemoTable();
+                updateControls();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = `${speed}ms`;
+            if (animationInterval) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load with a small delay to ensure DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initialize, 100);
+        });
+    </script>
+</body>
+</html> 

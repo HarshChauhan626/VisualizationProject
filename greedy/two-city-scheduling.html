@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two City Scheduling</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .person {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 120px;
+            margin: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+            position: relative;
+        }
+        .person.current {
+            box-shadow: 0 0 0 3px #eab308;
+        }
+        .person.assigned-a {
+            background-color: #22c55e;
+        }
+        .person.assigned-b {
+            background-color: #8b5cf6;
+        }
+        .person-index {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .person-costs {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin-top: 8px;
+        }
+        .cost {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .cost.highlighted {
+            background-color: #eab308;
+            color: #000;
+            font-weight: bold;
+        }
+        .diff-label {
+            font-size: 14px;
+            margin-top: 5px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .cost-diff.positive {
+            color: #ef4444;
+        }
+        .cost-diff.negative {
+            color: #22c55e;
+        }
+        .people-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .city {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #1f2937;
+            margin: 10px;
+            padding: 20px 10px;
+            border-radius: 8px;
+            min-width: 250px;
+            position: relative;
+        }
+        .city-label {
+            position: absolute;
+            top: -15px;
+            background-color: #374151;
+            padding: 2px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .city-total {
+            position: absolute;
+            bottom: -15px;
+            right: 10px;
+            background-color: #374151;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .cities-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Two City Scheduling</h1>
+        <p class="text-gray-300 mb-8">Visualize how to minimize the total cost of flying 2n people to two cities (n to each city).</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">City A and B Costs (pairs as comma-separated values)</label>
+                            <input type="text" id="costsInput" value="10,20,30,200,400,50,30,20" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter costs as comma-separated values">
+                            <p class="text-xs text-gray-400 mt-1">For example: "10,20,30,200,400,50,30,20" for costs [[10,20],[30,200],[400,50],[30,20]]</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- People Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">People with Travel Costs</h3>
+                    <div id="peopleContainer" class="people-container"></div>
+                </div>
+
+                <!-- Cities Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">City Assignments</h3>
+                    <div class="cities-container">
+                        <div class="city" id="cityA">
+                            <div class="city-label">City A</div>
+                            <div id="cityAContainer" class="flex flex-wrap justify-center"></div>
+                            <div class="city-total" id="cityATotalCost">Total: $0</div>
+                        </div>
+                        <div class="city" id="cityB">
+                            <div class="city-label">City B</div>
+                            <div id="cityBContainer" class="flex flex-wrap justify-center"></div>
+                            <div class="city-total" id="cityBTotalCost">Total: $0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Minimum Total Cost: $0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function twoCitySchedCost(costs):</span>
+<span class="code-line" data-line="2">    n = costs.length / 2</span>
+<span class="code-line" data-line="3">    </span>
+<span class="code-line" data-line="4">    # Calculate the difference between A and B for each person</span>
+<span class="code-line" data-line="5">    # Sort people by difference (cost A - cost B)</span>
+<span class="code-line" data-line="6">    costs.sort((a, b) => (a[0] - a[1]) - (b[0] - b[1]))</span>
+<span class="code-line" data-line="7">    </span>
+<span class="code-line" data-line="8">    # First n people with lowest difference go to city A</span>
+<span class="code-line" data-line="9">    # Last n people with highest difference go to city B</span>
+<span class="code-line" data-line="10">    totalCost = 0</span>
+<span class="code-line" data-line="11">    </span>
+<span class="code-line" data-line="12">    # Send first n people to city A</span>
+<span class="code-line" data-line="13">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="14">        totalCost += costs[i][0]</span>
+<span class="code-line" data-line="15">    </span>
+<span class="code-line" data-line="16">    # Send last n people to city B</span>
+<span class="code-line" data-line="17">    for i = n to 2n-1:</span>
+<span class="code-line" data-line="18">        totalCost += costs[i][1]</span>
+<span class="code-line" data-line="19">    </span>
+<span class="code-line" data-line="20">    return totalCost</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                A company is planning to interview 2n people. Given the array costs where costs[i] = [aCost, bCost], 
+                                the cost of flying the i-th person to city A and city B, respectively.
+                                <br><br>
+                                Return the minimum cost to fly every person to a city such that exactly n people arrive in each city.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n log n) due to sorting, where n is the number of people</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) extra space (not counting input and output)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The greedy approach works by exploiting the difference between city costs:
+                                <br>1. For each person, calculate the difference between flying to city A versus city B
+                                <br>2. Sort all people based on this difference (costA - costB)
+                                <br>3. Send the first n people (with smallest difference) to city A
+                                <br>4. Send the remaining n people (with largest difference) to city B
+                                <br><br>
+                                This approach is optimal because:
+                                <br>- If costA - costB is very negative, it's much cheaper to send the person to A
+                                <br>- If costA - costB is very positive, it's much cheaper to send the person to B
+                                <br>- By prioritizing the most extreme differences, we minimize the overall cost
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let costs = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createPersonElement(personIndex, costA, costB, diff, className = '', highlightCity = null) {
+            const personDiv = document.createElement('div');
+            personDiv.className = `person ${className}`;
+            personDiv.id = `person-${personIndex}`;
+            
+            const indexSpan = document.createElement('span');
+            indexSpan.className = 'person-index';
+            indexSpan.textContent = personIndex;
+            personDiv.appendChild(indexSpan);
+            
+            const personName = document.createElement('div');
+            personName.textContent = `Person ${personIndex}`;
+            personName.className = 'font-semibold';
+            personDiv.appendChild(personName);
+            
+            const costsDiv = document.createElement('div');
+            costsDiv.className = 'person-costs';
+            
+            const costASpan = document.createElement('span');
+            costASpan.className = `cost ${highlightCity === 'A' ? 'highlighted' : ''}`;
+            costASpan.textContent = `A: $${costA}`;
+            costsDiv.appendChild(costASpan);
+            
+            const costBSpan = document.createElement('span');
+            costBSpan.className = `cost ${highlightCity === 'B' ? 'highlighted' : ''}`;
+            costBSpan.textContent = `B: $${costB}`;
+            costsDiv.appendChild(costBSpan);
+            
+            personDiv.appendChild(costsDiv);
+            
+            const diffSpan = document.createElement('span');
+            diffSpan.className = `diff-label`;
+            diffSpan.innerHTML = `Diff: <span class="cost-diff ${diff > 0 ? 'positive' : 'negative'}">${diff > 0 ? '+' : ''}${diff}</span>`;
+            personDiv.appendChild(diffSpan);
+            
+            return personDiv;
+        }
+
+        function applyInputs() {
+            const costsInput = document.getElementById('costsInput').value;
+            
+            try {
+                const values = costsInput.split(',').map(c => parseInt(c.trim()));
+                
+                if (values.length % 2 !== 0 || values.some(isNaN)) {
+                    throw new Error('Invalid costs input. Must provide an even number of values.');
+                }
+                
+                // Convert flat array to array of pairs
+                costs = [];
+                for (let i = 0; i < values.length; i += 2) {
+                    costs.push([values[i], values[i + 1]]);
+                }
+                
+                createPeopleVisualization();
+                clearCitiesVisualization();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid inputs: ' + error.message);
+            }
+        }
+
+        function createPeopleVisualization() {
+            const container = document.getElementById('peopleContainer');
+            container.innerHTML = '';
+            
+            costs.forEach((cost, index) => {
+                const diff = cost[0] - cost[1];
+                container.appendChild(createPersonElement(index, cost[0], cost[1], diff));
+            });
+        }
+
+        function clearCitiesVisualization() {
+            document.getElementById('cityAContainer').innerHTML = '';
+            document.getElementById('cityBContainer').innerHTML = '';
+            document.getElementById('cityATotalCost').textContent = 'Total: $0';
+            document.getElementById('cityBTotalCost').textContent = 'Total: $0';
+        }
+
+        function updateCityVisualization(cityA, cityB, totalCostA, totalCostB) {
+            const cityAContainer = document.getElementById('cityAContainer');
+            const cityBContainer = document.getElementById('cityBContainer');
+            
+            cityAContainer.innerHTML = '';
+            cityBContainer.innerHTML = '';
+            
+            cityA.forEach(person => {
+                const diff = costs[person.index][0] - costs[person.index][1];
+                cityAContainer.appendChild(createPersonElement(
+                    person.index, 
+                    costs[person.index][0], 
+                    costs[person.index][1], 
+                    diff,
+                    'assigned-a',
+                    'A'
+                ));
+            });
+            
+            cityB.forEach(person => {
+                const diff = costs[person.index][0] - costs[person.index][1];
+                cityBContainer.appendChild(createPersonElement(
+                    person.index, 
+                    costs[person.index][0], 
+                    costs[person.index][1], 
+                    diff,
+                    'assigned-b',
+                    'B'
+                ));
+            });
+            
+            document.getElementById('cityATotalCost').textContent = `Total: $${totalCostA}`;
+            document.getElementById('cityBTotalCost').textContent = `Total: $${totalCostB}`;
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial step
+            steps.push({
+                type: 'init',
+                description: 'Initialize with costs for each person',
+                costs: [...costs],
+                cityA: [],
+                cityB: [],
+                totalCostA: 0,
+                totalCostB: 0,
+                totalCost: 0,
+                highlightIndices: [],
+                codeLine: 1
+            });
+            
+            // Calculate differences and create processed costs
+            const processedCosts = costs.map((cost, index) => ({
+                index,
+                costA: cost[0],
+                costB: cost[1],
+                diff: cost[0] - cost[1]
+            }));
+            
+            steps.push({
+                type: 'calculate_diff',
+                description: 'Calculate difference between city A and B costs for each person',
+                costs: [...costs],
+                processed: [...processedCosts],
+                cityA: [],
+                cityB: [],
+                totalCostA: 0,
+                totalCostB: 0,
+                totalCost: 0,
+                highlightIndices: [],
+                codeLine: 5
+            });
+            
+            // Sort by difference
+            const sortedCosts = [...processedCosts].sort((a, b) => a.diff - b.diff);
+            
+            steps.push({
+                type: 'sort',
+                description: 'Sort people by difference in costs (cost A - cost B)',
+                costs: [...costs],
+                processed: [...sortedCosts],
+                cityA: [],
+                cityB: [],
+                totalCostA: 0,
+                totalCostB: 0,
+                totalCost: 0,
+                highlightIndices: [],
+                codeLine: 6
+            });
+            
+            // Assign first half to city A
+            const n = costs.length / 2;
+            let cityA = [];
+            let cityB = [];
+            let totalCostA = 0;
+            let totalCostB = 0;
+            
+            steps.push({
+                type: 'prepare_assign',
+                description: `Prepare to assign first ${n} people to city A and remaining ${n} to city B`,
+                costs: [...costs],
+                processed: [...sortedCosts],
+                cityA: [],
+                cityB: [],
+                totalCostA: 0,
+                totalCostB: 0,
+                totalCost: 0,
+                highlightIndices: [],
+                codeLine: 10
+            });
+            
+            // Assign to city A
+            for (let i = 0; i < n; i++) {
+                const person = sortedCosts[i];
+                const currentCityA = [...cityA, person];
+                totalCostA += costs[person.index][0];
+                
+                steps.push({
+                    type: 'assign_a',
+                    description: `Assign Person ${person.index} to city A (cost: $${costs[person.index][0]})`,
+                    costs: [...costs],
+                    processed: [...sortedCosts],
+                    cityA: [...currentCityA],
+                    cityB: [...cityB],
+                    totalCostA: totalCostA,
+                    totalCostB: totalCostB,
+                    totalCost: totalCostA + totalCostB,
+                    highlightIndices: [person.index],
+                    assignIndex: i,
+                    codeLine: 14
+                });
+                
+                cityA = currentCityA;
+            }
+            
+            // Assign to city B
+            for (let i = n; i < costs.length; i++) {
+                const person = sortedCosts[i];
+                const currentCityB = [...cityB, person];
+                totalCostB += costs[person.index][1];
+                
+                steps.push({
+                    type: 'assign_b',
+                    description: `Assign Person ${person.index} to city B (cost: $${costs[person.index][1]})`,
+                    costs: [...costs],
+                    processed: [...sortedCosts],
+                    cityA: [...cityA],
+                    cityB: [...currentCityB],
+                    totalCostA: totalCostA,
+                    totalCostB: totalCostB,
+                    totalCost: totalCostA + totalCostB,
+                    highlightIndices: [person.index],
+                    assignIndex: i,
+                    codeLine: 18
+                });
+                
+                cityB = currentCityB;
+            }
+            
+            // Final result
+            steps.push({
+                type: 'result',
+                description: `Final result: Minimum total cost is $${totalCostA + totalCostB}`,
+                costs: [...costs],
+                processed: [...sortedCosts],
+                cityA: [...cityA],
+                cityB: [...cityB],
+                totalCostA: totalCostA,
+                totalCostB: totalCostB,
+                totalCost: totalCostA + totalCostB,
+                highlightIndices: [],
+                codeLine: 20
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Update people visualization
+            const peopleContainer = document.getElementById('peopleContainer');
+            peopleContainer.innerHTML = '';
+            
+            // If we have processed/sorted costs, use them for the people container
+            const costsToShow = step.processed || step.costs.map((cost, index) => ({
+                index,
+                costA: cost[0],
+                costB: cost[1],
+                diff: cost[0] - cost[1]
+            }));
+            
+            costsToShow.forEach(person => {
+                let className = '';
+                if (step.highlightIndices && step.highlightIndices.includes(person.index)) {
+                    className = 'current';
+                }
+                
+                // Check if person is already assigned
+                const isInCityA = step.cityA.some(p => p.index === person.index);
+                const isInCityB = step.cityB.some(p => p.index === person.index);
+                
+                if (isInCityA) {
+                    className = 'assigned-a';
+                } else if (isInCityB) {
+                    className = 'assigned-b';
+                }
+                
+                peopleContainer.appendChild(createPersonElement(
+                    person.index, 
+                    step.costs[person.index][0], 
+                    step.costs[person.index][1], 
+                    person.diff,
+                    className
+                ));
+            });
+            
+            // Update city visualization
+            updateCityVisualization(step.cityA, step.cityB, step.totalCostA, step.totalCostB);
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            document.getElementById('result').textContent = `Minimum Total Cost: $${step.totalCost}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Nth Node From End - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .target {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .removed {
+            background-color: #dc2626;
+            border-color: #ef4444;
+            opacity: 0.5;
+        }
+        .fast {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Remove Nth Node From End</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given the head of a linked list, remove the nth node from the end of the list and return its head.<br><br>
+                Follow up: Could you do this in one pass?
+            </p>
+        </div>
+
+        <!-- Solution Approach Tabs -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="onePassTab" class="tab active px-4 py-2 rounded" onclick="switchApproach('onePass')">
+                    One Pass (Fast-Slow Pointers)
+                </div>
+                <div id="twoPassTab" class="tab px-4 py-2 rounded" onclick="switchApproach('twoPass')">
+                    Two Pass (Length Count)
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Linked List Values (comma-separated)</label>
+                    <input type="text" id="inputValues" placeholder="Enter values" 
+                        class="border p-2 rounded w-full" value="1,2,3,4,5">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">N (from end)</label>
+                    <input type="number" id="nFromEnd" placeholder="Enter n" min="1"
+                        class="border p-2 rounded w-full" value="2">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Linked List:</h3>
+                <div id="linkedListVisualization" class="relative h-64 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-green-400">Current Node:</h4>
+                        <div id="currentVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-indigo-400">Fast Pointer:</h4>
+                        <div id="fastVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="onePassPseudoCode" class="approach-code">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(1)
+function removeNthFromEnd(head, n):
+    // Create dummy node to handle edge cases
+    dummy = new ListNode(0)
+    dummy.next = head
+    
+    // Initialize fast and slow pointers
+    fast = slow = dummy
+    
+    // Move fast pointer n steps ahead
+    for i in range(n):
+        fast = fast.next
+    
+    // Move both pointers until fast reaches end
+    while fast.next:
+        slow = slow.next
+        fast = fast.next
+    
+    // Remove nth node from end
+    slow.next = slow.next.next
+    
+    return dummy.next</pre>
+            </div>
+            <div id="twoPassPseudoCode" class="approach-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(1)
+function removeNthFromEnd(head, n):
+    // Create dummy node to handle edge cases
+    dummy = new ListNode(0)
+    dummy.next = head
+    
+    // First pass: Count length
+    length = 0
+    curr = head
+    while curr:
+        length++
+        curr = curr.next
+    
+    // Calculate position from start
+    pos = length - n
+    
+    // Second pass: Remove node
+    curr = dummy
+    for i in range(pos):
+        curr = curr.next
+    
+    curr.next = curr.next.next
+    
+    return dummy.next</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">head = [1,2,3,4,5], n = 2</p>
+                    <p class="text-green-400">Output: [1,2,3,5]</p>
+                    <p class="text-gray-400">Explanation: The second node from the end (4) is removed.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">head = [1], n = 1</p>
+                    <p class="text-green-400">Output: []</p>
+                    <p class="text-gray-400">Explanation: The only node is removed.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">head = [1,2], n = 1</p>
+                    <p class="text-green-400">Output: [1]</p>
+                    <p class="text-gray-400">Explanation: The last node is removed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let values = [];
+        let nFromEnd = 2;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'onePass';
+
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function switchApproach(approach) {
+            currentApproach = approach;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(approach + 'Tab').classList.add('active');
+            document.querySelectorAll('.approach-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(approach + 'PseudoCode').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function generateOnePassSteps(head, n) {
+            const steps = [];
+            if (!head) {
+                steps.push({
+                    nodes: [],
+                    current: null,
+                    fast: null,
+                    explanation: "Empty list, nothing to remove",
+                    done: true
+                });
+                return steps;
+            }
+
+            const dummy = new ListNode(0);
+            dummy.next = head;
+            let fast = dummy;
+            let slow = dummy;
+
+            steps.push({
+                nodes: [...getListNodes(dummy.next)],
+                current: slow,
+                fast,
+                explanation: "Initialize slow and fast pointers at dummy node"
+            });
+
+            // Move fast pointer n steps ahead
+            for (let i = 0; i < n; i++) {
+                fast = fast.next;
+                steps.push({
+                    nodes: [...getListNodes(dummy.next)],
+                    current: slow,
+                    fast,
+                    explanation: `Move fast pointer ${i + 1} step(s) ahead`
+                });
+            }
+
+            // Move both pointers until fast reaches end
+            while (fast.next) {
+                slow = slow.next;
+                fast = fast.next;
+                steps.push({
+                    nodes: [...getListNodes(dummy.next)],
+                    current: slow,
+                    fast,
+                    explanation: "Move both pointers one step"
+                });
+            }
+
+            // Mark node to be removed
+            steps.push({
+                nodes: [...getListNodes(dummy.next)],
+                current: slow,
+                fast,
+                target: slow.next,
+                explanation: "Found node to remove"
+            });
+
+            // Remove node
+            slow.next = slow.next.next;
+            steps.push({
+                nodes: [...getListNodes(dummy.next)],
+                current: slow,
+                fast,
+                explanation: "Remove node by updating next pointer",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateTwoPassSteps(head, n) {
+            const steps = [];
+            if (!head) {
+                steps.push({
+                    nodes: [],
+                    current: null,
+                    explanation: "Empty list, nothing to remove",
+                    done: true
+                });
+                return steps;
+            }
+
+            const dummy = new ListNode(0);
+            dummy.next = head;
+            let length = 0;
+            let curr = head;
+
+            // First pass: count length
+            steps.push({
+                nodes: [...getListNodes(head)],
+                current: curr,
+                explanation: "Start counting length"
+            });
+
+            while (curr) {
+                length++;
+                curr = curr.next;
+                if (curr) {
+                    steps.push({
+                        nodes: [...getListNodes(head)],
+                        current: curr,
+                        explanation: `Count length: ${length}`
+                    });
+                }
+            }
+
+            steps.push({
+                nodes: [...getListNodes(head)],
+                explanation: `Total length: ${length}`
+            });
+
+            // Calculate position from start
+            const pos = length - n;
+            steps.push({
+                nodes: [...getListNodes(head)],
+                explanation: `Calculate position from start: ${length} - ${n} = ${pos}`
+            });
+
+            // Second pass: remove node
+            curr = dummy;
+            for (let i = 0; i < pos; i++) {
+                curr = curr.next;
+                steps.push({
+                    nodes: [...getListNodes(head)],
+                    current: curr,
+                    explanation: `Move to position ${i + 1}`
+                });
+            }
+
+            steps.push({
+                nodes: [...getListNodes(head)],
+                current: curr,
+                target: curr.next,
+                explanation: "Found node to remove"
+            });
+
+            curr.next = curr.next.next;
+            steps.push({
+                nodes: [...getListNodes(dummy.next)],
+                current: curr,
+                explanation: "Remove node by updating next pointer",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function initializeVisualization() {
+            values = document.getElementById('inputValues').value.split(',').map(x => parseInt(x.trim()));
+            nFromEnd = parseInt(document.getElementById('nFromEnd').value);
+            currentStep = 0;
+            const head = createLinkedList(values);
+            steps = currentApproach === 'onePass' ? generateOnePassSteps(head, nFromEnd) : generateTwoPassSteps(head, nFromEnd);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const linkedListDiv = document.getElementById('linkedListVisualization');
+            const currentDiv = document.getElementById('currentVisualization');
+            const fastDiv = document.getElementById('fastVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            linkedListDiv.innerHTML = '';
+            
+            const nodePositions = new Map();
+            let x = 50;
+            let y = 100;
+            
+            step.nodes.forEach((node, index) => {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg';
+                
+                if (node === step.current) {
+                    nodeDiv.classList.add('current');
+                }
+                if (node === step.fast) {
+                    nodeDiv.classList.add('fast');
+                }
+                if (node === step.target) {
+                    nodeDiv.classList.add('target');
+                }
+                
+                nodeDiv.style.left = `${x}px`;
+                nodeDiv.style.top = `${y}px`;
+                nodeDiv.textContent = node.val;
+                
+                linkedListDiv.appendChild(nodeDiv);
+                nodePositions.set(node, {x, y});
+                
+                x += 100;
+            });
+            
+            step.nodes.forEach((node, index) => {
+                if (node.next && nodePositions.has(step.nodes[index + 1])) {
+                    const start = nodePositions.get(node);
+                    const end = nodePositions.get(step.nodes[index + 1]);
+                    
+                    const arrow = document.createElement('div');
+                    arrow.className = 'arrow';
+                    
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    arrow.style.left = `${start.x + 24}px`;
+                    arrow.style.top = `${start.y + 24}px`;
+                    arrow.style.width = `${length - 48}px`;
+                    arrow.style.transform = `rotate(${angle}deg)`;
+                    
+                    linkedListDiv.appendChild(arrow);
+                }
+            });
+            
+            currentDiv.textContent = step.current ? `Value: ${step.current.val}` : "Not set";
+            fastDiv.textContent = step.fast ? `Value: ${step.fast.val}` : "Not set";
+            
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Node removal complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

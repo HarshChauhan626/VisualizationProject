@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Days to Make Bouquets - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .flower {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .bloomed {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .current-bouquet {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .mid-day {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .not-bloomed {
+            background-color: #64748b;
+            border-color: #94a3b8;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Minimum Days to Make Bouquets</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an integer array bloomDay, an integer m (number of bouquets), and an integer k (flowers per bouquet):<br><br>
+                - You want to make m bouquets from these flowers.<br>
+                - To make a bouquet, you need to use k adjacent flowers from the garden.<br>
+                - The garden consists of n flowers, the ith flower will bloom in bloomDay[i] days.<br>
+                - Each flower can be used in exactly one bouquet.<br><br>
+                Return the minimum number of days you need to wait to be able to make m bouquets from the garden. If it is impossible to make m bouquets, return -1.<br><br>
+                Example: bloomDay = [1,10,3,10,2], m = 3, k = 1<br>
+                Answer: 3 (After day 3, we can make 3 bouquets, each using 1 flower)
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Bloom Days (comma-separated)</label>
+                    <input type="text" id="bloomDay" placeholder="1,10,3,10,2" 
+                        class="border p-2 rounded w-full" value="1,10,3,10,2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Number of Bouquets (m)</label>
+                    <input type="number" id="bouquets" placeholder="Number of bouquets" 
+                        class="border p-2 rounded w-full" value="3">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Flowers per Bouquet (k)</label>
+                    <input type="number" id="flowersPerBouquet" placeholder="Flowers per bouquet" 
+                        class="border p-2 rounded w-full" value="1">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Garden:</h3>
+                <div id="gardenVisualization" class="flex flex-wrap items-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div id="stateVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n * log(maxDay)), Space Complexity: O(1)
+function minDays(bloomDay, m, k):
+    if m * k > bloomDay.length:
+        return -1  // Impossible case
+        
+    left = min(bloomDay)
+    right = max(bloomDay)
+    
+    while left < right:
+        mid = left + (right - left) // 2
+        if canMakeBouquets(bloomDay, mid, m, k):
+            right = mid  // Try fewer days
+        else:
+            left = mid + 1  // Need more days
+    
+    return left
+
+function canMakeBouquets(bloomDay, days, m, k):
+    flowers = 0  // Current consecutive flowers
+    bouquets = 0 // Bouquets made so far
+    
+    for day in bloomDay:
+        if day <= days:
+            flowers++  // Flower has bloomed
+            if flowers == k:
+                bouquets++
+                flowers = 0
+        else:
+            flowers = 0  // Reset consecutive count
+    
+    return bouquets >= m</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">bloomDay = [1,10,3,10,2], m = 3, k = 1</p>
+                    <p class="text-green-400">Output: 3</p>
+                    <p class="text-gray-400">Explanation: After day 3, we can make three bouquets, each using one flower.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">bloomDay = [1,10,3,10,2], m = 3, k = 2</p>
+                    <p class="text-green-400">Output: 10</p>
+                    <p class="text-gray-400">Explanation: We need 10 days to make three bouquets, each using two adjacent flowers.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">bloomDay = [7,7,7,7,12,7,7], m = 2, k = 3</p>
+                    <p class="text-green-400">Output: 7</p>
+                    <p class="text-gray-400">Explanation: We can make two bouquets of three flowers after waiting 7 days.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bloomDay = [];
+        let m = 0;
+        let k = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function canMakeBouquets(bloomDay, days, m, k) {
+            let flowers = 0;
+            let bouquets = 0;
+            const state = { flowers: [], bouquets: [] };
+            
+            for (let i = 0; i < bloomDay.length; i++) {
+                if (bloomDay[i] <= days) {
+                    flowers++;
+                    state.flowers.push(i);
+                    if (flowers === k) {
+                        bouquets++;
+                        state.bouquets.push(state.flowers.slice());
+                        flowers = 0;
+                        state.flowers = [];
+                    }
+                } else {
+                    flowers = 0;
+                    state.flowers = [];
+                }
+            }
+            
+            return { possible: bouquets >= m, state };
+        }
+
+        function generateSteps(bloomDay, m, k) {
+            const steps = [];
+            
+            if (m * k > bloomDay.length) {
+                steps.push({
+                    bloomDay,
+                    explanation: "Impossible case: need more flowers than available",
+                    done: true,
+                    result: -1
+                });
+                return steps;
+            }
+
+            const left = Math.min(...bloomDay);
+            const right = Math.max(...bloomDay);
+            
+            steps.push({
+                bloomDay,
+                left,
+                right,
+                explanation: `Initialize binary search with left = ${left} (min days) and right = ${right} (max days)`
+            });
+
+            let currentLeft = left;
+            let currentRight = right;
+
+            while (currentLeft < currentRight) {
+                const mid = Math.floor(currentLeft + (currentRight - currentLeft) / 2);
+                const { possible, state } = canMakeBouquets(bloomDay, mid, m, k);
+                
+                steps.push({
+                    bloomDay,
+                    left: currentLeft,
+                    right: currentRight,
+                    mid,
+                    currentDay: mid,
+                    bouquetState: state,
+                    explanation: `Try making bouquets with ${mid} days: ${possible ? 'possible' : 'not possible'}`
+                });
+
+                if (possible) {
+                    steps.push({
+                        bloomDay,
+                        left: currentLeft,
+                        right: mid,
+                        lastMid: mid,
+                        bouquetState: state,
+                        explanation: `Can make ${m} bouquets in ${mid} days, try fewer days`
+                    });
+                    currentRight = mid;
+                } else {
+                    steps.push({
+                        bloomDay,
+                        left: mid + 1,
+                        right: currentRight,
+                        lastMid: mid,
+                        bouquetState: state,
+                        explanation: `Cannot make ${m} bouquets in ${mid} days, need more days`
+                    });
+                    currentLeft = mid + 1;
+                }
+            }
+
+            const finalState = canMakeBouquets(bloomDay, currentLeft, m, k);
+            steps.push({
+                bloomDay,
+                result: currentLeft,
+                bouquetState: finalState.state,
+                explanation: `Minimum days needed: ${currentLeft}`,
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            bloomDay = document.getElementById('bloomDay').value.split(',').map(x => parseInt(x.trim()));
+            m = parseInt(document.getElementById('bouquets').value);
+            k = parseInt(document.getElementById('flowersPerBouquet').value);
+            currentStep = 0;
+            steps = generateSteps(bloomDay, m, k);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const gardenDiv = document.getElementById('gardenVisualization');
+            const stateDiv = document.getElementById('stateVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            gardenDiv.innerHTML = '';
+            
+            // Create garden visualization
+            for (let i = 0; i < step.bloomDay.length; i++) {
+                const flowerDiv = document.createElement('div');
+                flowerDiv.className = 'flower w-16 h-16 rounded-lg border-2 flex flex-col items-center justify-center text-sm';
+                
+                const daySpan = document.createElement('span');
+                daySpan.textContent = `Day ${step.bloomDay[i]}`;
+                flowerDiv.appendChild(daySpan);
+                
+                if (step.currentDay !== undefined && step.bloomDay[i] <= step.currentDay) {
+                    flowerDiv.classList.add('bloomed');
+                    if (step.bouquetState && step.bouquetState.flowers.includes(i)) {
+                        flowerDiv.classList.add('current-bouquet');
+                    }
+                } else {
+                    flowerDiv.classList.add('not-bloomed');
+                }
+                
+                if (step.mid !== undefined && step.bloomDay[i] === step.mid) {
+                    flowerDiv.classList.add('mid-day');
+                }
+                
+                gardenDiv.appendChild(flowerDiv);
+            }
+            
+            // Update state
+            let stateText = step.left !== undefined ? 
+                `Left: ${step.left}, Right: ${step.right}${step.mid !== undefined ? `, Mid: ${step.mid}` : ''}` : '';
+            
+            if (step.bouquetState) {
+                stateText += `\nBouquets made: ${step.bouquetState.bouquets.length}/${m}`;
+            }
+            
+            stateDiv.innerHTML = stateText;
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = step.result === -1 ? 
+                    'Impossible to make required bouquets' : 
+                    `Minimum days needed: ${step.result}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search in 2D Matrix - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .matrix-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .left {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .right {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .mid {
+            background-color: #eab308;
+            border-color: #facc15;
+        }
+        .found {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Search in 2D Matrix</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Write an efficient algorithm that searches for a value target in an m x n matrix. This matrix has the following properties:<br><br>
+                1. Integers in each row are sorted from left to right.<br>
+                2. The first integer of each row is greater than the last integer of the previous row.<br><br>
+                Return true if target is in matrix, otherwise return false.<br><br>
+                Example: For matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]] and target = 3, return true.
+            </p>
+        </div>
+
+        <!-- Solution Approach Tabs -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="binarySearchTab" class="tab active px-4 py-2 rounded" onclick="switchApproach('binarySearch')">
+                    Binary Search (O(log(m*n)))
+                </div>
+                <div id="linearSearchTab" class="tab px-4 py-2 rounded" onclick="switchApproach('linearSearch')">
+                    Linear Search (O(m*n))
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Matrix (comma-separated rows, semicolon between rows)</label>
+                    <input type="text" id="inputMatrix" placeholder="1,3,5,7;10,11,16,20;23,30,34,60" 
+                        class="border p-2 rounded w-full" value="1,3,5,7;10,11,16,20;23,30,34,60">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Target</label>
+                    <input type="number" id="target" placeholder="Enter target value" 
+                        class="border p-2 rounded w-full" value="3">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Matrix:</h3>
+                <div id="matrixVisualization" class="flex flex-col items-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-orange-400">Left:</h4>
+                        <div id="leftVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-yellow-400">Mid:</h4>
+                        <div id="midVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-indigo-400">Right:</h4>
+                        <div id="rightVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="binarySearchCode" class="approach-code">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(log(m*n)), Space Complexity: O(1)
+function searchMatrix(matrix, target):
+    if matrix is empty:
+        return false
+        
+    m = matrix.length    // rows
+    n = matrix[0].length // columns
+    left = 0
+    right = m * n - 1
+    
+    while left <= right:
+        mid = left + (right - left) // 2
+        row = mid // n
+        col = mid % n
+        value = matrix[row][col]
+        
+        if value == target:
+            return true
+        else if value < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    
+    return false</pre>
+            </div>
+            <div id="linearSearchCode" class="approach-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(m*n), Space Complexity: O(1)
+function searchMatrix(matrix, target):
+    if matrix is empty:
+        return false
+        
+    for i in range(matrix.length):
+        for j in range(matrix[0].length):
+            if matrix[i][j] == target:
+                return true
+            if matrix[i][j] > target:
+                return false
+    
+    return false</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3</p>
+                    <p class="text-green-400">Output: true</p>
+                    <p class="text-gray-400">Explanation: 3 is in the matrix at position [0][1].</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13</p>
+                    <p class="text-green-400">Output: false</p>
+                    <p class="text-gray-400">Explanation: 13 is not in the matrix.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">matrix = [[1]], target = 1</p>
+                    <p class="text-green-400">Output: true</p>
+                    <p class="text-gray-400">Explanation: Single element matrix contains target.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let matrix = [];
+        let target = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'binarySearch';
+
+        function switchApproach(approach) {
+            currentApproach = approach;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(approach + 'Tab').classList.add('active');
+            document.querySelectorAll('.approach-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(approach + 'Code').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function generateBinarySearchSteps(matrix, target) {
+            const steps = [];
+            
+            if (matrix.length === 0 || matrix[0].length === 0) {
+                steps.push({
+                    matrix: [...matrix],
+                    explanation: "Matrix is empty",
+                    done: true,
+                    result: false
+                });
+                return steps;
+            }
+
+            const m = matrix.length;
+            const n = matrix[0].length;
+            let left = 0;
+            let right = m * n - 1;
+
+            steps.push({
+                matrix: matrix,
+                left,
+                right,
+                explanation: "Initialize binary search on flattened matrix"
+            });
+
+            while (left <= right) {
+                const mid = Math.floor(left + (right - left) / 2);
+                const row = Math.floor(mid / n);
+                const col = mid % n;
+                const value = matrix[row][col];
+
+                steps.push({
+                    matrix: matrix,
+                    left,
+                    right,
+                    mid,
+                    row,
+                    col,
+                    explanation: `Check element at position [${row}][${col}] = ${value}`
+                });
+
+                if (value === target) {
+                    steps.push({
+                        matrix: matrix,
+                        found: { row, col },
+                        explanation: `Found target ${target} at position [${row}][${col}]`,
+                        done: true,
+                        result: true
+                    });
+                    return steps;
+                } else if (value < target) {
+                    steps.push({
+                        matrix: matrix,
+                        left: mid + 1,
+                        right,
+                        lastMid: { row, col },
+                        explanation: `${value} < ${target}, look in right half`
+                    });
+                    left = mid + 1;
+                } else {
+                    steps.push({
+                        matrix: matrix,
+                        left,
+                        right: mid - 1,
+                        lastMid: { row, col },
+                        explanation: `${value} > ${target}, look in left half`
+                    });
+                    right = mid - 1;
+                }
+            }
+
+            steps.push({
+                matrix: matrix,
+                explanation: `Target ${target} not found in matrix`,
+                done: true,
+                result: false
+            });
+            
+            return steps;
+        }
+
+        function generateLinearSearchSteps(matrix, target) {
+            const steps = [];
+            
+            if (matrix.length === 0 || matrix[0].length === 0) {
+                steps.push({
+                    matrix: [...matrix],
+                    explanation: "Matrix is empty",
+                    done: true,
+                    result: false
+                });
+                return steps;
+            }
+
+            steps.push({
+                matrix: matrix,
+                explanation: "Start linear search from top-left corner"
+            });
+
+            for (let i = 0; i < matrix.length; i++) {
+                for (let j = 0; j < matrix[0].length; j++) {
+                    steps.push({
+                        matrix: matrix,
+                        current: { row: i, col: j },
+                        explanation: `Check element at position [${i}][${j}] = ${matrix[i][j]}`
+                    });
+
+                    if (matrix[i][j] === target) {
+                        steps.push({
+                            matrix: matrix,
+                            found: { row: i, col: j },
+                            explanation: `Found target ${target} at position [${i}][${j}]`,
+                            done: true,
+                            result: true
+                        });
+                        return steps;
+                    }
+
+                    if (matrix[i][j] > target) {
+                        steps.push({
+                            matrix: matrix,
+                            current: { row: i, col: j },
+                            explanation: `${matrix[i][j]} > ${target}, since matrix is sorted, target cannot be in remaining positions`,
+                            done: true,
+                            result: false
+                        });
+                        return steps;
+                    }
+                }
+            }
+
+            steps.push({
+                matrix: matrix,
+                explanation: `Target ${target} not found in matrix`,
+                done: true,
+                result: false
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            const matrixInput = document.getElementById('inputMatrix').value;
+            matrix = matrixInput.split(';').map(row => row.split(',').map(x => parseInt(x.trim())));
+            target = parseInt(document.getElementById('target').value);
+            currentStep = 0;
+            
+            steps = currentApproach === 'binarySearch' ?
+                generateBinarySearchSteps(matrix, target) :
+                generateLinearSearchSteps(matrix, target);
+            
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const matrixDiv = document.getElementById('matrixVisualization');
+            const leftDiv = document.getElementById('leftVisualization');
+            const midDiv = document.getElementById('midVisualization');
+            const rightDiv = document.getElementById('rightVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            matrixDiv.innerHTML = '';
+            
+            // Create matrix visualization
+            step.matrix.forEach((row, i) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex gap-2';
+                
+                row.forEach((value, j) => {
+                    const elementDiv = document.createElement('div');
+                    elementDiv.className = 'matrix-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                    
+                    if (step.found && step.found.row === i && step.found.col === j) {
+                        elementDiv.classList.add('found');
+                    } else if (step.current && step.current.row === i && step.current.col === j) {
+                        elementDiv.classList.add('current');
+                    } else if (currentApproach === 'binarySearch' && step.row === i && step.col === j) {
+                        elementDiv.classList.add('mid');
+                    }
+                    
+                    elementDiv.textContent = value;
+                    rowDiv.appendChild(elementDiv);
+                });
+                
+                matrixDiv.appendChild(rowDiv);
+            });
+            
+            // Update pointers for binary search
+            if (currentApproach === 'binarySearch') {
+                const n = matrix[0].length;
+                leftDiv.textContent = step.left !== undefined ? 
+                    `Index: ${step.left} [${Math.floor(step.left/n)}][${step.left%n}]` : "Not set";
+                midDiv.textContent = step.mid !== undefined ? 
+                    `Index: ${step.mid} [${Math.floor(step.mid/n)}][${step.mid%n}]` : "Not set";
+                rightDiv.textContent = step.right !== undefined ? 
+                    `Index: ${step.right} [${Math.floor(step.right/n)}][${step.right%n}]` : "Not set";
+            } else {
+                leftDiv.textContent = "N/A";
+                midDiv.textContent = "N/A";
+                rightDiv.textContent = "N/A";
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = step.result ? 
+                    `Found: ${step.result}` : 
+                    `Not Found: ${step.result}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

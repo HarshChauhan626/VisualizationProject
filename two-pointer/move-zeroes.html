@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Move Zeroes Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-elem {
+            width: 50px;
+            height: 50px;
+            margin: 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background-color: #3b82f6;
+            color: white;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .array-elem.pointer-slow {
+            background-color: #8b5cf6;
+            border: 2px solid #a78bfa;
+        }
+        .array-elem.pointer-fast {
+            background-color: #4ade80;
+            border: 2px solid #86efac;
+        }
+        .array-elem.swapped {
+            background-color: #f59e0b;
+            border: 2px solid #fbbf24;
+        }
+        .array-elem.zero {
+            background-color: #64748b;
+            opacity: 0.8;
+        }
+        .array-elem.done {
+            background-color: #10b981;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Move Zeroes Visualization</h1>
+        <p class="text-gray-300 mb-8">Visualize how to move all zeroes to the end of an array while maintaining the relative order of non-zero elements using the two-pointer technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Array (comma-separated numbers)</label>
+                        <input type="text" id="inputArray" value="0,1,0,3,12" 
+                            class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array Visualization</h3>
+                    <div id="arrayVisualization" class="flex flex-wrap justify-center">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Pointers</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Slow Pointer (Purple):</p>
+                            <div id="slowPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Fast Pointer (Green):</p>
+                            <div id="fastPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Result Array -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Final Result</h3>
+                    <div id="resultArray" class="flex flex-wrap justify-center">
+                        <p class="text-gray-400 italic">Execute the algorithm to see the result.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm leading-relaxed">
+<span class="code-line" data-line="1">function moveZeroes(nums):</span>
+<span class="code-line" data-line="2">    slow = 0  // position to place next non-zero number</span>
+<span class="code-line" data-line="3">    </span>
+<span class="code-line" data-line="4">    // Move all non-zero numbers to the front</span>
+<span class="code-line" data-line="5">    for fast = 0 to nums.length-1:</span>
+<span class="code-line" data-line="6">        if nums[fast] != 0:</span>
+<span class="code-line" data-line="7">            // Swap nums[slow] and nums[fast]</span>
+<span class="code-line" data-line="8">            temp = nums[slow]</span>
+<span class="code-line" data-line="9">            nums[slow] = nums[fast]</span>
+<span class="code-line" data-line="10">            nums[fast] = temp</span>
+<span class="code-line" data-line="11">    </span>
+<span class="code-line" data-line="12">    return nums  // All zeroes are now at the end</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) - constant extra space (in-place operation)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The Move Zeroes algorithm uses a two-pointer approach to efficiently move all zeroes to the end of an array:
+                                <br><br>1. We maintain two pointers: 'slow' and 'fast'
+                                <br>2. The 'slow' pointer keeps track of the position where the next non-zero element should be placed
+                                <br>3. The 'fast' pointer scans through the array to find non-zero elements
+                                <br>4. When 'fast' finds a non-zero element, we swap the elements at 'slow' and 'fast', then increment 'slow'
+                                <br>5. After the loop, all non-zero elements are at the front of the array in their original order, and all zeroes are at the end
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">nums = [0,1,0,3,12]</p>
+                            <p class="text-gray-300">Output: [1,3,12,0,0]</p>
+                            <p class="text-gray-300">Explanation: All non-zero elements are moved to the front, preserving their order, and zeroes are moved to the end.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">nums = [0,0,1]</p>
+                            <p class="text-gray-300">Output: [1,0,0]</p>
+                            <p class="text-gray-300">Explanation: The non-zero element (1) is moved to the front, and zeroes are moved to the end.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 3:</h3>
+                            <p class="text-gray-300">nums = [0]</p>
+                            <p class="text-gray-300">Output: [0]</p>
+                            <p class="text-gray-300">Explanation: Only one element, nothing to move.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initializeVisualization() {
+            // Get input values
+            nums = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            
+            // Reset visualization state
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Enable buttons
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Reset current step
+            currentStepIndex = -1;
+            
+            // Update visualization
+            nextStep();
+        }
+
+        function createArrayVisualization() {
+            const arrayArea = document.getElementById('arrayVisualization');
+            arrayArea.innerHTML = '';
+            
+            for (let i = 0; i < nums.length; i++) {
+                const elem = document.createElement('div');
+                elem.className = 'array-elem';
+                if (nums[i] === 0) {
+                    elem.classList.add('zero');
+                }
+                elem.textContent = nums[i];
+                elem.id = `elem-${i}`;
+                
+                arrayArea.appendChild(elem);
+            }
+        }
+
+        function resetVisualization() {
+            // Clear visualization
+            document.getElementById('arrayVisualization').innerHTML = '';
+            document.getElementById('slowPointerInfo').innerHTML = '';
+            document.getElementById('fastPointerInfo').innerHTML = '';
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('resultArray').innerHTML = '<p class="text-gray-400 italic">Execute the algorithm to see the result.</p>';
+            
+            // Stop playing if active
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Reset state
+            currentStepIndex = -1;
+            steps = [];
+            
+            // Disable buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Create a copy of the array for visualization
+            const numsCopy = [...nums];
+            
+            // Initialize - Original array
+            steps.push({
+                type: 'initial',
+                array: [...numsCopy],
+                explanation: 'Original array before moving zeroes',
+                activeLines: [1]
+            });
+            
+            // Initialize slow pointer
+            let slow = 0;
+            steps.push({
+                type: 'init-slow',
+                array: [...numsCopy],
+                slow,
+                explanation: 'Initialize slow pointer to 0 - this tracks where to place the next non-zero element',
+                activeLines: [2]
+            });
+            
+            // Main algorithm
+            for (let fast = 0; fast < numsCopy.length; fast++) {
+                steps.push({
+                    type: 'examine',
+                    array: [...numsCopy],
+                    slow,
+                    fast,
+                    explanation: `Examining element at index ${fast} with value ${numsCopy[fast]}`,
+                    activeLines: [5, 6]
+                });
+                
+                if (numsCopy[fast] !== 0) {
+                    steps.push({
+                        type: 'found-nonzero',
+                        array: [...numsCopy],
+                        slow,
+                        fast,
+                        explanation: `Found non-zero element ${numsCopy[fast]} at index ${fast}`,
+                        activeLines: [6]
+                    });
+                    
+                    // If the indices are different, swap
+                    if (slow !== fast) {
+                        steps.push({
+                            type: 'swap-prepare',
+                            array: [...numsCopy],
+                            slow,
+                            fast,
+                            explanation: `Preparing to swap elements at indices ${slow} (${numsCopy[slow]}) and ${fast} (${numsCopy[fast]})`,
+                            activeLines: [7, 8]
+                        });
+                        
+                        // Swap elements
+                        const temp = numsCopy[slow];
+                        numsCopy[slow] = numsCopy[fast];
+                        numsCopy[fast] = temp;
+                        
+                        steps.push({
+                            type: 'swap-complete',
+                            array: [...numsCopy],
+                            slow,
+                            fast,
+                            explanation: `Swapped elements: placed ${numsCopy[slow]} at index ${slow} and ${numsCopy[fast]} at index ${fast}`,
+                            activeLines: [9, 10]
+                        });
+                    } else {
+                        steps.push({
+                            type: 'no-swap',
+                            array: [...numsCopy],
+                            slow,
+                            fast,
+                            explanation: `No swap needed since slow and fast pointers are at the same position (${slow})`,
+                            activeLines: [7]
+                        });
+                    }
+                    
+                    // Increment slow pointer
+                    slow++;
+                    steps.push({
+                        type: 'increment-slow',
+                        array: [...numsCopy],
+                        slow,
+                        fast,
+                        explanation: `Incremented slow pointer to ${slow} after processing a non-zero element`,
+                        activeLines: [12, 13]
+                    });
+                }
+            }
+            
+            // Final result
+            steps.push({
+                type: 'complete',
+                array: [...numsCopy],
+                explanation: 'Algorithm completed. All zeroes have been moved to the end.',
+                activeLines: [15]
+            });
+        }
+
+        function updateVisualization() {
+            if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+            
+            const step = steps[currentStepIndex];
+            
+            // Update current step display
+            document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+            
+            // Create or update array visualization
+            if (document.getElementById('arrayVisualization').children.length === 0) {
+                createArrayVisualization();
+            }
+            
+            // Update array elements based on current step's array
+            if (step.array) {
+                for (let i = 0; i < step.array.length; i++) {
+                    const elem = document.getElementById(`elem-${i}`);
+                    if (elem) {
+                        // Reset classes
+                        elem.className = 'array-elem';
+                        
+                        // Mark zeroes
+                        if (step.array[i] === 0) {
+                            elem.classList.add('zero');
+                        }
+                        
+                        // Update content
+                        elem.textContent = step.array[i];
+                    }
+                }
+            }
+            
+            // Reset all pointers
+            document.querySelectorAll('.array-elem').forEach(elem => {
+                elem.classList.remove('pointer-slow', 'pointer-fast', 'swapped');
+            });
+            
+            // Update pointers
+            if (step.slow !== undefined) {
+                const slowElem = document.getElementById(`elem-${step.slow}`);
+                if (slowElem) slowElem.classList.add('pointer-slow');
+            }
+            
+            if (step.fast !== undefined) {
+                const fastElem = document.getElementById(`elem-${step.fast}`);
+                if (fastElem) fastElem.classList.add('pointer-fast');
+            }
+            
+            // Highlight swapped elements
+            if (step.type === 'swap-complete' && step.slow !== step.fast) {
+                document.getElementById(`elem-${step.slow}`).classList.add('swapped');
+                document.getElementById(`elem-${step.fast}`).classList.add('swapped');
+            }
+            
+            // Mark all as done when complete
+            if (step.type === 'complete') {
+                document.querySelectorAll('.array-elem').forEach((elem, index) => {
+                    elem.classList.add('done');
+                });
+                
+                // Update result array
+                updateResultArray(step.array);
+            }
+            
+            // Update pointers info
+            updatePointersInfo(step);
+            
+            // Highlight active code lines
+            if (step.activeLines) {
+                document.querySelectorAll('.code-line').forEach(line => {
+                    line.classList.remove('active');
+                });
+                
+                step.activeLines.forEach(lineNum => {
+                    document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+                });
+            }
+        }
+        
+        function updatePointersInfo(step) {
+            if (step.slow !== undefined) {
+                document.getElementById('slowPointerInfo').textContent = 
+                    `Index ${step.slow}${step.array ? ': ' + step.array[step.slow] : ''}`;
+            } else {
+                document.getElementById('slowPointerInfo').textContent = 'Not initialized';
+            }
+            
+            if (step.fast !== undefined) {
+                document.getElementById('fastPointerInfo').textContent = 
+                    `Index ${step.fast}${step.array ? ': ' + step.array[step.fast] : ''}`;
+            } else {
+                document.getElementById('fastPointerInfo').textContent = 'Not initialized';
+            }
+        }
+        
+        function updateResultArray(finalArray) {
+            const resultArea = document.getElementById('resultArray');
+            resultArea.innerHTML = '';
+            
+            for (let i = 0; i < finalArray.length; i++) {
+                const elem = document.createElement('div');
+                elem.className = 'array-elem done';
+                if (finalArray[i] === 0) {
+                    elem.classList.add('zero');
+                }
+                elem.textContent = finalArray[i];
+                
+                resultArea.appendChild(elem);
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+            document.getElementById('playBtn').className = isPlaying 
+                ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+                : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+            
+            if (isPlaying) {
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(document.getElementById('speedSlider').value));
+            } else {
+                clearInterval(animationInterval);
+            }
+        }
+
+        // Update speed value display when slider changes
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = `${this.value}ms`;
+            
+            // Update interval if playing
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(this.value));
+            }
+        });
+    </script>
+</body>
+</html> 

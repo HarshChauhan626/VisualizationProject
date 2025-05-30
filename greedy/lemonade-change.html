@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lemonade Change</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .bill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 40px;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+            position: relative;
+        }
+        .bill.five {
+            background-color: #22c55e;
+        }
+        .bill.ten {
+            background-color: #eab308;
+        }
+        .bill.twenty {
+            background-color: #ef4444;
+        }
+        .bill.current {
+            box-shadow: 0 0 0 3px #fff;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .cash-register {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .register-section {
+            background-color: #1f2937;
+            padding: 10px;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 120px;
+        }
+        .register-section h4 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .register-bills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+        }
+        .customer-queue {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+            gap: 10px;
+        }
+        .customer {
+            background-color: #1f2937;
+            padding: 10px;
+            border-radius: 4px;
+            min-width: 80px;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+        }
+        .customer.current {
+            background-color: #374151;
+            box-shadow: 0 0 0 2px #f59e0b;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Lemonade Change</h1>
+        <p class="text-gray-300 mb-8">Visualize whether you can provide change to each customer buying lemonade for $5, given an array of bills.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Customer Bills (5, 10, or 20)</label>
+                            <input type="text" id="billsInput" value="5,5,5,10,20" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter bills as comma-separated values">
+                            <div class="text-xs text-gray-400 mt-1">Format: comma-separated list of bill values (e.g., 5,5,10,20)</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Customer Queue -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Customer Queue</h3>
+                    <div id="customerQueue" class="customer-queue"></div>
+                </div>
+
+                <!-- Cash Register -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Cash Register</h3>
+                    <div class="cash-register">
+                        <div class="register-section">
+                            <h4>$5 Bills</h4>
+                            <div id="fiveBills" class="register-bills"></div>
+                        </div>
+                        <div class="register-section">
+                            <h4>$10 Bills</h4>
+                            <div id="tenBills" class="register-bills"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Can provide change to all customers: ?</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function lemonadeChange(bills):</span>
+<span class="code-line" data-line="2">    # Initialize bill counts</span>
+<span class="code-line" data-line="3">    five = 0</span>
+<span class="code-line" data-line="4">    ten = 0</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    for bill in bills:</span>
+<span class="code-line" data-line="7">        if bill == 5:</span>
+<span class="code-line" data-line="8">            # $5 bill requires no change</span>
+<span class="code-line" data-line="9">            five += 1</span>
+<span class="code-line" data-line="10">        </span>
+<span class="code-line" data-line="11">        elif bill == 10:</span>
+<span class="code-line" data-line="12">            # $10 bill requires $5 change</span>
+<span class="code-line" data-line="13">            if five == 0:</span>
+<span class="code-line" data-line="14">                return False  # Can't provide change</span>
+<span class="code-line" data-line="15">            five -= 1</span>
+<span class="code-line" data-line="16">            ten += 1</span>
+<span class="code-line" data-line="17">        </span>
+<span class="code-line" data-line="18">        elif bill == 20:</span>
+<span class="code-line" data-line="19">            # $20 bill requires $15 change</span>
+<span class="code-line" data-line="20">            # Try to use one $10 and one $5 first</span>
+<span class="code-line" data-line="21">            if ten > 0 and five > 0:</span>
+<span class="code-line" data-line="22">                ten -= 1</span>
+<span class="code-line" data-line="23">                five -= 1</span>
+<span class="code-line" data-line="24">            # If not possible, use three $5 bills</span>
+<span class="code-line" data-line="25">            elif five >= 3:</span>
+<span class="code-line" data-line="26">                five -= 3</span>
+<span class="code-line" data-line="27">            else:</span>
+<span class="code-line" data-line="28">                return False  # Can't provide change</span>
+<span class="code-line" data-line="29">    </span>
+<span class="code-line" data-line="30">    return True  # Was able to provide change to everyone</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                At a lemonade stand, each lemonade costs $5. Customers queue up to buy from you, 
+                                and order one at a time. Each customer pays with either a $5, $10, or $20 bill. 
+                                You must provide the correct change to each customer, so that the net transaction 
+                                is that the customer pays $5.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the number of customers</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) - just need to track count of 5 and 10 dollar bills</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The greedy algorithm works by:
+                                <br>1. Keep track of the number of $5 and $10 bills in hand
+                                <br>2. For each customer:
+                                <br>&nbsp;&nbsp;&nbsp;- If they give $5: No change needed, add it to register
+                                <br>&nbsp;&nbsp;&nbsp;- If they give $10: Give back $5, add $10 to register
+                                <br>&nbsp;&nbsp;&nbsp;- If they give $20: Try to give one $10 and one $5 first
+                                <br>&nbsp;&nbsp;&nbsp;- If not possible, try to give three $5 bills
+                                <br>&nbsp;&nbsp;&nbsp;- If neither is possible, return false
+                                <br>3. If all customers can be served, return true
+                                <br><br>This is greedy because we always try to keep as many $5 bills as possible.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let bills = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createBillElement(value, id = '') {
+            const billDiv = document.createElement('div');
+            billDiv.className = `bill ${value === 5 ? 'five' : value === 10 ? 'ten' : 'twenty'}`;
+            if (id) billDiv.id = id;
+            billDiv.textContent = `$${value}`;
+            return billDiv;
+        }
+
+        function applyInputs() {
+            const billsInput = document.getElementById('billsInput').value;
+            try {
+                bills = billsInput.split(',').map(Number);
+                
+                if (!bills.every(bill => [5, 10, 20].includes(bill))) {
+                    throw new Error('Bills must be 5, 10, or 20');
+                }
+                
+                createCustomerQueue();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid bills: ' + error.message);
+            }
+        }
+
+        function createCustomerQueue() {
+            const queueDiv = document.getElementById('customerQueue');
+            queueDiv.innerHTML = '';
+            
+            bills.forEach((bill, index) => {
+                const customerDiv = document.createElement('div');
+                customerDiv.className = 'customer';
+                customerDiv.id = `customer-${index}`;
+                
+                const billElement = createBillElement(bill);
+                
+                customerDiv.innerHTML = `<div>Customer ${index + 1}</div>`;
+                customerDiv.appendChild(billElement);
+                
+                queueDiv.appendChild(customerDiv);
+            });
+
+            // Clear register
+            document.getElementById('fiveBills').innerHTML = '';
+            document.getElementById('tenBills').innerHTML = '';
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            steps.push({
+                type: 'init',
+                description: 'Initialize with empty cash register',
+                five: 0,
+                ten: 0,
+                currentIndex: -1,
+                codeLine: 4
+            });
+            
+            let five = 0; // Count of $5 bills
+            let ten = 0;  // Count of $10 bills
+            let success = true;
+            
+            for (let i = 0; i < bills.length; i++) {
+                const bill = bills[i];
+                
+                steps.push({
+                    type: 'process',
+                    description: `Processing customer ${i + 1} with a $${bill} bill`,
+                    currentIndex: i,
+                    five: five,
+                    ten: ten,
+                    codeLine: 6
+                });
+                
+                if (bill === 5) {
+                    // $5 bill, no change needed
+                    five++;
+                    
+                    steps.push({
+                        type: 'five',
+                        description: `Customer ${i + 1} gives $5, no change needed`,
+                        currentIndex: i,
+                        five: five,
+                        ten: ten,
+                        codeLine: 9
+                    });
+                } else if (bill === 10) {
+                    // $10 bill, need to give $5 change
+                    if (five === 0) {
+                        success = false;
+                        
+                        steps.push({
+                            type: 'fail',
+                            description: `Cannot provide $5 change to customer ${i + 1}`,
+                            currentIndex: i,
+                            five: five,
+                            ten: ten,
+                            codeLine: 14
+                        });
+                        
+                        break;
+                    }
+                    
+                    five--;
+                    ten++;
+                    
+                    steps.push({
+                        type: 'ten',
+                        description: `Customer ${i + 1} gives $10, give back $5`,
+                        currentIndex: i,
+                        five: five,
+                        ten: ten,
+                        codeLine: 16
+                    });
+                } else if (bill === 20) {
+                    // $20 bill, need to give $15 change
+                    if (ten > 0 && five > 0) {
+                        // Use one $10 and one $5
+                        ten--;
+                        five--;
+                        
+                        steps.push({
+                            type: 'twenty_option1',
+                            description: `Customer ${i + 1} gives $20, give back $10 + $5`,
+                            currentIndex: i,
+                            five: five,
+                            ten: ten,
+                            codeLine: 23
+                        });
+                    } else if (five >= 3) {
+                        // Use three $5
+                        five -= 3;
+                        
+                        steps.push({
+                            type: 'twenty_option2',
+                            description: `Customer ${i + 1} gives $20, give back 3 × $5`,
+                            currentIndex: i,
+                            five: five,
+                            ten: ten,
+                            codeLine: 26
+                        });
+                    } else {
+                        success = false;
+                        
+                        steps.push({
+                            type: 'fail',
+                            description: `Cannot provide $15 change to customer ${i + 1}`,
+                            currentIndex: i,
+                            five: five,
+                            ten: ten,
+                            codeLine: 28
+                        });
+                        
+                        break;
+                    }
+                }
+            }
+            
+            steps.push({
+                type: 'result',
+                description: success ? 'Successfully provided change to all customers' : 'Failed to provide change',
+                five: five,
+                ten: ten,
+                success: success,
+                codeLine: success ? 30 : 28
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset customer styling
+            document.querySelectorAll('.customer').forEach(c => {
+                c.className = 'customer';
+            });
+            
+            // Update register display
+            updateRegister(step.five, step.ten);
+            
+            // Highlight current customer
+            if (step.currentIndex >= 0) {
+                const customer = document.getElementById(`customer-${step.currentIndex}`);
+                if (customer) {
+                    customer.className = 'customer current';
+                }
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'result') {
+                document.getElementById('result').textContent = `Can provide change to all customers: ${step.success}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function updateRegister(fiveCount, tenCount) {
+            const fiveBillsDiv = document.getElementById('fiveBills');
+            const tenBillsDiv = document.getElementById('tenBills');
+            
+            fiveBillsDiv.innerHTML = '';
+            tenBillsDiv.innerHTML = '';
+            
+            // Add $5 bills
+            for (let i = 0; i < fiveCount; i++) {
+                fiveBillsDiv.appendChild(createBillElement(5));
+            }
+            
+            // Add $10 bills
+            for (let i = 0; i < tenCount; i++) {
+                tenBillsDiv.appendChild(createBillElement(10));
+            }
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

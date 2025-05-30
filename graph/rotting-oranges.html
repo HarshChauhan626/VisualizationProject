@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotting Oranges</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .grid {
+            display: grid;
+            gap: 1px;
+            background-color: #2d3748;
+            padding: 1px;
+            border-radius: 4px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 14px;
+            transition: all 0.3s ease-in-out;
+        }
+        .cell.empty {
+            background-color: #1e293b;
+        }
+        .cell.fresh {
+            background-color: #10b981;
+        }
+        .cell.rotten {
+            background-color: #f43f5e;
+        }
+        .cell.rotting {
+            background-color: #fbbf24;
+            transform: scale(1.1);
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Rotting Oranges</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum time required to rot all oranges in a grid using multi-source BFS.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Grid Size</label>
+                            <input type="number" id="gridSize" value="3" min="2" max="5"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Fresh Orange Density</label>
+                            <input type="range" min="1" max="100" value="50" class="w-full" id="densitySlider">
+                            <span id="densityValue" class="text-sm">50%</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Orange Grid</h3>
+                    <div id="grid" class="grid"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="minutes" class="text-gray-300 mt-2">Minutes elapsed: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def orangesRotting(grid):</span>
+<span class="code-line" data-line="2">    rows, cols = len(grid), len(grid[0])</span>
+<span class="code-line" data-line="3">    queue = []</span>
+<span class="code-line" data-line="4">    fresh = 0</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    # Find all rotten oranges</span>
+<span class="code-line" data-line="7">    for i in range(rows):</span>
+<span class="code-line" data-line="8">        for j in range(cols):</span>
+<span class="code-line" data-line="9">            if grid[i][j] == 2:</span>
+<span class="code-line" data-line="10">                queue.append((i, j))</span>
+<span class="code-line" data-line="11">            elif grid[i][j] == 1:</span>
+<span class="code-line" data-line="12">                fresh += 1</span>
+<span class="code-line" data-line="13">    </span>
+<span class="code-line" data-line="14">    minutes = 0</span>
+<span class="code-line" data-line="15">    while queue and fresh > 0:</span>
+<span class="code-line" data-line="16">        for _ in range(len(queue)):</span>
+<span class="code-line" data-line="17">            i, j = queue.pop(0)</span>
+<span class="code-line" data-line="18">            for di, dj in [(0,1), (1,0), (0,-1), (-1,0)]:</span>
+<span class="code-line" data-line="19">                ni, nj = i + di, j + dj</span>
+<span class="code-line" data-line="20">                if 0 <= ni < rows and 0 <= nj < cols:</span>
+<span class="code-line" data-line="21">                    if grid[ni][nj] == 1:</span>
+<span class="code-line" data-line="22">                        grid[ni][nj] = 2</span>
+<span class="code-line" data-line="23">                        fresh -= 1</span>
+<span class="code-line" data-line="24">                        queue.append((ni, nj))</span>
+<span class="code-line" data-line="25">        minutes += 1</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given a grid representing a box of oranges, where 0 represents an empty cell, 1 represents a fresh orange, and 2 represents a rotten orange, find the minimum time required to rot all oranges. Every minute, any fresh orange that is adjacent to a rotten orange becomes rotten.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m * n) - where m and n are the dimensions of the grid</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m * n) - in the worst case, when all oranges are rotten</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works as follows:
+                                <br>1. Find all rotten oranges and count fresh oranges
+                                <br>2. Use multi-source BFS to spread the rot
+                                <br>3. For each minute:
+                                <br>   - Process all currently rotten oranges
+                                <br>   - Rot their fresh neighbors
+                                <br>   - Add newly rotten oranges to the queue
+                                <br>4. Continue until no fresh oranges remain
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let grid = [];
+        let cells = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initialize() {
+            const size = parseInt(document.getElementById('gridSize').value);
+            const density = parseInt(document.getElementById('densitySlider').value) / 100;
+
+            if (isNaN(size) || size < 2 || size > 5) {
+                alert('Please enter a valid grid size between 2 and 5');
+                return;
+            }
+
+            // Initialize grid
+            grid = Array(size).fill().map(() => Array(size).fill(0));
+            cells = [];
+
+            // Create grid display
+            const gridElement = document.getElementById('grid');
+            gridElement.innerHTML = '';
+            gridElement.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+
+            // Place rotten oranges (2) and fresh oranges (1)
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (Math.random() < density) {
+                        grid[i][j] = 1; // Fresh orange
+                    }
+                }
+            }
+
+            // Place at least one rotten orange
+            const rottenI = Math.floor(Math.random() * size);
+            const rottenJ = Math.floor(Math.random() * size);
+            grid[rottenI][rottenJ] = 2; // Rotten orange
+
+            // Create cells
+            for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${i}-${j}`;
+                    updateCellClass(cell, grid[i][j]);
+                    gridElement.appendChild(cell);
+                    cells.push(cell);
+                }
+            }
+
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function updateCellClass(cell, value) {
+            cell.className = 'cell';
+            if (value === 0) cell.className += ' empty';
+            else if (value === 1) cell.className += ' fresh';
+            else if (value === 2) cell.className += ' rotten';
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            const rows = grid.length;
+            const cols = grid[0].length;
+            let fresh = 0;
+            const queue = [];
+
+            // Find all rotten oranges and count fresh ones
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    if (grid[i][j] === 2) {
+                        queue.push([i, j]);
+                        steps.push({
+                            type: 'enqueue',
+                            description: `Add rotten orange at (${i}, ${j}) to queue`,
+                            row: i,
+                            col: j,
+                            codeLine: 10
+                        });
+                    } else if (grid[i][j] === 1) {
+                        fresh++;
+                    }
+                }
+            }
+
+            let minutes = 0;
+            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+
+            while (queue.length > 0 && fresh > 0) {
+                const currentSize = queue.length;
+                let rotted = false;
+
+                for (let _ = 0; _ < currentSize; _++) {
+                    const [i, j] = queue.shift();
+
+                    steps.push({
+                        type: 'process',
+                        description: `Processing rotten orange at (${i}, ${j})`,
+                        row: i,
+                        col: j,
+                        codeLine: 17
+                    });
+
+                    for (const [di, dj] of directions) {
+                        const ni = i + di;
+                        const nj = j + dj;
+
+                        if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
+                            if (grid[ni][nj] === 1) {
+                                grid[ni][nj] = 2;
+                                fresh--;
+                                queue.push([ni, nj]);
+                                rotted = true;
+
+                                steps.push({
+                                    type: 'rot',
+                                    description: `Orange at (${ni}, ${nj}) becomes rotten`,
+                                    row: ni,
+                                    col: nj,
+                                    codeLine: 22
+                                });
+                            }
+                        }
+                    }
+                }
+
+                if (rotted) {
+                    minutes++;
+                    steps.push({
+                        type: 'minute',
+                        description: `Minute ${minutes} complete`,
+                        minutes: minutes,
+                        codeLine: 25
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                description: fresh === 0 ? 'All oranges are rotten' : 'Some oranges cannot be rotten',
+                minutes: minutes,
+                codeLine: 1
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            cells.forEach(cell => {
+                const [i, j] = cell.id.split('-').slice(1).map(Number);
+                updateCellClass(cell, grid[i][j]);
+            });
+
+            if (step.type === 'enqueue' || step.type === 'process') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' rotting';
+            } else if (step.type === 'rot') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className = 'cell rotten';
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.minutes !== undefined) {
+                document.getElementById('minutes').textContent = `Minutes elapsed: ${step.minutes}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle sliders
+        document.getElementById('densitySlider').addEventListener('input', function() {
+            document.getElementById('densityValue').textContent = this.value + '%';
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

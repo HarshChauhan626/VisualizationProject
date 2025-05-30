@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sort List - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .slow {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .fast {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .middle {
+            background-color: #fbbf24;
+            border-color: #f59e0b;
+        }
+        .left {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .right {
+            background-color: #4c1d95;
+            border-color: #8b5cf6;
+        }
+        .comparing {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .merged {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .phase {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .phase.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Sort List</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given the head of a linked list, return the list after sorting it in ascending order.<br><br>
+                Can you sort the linked list in O(n log n) time and O(1) memory (i.e. constant space)?
+            </p>
+        </div>
+
+        <!-- Phase Selection -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="splitPhase" class="phase active px-4 py-2 rounded" onclick="switchPhase('split')">
+                    Phase 1: Split List
+                </div>
+                <div id="sortPhase" class="phase px-4 py-2 rounded" onclick="switchPhase('sort')">
+                    Phase 2: Sort Sublists
+                </div>
+                <div id="mergePhase" class="phase px-4 py-2 rounded" onclick="switchPhase('merge')">
+                    Phase 3: Merge Sorted Lists
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Linked List Values (comma-separated)</label>
+                    <input type="text" id="inputValues" placeholder="Enter values" 
+                        class="border p-2 rounded w-full" value="4,2,1,3">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="space-y-8">
+                <!-- Original List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Original List:</h3>
+                    <div id="originalListVisualization" class="relative h-24">
+                    </div>
+                </div>
+                <!-- Working Area -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Working Area:</h3>
+                    <div id="workingAreaVisualization" class="relative h-48">
+                    </div>
+                </div>
+                <!-- Result List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Sorted List:</h3>
+                    <div id="sortedListVisualization" class="relative h-24">
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mt-6">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="splitPseudoCode" class="phase-code">
+                <pre class="p-4 rounded text-gray-300">
+// Phase 1: Split List (Time: O(n), Space: O(1))
+function findMiddle(head):
+    if !head or !head.next:
+        return head
+    
+    slow = head
+    fast = head
+    
+    while fast.next and fast.next.next:
+        slow = slow.next
+        fast = fast.next.next
+    
+    return slow  // Middle node</pre>
+            </div>
+            <div id="sortPseudoCode" class="phase-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Phase 2: Sort List (Time: O(n log n), Space: O(1))
+function sortList(head):
+    if !head or !head.next:
+        return head
+    
+    // Split list into two halves
+    middle = findMiddle(head)
+    secondHalf = middle.next
+    middle.next = null
+    
+    // Recursively sort both halves
+    left = sortList(head)
+    right = sortList(secondHalf)
+    
+    // Merge sorted halves
+    return mergeLists(left, right)</pre>
+            </div>
+            <div id="mergePseudoCode" class="phase-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Phase 3: Merge Lists (Time: O(n), Space: O(1))
+function mergeLists(l1, l2):
+    dummy = new ListNode(0)
+    curr = dummy
+    
+    while l1 and l2:
+        if l1.val <= l2.val:
+            curr.next = l1
+            l1 = l1.next
+        else:
+            curr.next = l2
+            l2 = l2.next
+        curr = curr.next
+    
+    curr.next = l1 or l2
+    return dummy.next</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">head = [4,2,1,3]</p>
+                    <p class="text-green-400">Output: [1,2,3,4]</p>
+                    <p class="text-gray-400">Explanation: Sort the list in ascending order.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">head = [-1,5,3,4,0]</p>
+                    <p class="text-green-400">Output: [-1,0,3,4,5]</p>
+                    <p class="text-gray-400">Explanation: Sort the list with negative numbers.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">head = []</p>
+                    <p class="text-green-400">Output: []</p>
+                    <p class="text-gray-400">Explanation: Empty list remains empty.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        let values = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentPhase = 'split';
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function switchPhase(phase) {
+            currentPhase = phase;
+            document.querySelectorAll('.phase').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(phase + 'Phase').classList.add('active');
+            document.querySelectorAll('.phase-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(phase + 'PseudoCode').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function findMiddle(head) {
+            if (!head || !head.next) return head;
+            
+            let slow = head;
+            let fast = head;
+            
+            while (fast.next && fast.next.next) {
+                slow = slow.next;
+                fast = fast.next.next;
+            }
+            
+            return slow;
+        }
+
+        function mergeLists(l1, l2) {
+            const dummy = new ListNode(0);
+            let curr = dummy;
+            
+            while (l1 && l2) {
+                if (l1.val <= l2.val) {
+                    curr.next = new ListNode(l1.val);
+                    l1 = l1.next;
+                } else {
+                    curr.next = new ListNode(l2.val);
+                    l2 = l2.next;
+                }
+                curr = curr.next;
+            }
+            
+            while (l1) {
+                curr.next = new ListNode(l1.val);
+                curr = curr.next;
+                l1 = l1.next;
+            }
+            
+            while (l2) {
+                curr.next = new ListNode(l2.val);
+                curr = curr.next;
+                l2 = l2.next;
+            }
+            
+            return dummy.next;
+        }
+
+        function generateSplitSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [],
+                    sorted: getListNodes(head),
+                    explanation: "List too short, already sorted",
+                    done: true
+                });
+                return steps;
+            }
+
+            let slow = head;
+            let fast = head;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    slow,
+                    fast
+                }],
+                explanation: "Initialize slow and fast pointers at head"
+            });
+
+            while (fast.next && fast.next.next) {
+                slow = slow.next;
+                fast = fast.next.next;
+
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        slow,
+                        fast
+                    }],
+                    explanation: "Move slow one step, fast two steps"
+                });
+            }
+
+            const middle = slow;
+            const secondHalf = middle.next;
+            middle.next = null;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [
+                    {
+                        nodes: getListNodes(head),
+                        y: 0,
+                        className: 'left'
+                    },
+                    {
+                        nodes: getListNodes(secondHalf),
+                        y: 40,
+                        className: 'right'
+                    }
+                ],
+                middle,
+                explanation: "Split list at middle node",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateSortSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [],
+                    sorted: getListNodes(head),
+                    explanation: "List too short, already sorted",
+                    done: true
+                });
+                return steps;
+            }
+
+            // Get to split state first
+            const middle = findMiddle(head);
+            const secondHalf = middle.next;
+            middle.next = null;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [
+                    {
+                        nodes: getListNodes(head),
+                        y: 0,
+                        className: 'left'
+                    },
+                    {
+                        nodes: getListNodes(secondHalf),
+                        y: 40,
+                        className: 'right'
+                    }
+                ],
+                explanation: "Start with split lists"
+            });
+
+            // Sort first half
+            const sortedFirst = [...getListNodes(head)].sort((a, b) => a.val - b.val);
+            steps.push({
+                original: getListNodes(head),
+                working: [
+                    {
+                        nodes: sortedFirst,
+                        y: 0,
+                        className: 'merged'
+                    },
+                    {
+                        nodes: getListNodes(secondHalf),
+                        y: 40,
+                        className: 'right'
+                    }
+                ],
+                explanation: "Sort first half"
+            });
+
+            // Sort second half
+            const sortedSecond = [...getListNodes(secondHalf)].sort((a, b) => a.val - b.val);
+            steps.push({
+                original: getListNodes(head),
+                working: [
+                    {
+                        nodes: sortedFirst,
+                        y: 0,
+                        className: 'merged'
+                    },
+                    {
+                        nodes: sortedSecond,
+                        y: 40,
+                        className: 'merged'
+                    }
+                ],
+                explanation: "Sort second half",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateMergeSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [],
+                    sorted: getListNodes(head),
+                    explanation: "List too short, already sorted",
+                    done: true
+                });
+                return steps;
+            }
+
+            // Get to sorted halves state first
+            const middle = findMiddle(head);
+            const secondHalf = middle.next;
+            middle.next = null;
+
+            const sortedFirst = [...getListNodes(head)].sort((a, b) => a.val - b.val);
+            const sortedSecond = [...getListNodes(secondHalf)].sort((a, b) => a.val - b.val);
+
+            steps.push({
+                original: getListNodes(head),
+                working: [
+                    {
+                        nodes: sortedFirst,
+                        y: 0,
+                        className: 'left'
+                    },
+                    {
+                        nodes: sortedSecond,
+                        y: 40,
+                        className: 'right'
+                    }
+                ],
+                explanation: "Start with sorted halves"
+            });
+
+            // Merge process
+            const merged = [];
+            let i = 0, j = 0;
+
+            while (i < sortedFirst.length && j < sortedSecond.length) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [
+                        {
+                            nodes: sortedFirst,
+                            y: 0,
+                            className: 'left',
+                            comparing: sortedFirst[i]
+                        },
+                        {
+                            nodes: sortedSecond,
+                            y: 40,
+                            className: 'right',
+                            comparing: sortedSecond[j]
+                        }
+                    ],
+                    sorted: merged,
+                    explanation: `Compare ${sortedFirst[i].val} and ${sortedSecond[j].val}`
+                });
+
+                if (sortedFirst[i].val <= sortedSecond[j].val) {
+                    merged.push({...sortedFirst[i]});
+                    i++;
+                } else {
+                    merged.push({...sortedSecond[j]});
+                    j++;
+                }
+
+                steps.push({
+                    original: getListNodes(head),
+                    working: [
+                        {
+                            nodes: sortedFirst,
+                            y: 0,
+                            className: 'left'
+                        },
+                        {
+                            nodes: sortedSecond,
+                            y: 40,
+                            className: 'right'
+                        }
+                    ],
+                    sorted: merged,
+                    explanation: "Add smaller value to result"
+                });
+            }
+
+            // Add remaining elements
+            while (i < sortedFirst.length) {
+                merged.push({...sortedFirst[i]});
+                i++;
+                steps.push({
+                    original: getListNodes(head),
+                    working: [
+                        {
+                            nodes: sortedFirst,
+                            y: 0,
+                            className: 'left'
+                        },
+                        {
+                            nodes: sortedSecond,
+                            y: 40,
+                            className: 'right'
+                        }
+                    ],
+                    sorted: merged,
+                    explanation: "Add remaining elements from first half"
+                });
+            }
+
+            while (j < sortedSecond.length) {
+                merged.push({...sortedSecond[j]});
+                j++;
+                steps.push({
+                    original: getListNodes(head),
+                    working: [
+                        {
+                            nodes: sortedFirst,
+                            y: 0,
+                            className: 'left'
+                        },
+                        {
+                            nodes: sortedSecond,
+                            y: 40,
+                            className: 'right'
+                        }
+                    ],
+                    sorted: merged,
+                    explanation: "Add remaining elements from second half"
+                });
+            }
+
+            steps.push({
+                original: getListNodes(head),
+                working: [],
+                sorted: merged,
+                explanation: "Merge complete",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            values = document.getElementById('inputValues').value.split(',').map(x => parseInt(x.trim()));
+            currentStep = 0;
+            const head = createLinkedList(values);
+            
+            switch (currentPhase) {
+                case 'split':
+                    steps = generateSplitSteps(head);
+                    break;
+                case 'sort':
+                    steps = generateSortSteps(head);
+                    break;
+                case 'merge':
+                    steps = generateMergeSteps(head);
+                    break;
+            }
+            
+            updateVisualization();
+        }
+
+        function createNodeElement(node, x, y, className = '') {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg ${className}`;
+            nodeDiv.style.left = `${x}px`;
+            nodeDiv.style.top = `${y}px`;
+            nodeDiv.textContent = node.val;
+            return nodeDiv;
+        }
+
+        function createArrow(startX, startY, endX, endY) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            arrow.style.left = `${startX + 24}px`;
+            arrow.style.top = `${startY + 24}px`;
+            arrow.style.width = `${length - 48}px`;
+            arrow.style.transform = `rotate(${angle}deg)`;
+            
+            return arrow;
+        }
+
+        function updateVisualization() {
+            const originalListDiv = document.getElementById('originalListVisualization');
+            const workingAreaDiv = document.getElementById('workingAreaVisualization');
+            const sortedListDiv = document.getElementById('sortedListVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            originalListDiv.innerHTML = '';
+            workingAreaDiv.innerHTML = '';
+            sortedListDiv.innerHTML = '';
+            
+            // Draw original list
+            if (step.original) {
+                let x = 50;
+                const y = 12;
+                
+                step.original.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    originalListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.original.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        originalListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Draw working area
+            if (step.working) {
+                step.working.forEach(list => {
+                    let x = 50;
+                    const y = list.y + 12;
+                    
+                    list.nodes.forEach((node, index) => {
+                        let className = list.className || '';
+                        if (node === step.slow) className += ' slow';
+                        if (node === step.fast) className += ' fast';
+                        if (node === step.middle) className += ' middle';
+                        if (node === list.comparing) className += ' comparing';
+                        
+                        const nodeDiv = createNodeElement(node, x, y, className);
+                        workingAreaDiv.appendChild(nodeDiv);
+                        
+                        if (index < list.nodes.length - 1) {
+                            const arrow = createArrow(x, y, x + 100, y);
+                            workingAreaDiv.appendChild(arrow);
+                        }
+                        
+                        x += 100;
+                    });
+                });
+            }
+            
+            // Draw sorted list
+            if (step.sorted) {
+                let x = 50;
+                const y = 12;
+                
+                step.sorted.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y, 'merged');
+                    sortedListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.sorted.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        sortedListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Phase complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

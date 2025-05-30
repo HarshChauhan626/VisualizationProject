@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trapping Rain Water II</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 1px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+            position: relative;
+        }
+        .grid-cell.current {
+            background-color: #eab308;
+        }
+        .grid-cell.water {
+            background-color: #0ea5e9;
+        }
+        .grid-cell.wall {
+            background-color: #6b7280;
+        }
+        .grid-cell.processed {
+            background-color: #22c55e;
+        }
+        .grid-cell::after {
+            content: attr(data-height);
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            background-color: #4b5563;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            background-color: #1f2937;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Trapping Rain Water II</h1>
+        <p class="text-gray-300 mb-8">Visualize how to calculate the volume of trapped water in a 2D elevation map using a priority queue approach.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Height Map</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="heightMapInput" value="1,4,3,1,3,2,1,4,2" 
+                                    class="flex-1 px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400"
+                                    placeholder="Enter comma-separated heights for a 3x3 grid">
+                                <button onclick="applyCustomMap()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">Enter 9 numbers for a 3x3 grid</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="generateNewMap()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            New Map
+                        </button>
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- 3D Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">3D View</h3>
+                    <div id="canvas-container"></div>
+                </div>
+
+                <!-- 2D Grid Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Height Map</h3>
+                    <div id="gridContainer" class="flex flex-col items-center">
+                        <!-- Grid will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Total Water: 0 units</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function trapRainWater(heightMap):</span>
+<span class="code-line" data-line="2">    if not heightMap: return 0</span>
+<span class="code-line" data-line="3">    m, n = heightMap.length, heightMap[0].length</span>
+<span class="code-line" data-line="4">    visited = set()</span>
+<span class="code-line" data-line="5">    pq = PriorityQueue()</span>
+<span class="code-line" data-line="6">    // Add border cells to priority queue</span>
+<span class="code-line" data-line="7">    for i in range(m):</span>
+<span class="code-line" data-line="8">        pq.add((heightMap[i][0], i, 0))</span>
+<span class="code-line" data-line="9">        pq.add((heightMap[i][n-1], i, n-1))</span>
+<span class="code-line" data-line="10">    for j in range(n):</span>
+<span class="code-line" data-line="11">        pq.add((heightMap[0][j], 0, j))</span>
+<span class="code-line" data-line="12">        pq.add((heightMap[m-1][j], m-1, j))</span>
+<span class="code-line" data-line="13">    water = 0</span>
+<span class="code-line" data-line="14">    maxHeight = 0</span>
+<span class="code-line" data-line="15">    while pq not empty:</span>
+<span class="code-line" data-line="16">        height, i, j = pq.pop()</span>
+<span class="code-line" data-line="17">        maxHeight = max(maxHeight, height)</span>
+<span class="code-line" data-line="18">        for ni, nj in neighbors(i, j):</span>
+<span class="code-line" data-line="19">            if not visited[ni][nj]:</span>
+<span class="code-line" data-line="20">                water += max(0, maxHeight - heightMap[ni][nj])</span>
+<span class="code-line" data-line="21">                pq.add((heightMap[ni][nj], ni, nj))</span>
+<span class="code-line" data-line="22">    return water</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(mn log(m+n)) where m×n is the size of the height map</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(mn) for the visited set and priority queue</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Starting from the border cells
+                                <br>2. Using a priority queue to process cells from lowest to highest
+                                <br>3. For each cell:
+                                <br>&nbsp;&nbsp;&nbsp;- Track maximum height seen so far
+                                <br>&nbsp;&nbsp;&nbsp;- Check unvisited neighbors
+                                <br>&nbsp;&nbsp;&nbsp;- Add water if neighbor height < max height
+                                <br>4. Continue until all cells are processed
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let heightMap = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let scene, camera, renderer, cubes = [], waterMeshes = [];
+        const ROWS = 3, COLS = 3;
+
+        function initThreeJS() {
+            // Set up scene
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            
+            const container = document.getElementById('canvas-container');
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            // Position camera
+            camera.position.set(5, 5, 5);
+            camera.lookAt(1, 0, 1);
+
+            // Start animation loop
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function createCubes() {
+            // Clear existing cubes
+            cubes.forEach(cube => scene.remove(cube));
+            waterMeshes.forEach(water => scene.remove(water));
+            cubes = [];
+            waterMeshes = [];
+
+            // Create new cubes
+            const geometry = new THREE.BoxGeometry(0.8, 1, 0.8);
+            const material = new THREE.MeshPhongMaterial({ color: 0x808080 });
+            const waterMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x0088ff,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            for (let i = 0; i < ROWS; i++) {
+                cubes[i] = [];
+                waterMeshes[i] = [];
+                for (let j = 0; j < COLS; j++) {
+                    const height = heightMap[i][j];
+                    const cube = new THREE.Mesh(geometry, material);
+                    cube.position.set(j, height/2, i);
+                    cube.scale.y = height;
+                    scene.add(cube);
+                    cubes[i][j] = cube;
+
+                    // Add water mesh (initially hidden)
+                    const water = new THREE.Mesh(geometry, waterMaterial);
+                    water.position.set(j, 0, i);
+                    water.visible = false;
+                    scene.add(water);
+                    waterMeshes[i][j] = water;
+                }
+            }
+        }
+
+        function updateWater(waterHeights) {
+            for (let i = 0; i < ROWS; i++) {
+                for (let j = 0; j < COLS; j++) {
+                    const waterHeight = waterHeights[i][j];
+                    const baseHeight = heightMap[i][j];
+                    const water = waterMeshes[i][j];
+                    
+                    if (waterHeight > baseHeight) {
+                        water.visible = true;
+                        water.position.y = (waterHeight + baseHeight) / 2;
+                        water.scale.y = waterHeight - baseHeight;
+                    } else {
+                        water.visible = false;
+                    }
+                }
+            }
+        }
+
+        function generateNewMap() {
+            heightMap = Array(ROWS).fill().map(() => 
+                Array(COLS).fill().map(() => Math.floor(Math.random() * 4) + 1)
+            );
+            document.getElementById('heightMapInput').value = heightMap.flat().join(',');
+            createGrid();
+            resetVisualization();
+            createCubes();
+        }
+
+        function applyCustomMap() {
+            const input = document.getElementById('heightMapInput').value;
+            const heights = input.split(',').map(h => parseInt(h.trim()));
+            
+            if (heights.length !== ROWS * COLS) {
+                alert(`Please enter exactly ${ROWS * COLS} numbers`);
+                return;
+            }
+            
+            if (heights.some(h => isNaN(h) || h < 0)) {
+                alert('Please enter valid non-negative numbers');
+                return;
+            }
+            
+            heightMap = [];
+            for (let i = 0; i < ROWS; i++) {
+                heightMap[i] = heights.slice(i * COLS, (i + 1) * COLS);
+            }
+            
+            createGrid();
+            resetVisualization();
+            createCubes();
+        }
+
+        function createGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < ROWS; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex';
+                
+                for (let j = 0; j < COLS; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.id = `cell-${i}-${j}`;
+                    cell.setAttribute('data-height', heightMap[i][j]);
+                    cell.textContent = heightMap[i][j];
+                    row.appendChild(cell);
+                }
+                
+                container.appendChild(row);
+            }
+        }
+
+        class PriorityQueue {
+            constructor() {
+                this.values = [];
+            }
+            
+            add(value) {
+                this.values.push(value);
+                this.sort();
+            }
+            
+            pop() {
+                return this.values.shift();
+            }
+            
+            sort() {
+                this.values.sort((a, b) => a[0] - b[0]);
+            }
+            
+            isEmpty() {
+                return this.values.length === 0;
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = ROWS, n = COLS;
+            const visited = Array(m).fill().map(() => Array(n).fill(false));
+            const waterHeights = Array(m).fill().map(() => Array(n).fill(0));
+            const pq = new PriorityQueue();
+            let water = 0;
+            let maxHeight = 0;
+
+            // Add initial state
+            steps.push({
+                type: 'init',
+                visited: visited.map(row => [...row]),
+                waterHeights: waterHeights.map(row => [...row]),
+                water: water,
+                description: 'Starting with empty visited set and water heights',
+                codeLine: 4
+            });
+
+            // Add border cells to priority queue
+            for (let i = 0; i < m; i++) {
+                pq.add([heightMap[i][0], i, 0]);
+                pq.add([heightMap[i][n-1], i, n-1]);
+                visited[i][0] = visited[i][n-1] = true;
+                
+                steps.push({
+                    type: 'border',
+                    visited: visited.map(row => [...row]),
+                    waterHeights: waterHeights.map(row => [...row]),
+                    current: [i, 0],
+                    water: water,
+                    description: `Adding border cell (${i},0) with height ${heightMap[i][0]}`,
+                    codeLine: 8
+                });
+            }
+
+            for (let j = 1; j < n-1; j++) {
+                pq.add([heightMap[0][j], 0, j]);
+                pq.add([heightMap[m-1][j], m-1, j]);
+                visited[0][j] = visited[m-1][j] = true;
+                
+                steps.push({
+                    type: 'border',
+                    visited: visited.map(row => [...row]),
+                    waterHeights: waterHeights.map(row => [...row]),
+                    current: [0, j],
+                    water: water,
+                    description: `Adding border cell (0,${j}) with height ${heightMap[0][j]}`,
+                    codeLine: 11
+                });
+            }
+
+            const directions = [[0,1], [1,0], [0,-1], [-1,0]];
+            
+            while (!pq.isEmpty()) {
+                const [height, i, j] = pq.pop();
+                maxHeight = Math.max(maxHeight, height);
+                
+                steps.push({
+                    type: 'process',
+                    visited: visited.map(row => [...row]),
+                    waterHeights: waterHeights.map(row => [...row]),
+                    current: [i, j],
+                    water: water,
+                    description: `Processing cell (${i},${j}) with height ${height}, max height is ${maxHeight}`,
+                    codeLine: 16
+                });
+
+                for (const [di, dj] of directions) {
+                    const ni = i + di, nj = j + dj;
+                    if (ni >= 0 && ni < m && nj >= 0 && nj < n && !visited[ni][nj]) {
+                        visited[ni][nj] = true;
+                        const waterAdded = Math.max(0, maxHeight - heightMap[ni][nj]);
+                        water += waterAdded;
+                        waterHeights[ni][nj] = maxHeight;
+                        
+                        steps.push({
+                            type: 'water',
+                            visited: visited.map(row => [...row]),
+                            waterHeights: waterHeights.map(row => [...row]),
+                            current: [ni, nj],
+                            water: water,
+                            description: `Adding ${waterAdded} units of water to cell (${ni},${nj})`,
+                            codeLine: 20
+                        });
+                        
+                        pq.add([heightMap[ni][nj], ni, nj]);
+                    }
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                visited: visited.map(row => [...row]),
+                waterHeights: waterHeights.map(row => [...row]),
+                water: water,
+                description: `Algorithm complete. Total water trapped: ${water} units`,
+                codeLine: 22
+            });
+        }
+
+        function startVisualization() {
+            if (heightMap.length === 0) {
+                alert('Please generate or enter a height map first');
+                return;
+            }
+
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Total Water: 0 units';
+            highlightCodeLine(1);
+            createGrid();
+            updateWater(Array(ROWS).fill().map(() => Array(COLS).fill(0)));
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                cell.className = 'grid-cell';
+            });
+
+            // Update water visualization
+            updateWater(step.waterHeights);
+
+            // Update visited cells
+            for (let i = 0; i < ROWS; i++) {
+                for (let j = 0; j < COLS; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    if (step.visited[i][j]) {
+                        cell.classList.add('processed');
+                    }
+                    if (step.waterHeights[i][j] > heightMap[i][j]) {
+                        cell.classList.add('water');
+                    }
+                }
+            }
+
+            // Highlight current cell
+            if (step.current) {
+                const [i, j] = step.current;
+                document.getElementById(`cell-${i}-${j}`).classList.add('current');
+            }
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            document.getElementById('result').textContent = `Total Water: ${step.water} units`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('canvas-container');
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initThreeJS();
+            generateNewMap();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

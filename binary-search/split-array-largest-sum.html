@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Array Largest Sum - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current-split {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .current {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .optimal {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .mid {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .split-marker {
+            width: 2px;
+            height: 40px;
+            background-color: #fb923c;
+            position: absolute;
+            transform: translateX(-50%);
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Split Array Largest Sum</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an array nums which consists of non-negative integers and an integer m, you need to split the array into m non-empty continuous subarrays.<br><br>
+                The objective is to minimize the largest sum among these m subarrays.<br><br>
+                Example:<br>
+                Input: nums = [7,2,5,10,8], m = 2<br>
+                Output: 18<br>
+                Explanation: There are four ways to split nums into two subarrays.<br>
+                The best way is to split it into [7,2,5] and [10,8], where the largest sum among the two subarrays is only 18.
+            </p>
+        </div>
+
+        <!-- Approach Selection -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Approach</h2>
+            <div class="flex gap-4">
+                <div id="binaryTab" class="tab active" onclick="switchTab('binary')">
+                    Binary Search
+                </div>
+                <div id="dpTab" class="tab" onclick="switchTab('dp')">
+                    Dynamic Programming
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                    <input type="text" id="array" placeholder="7,2,5,10,8" 
+                        class="border p-2 rounded w-full" value="7,2,5,10,8">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Number of Splits (m)</label>
+                    <input type="number" id="splits" placeholder="Number of splits" min="1"
+                        class="border p-2 rounded w-full" value="2">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div class="relative">
+                    <div id="arrayVisualization" class="flex flex-wrap items-center gap-2">
+                    </div>
+                    <div id="splitMarkers" class="absolute top-0 left-0 w-full">
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div id="stateVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="binaryPseudoCode">
+                <pre class="p-4 rounded text-gray-300">
+// Binary Search Approach
+// Time: O(n * log(sum)), Space: O(1)
+function splitArray(nums, m):
+    left = max(nums)  // Minimum possible maximum subarray sum
+    right = sum(nums) // Maximum possible maximum subarray sum
+    
+    while left < right:
+        mid = (left + right) // 2
+        count = 1
+        currentSum = 0
+        
+        // Try to split array with mid as maximum sum
+        for num in nums:
+            if currentSum + num > mid:
+                count++
+                currentSum = num
+            else:
+                currentSum += num
+        
+        if count <= m:
+            right = mid  // Try smaller maximum sum
+        else:
+            left = mid + 1  // Need larger maximum sum
+    
+    return left</pre>
+            </div>
+            <div id="dpPseudoCode" style="display: none;">
+                <pre class="p-4 rounded text-gray-300">
+// Dynamic Programming Approach
+// Time: O(n * n * m), Space: O(n * m)
+function splitArray(nums, m):
+    n = nums.length
+    // dp[i][j] = min largest sum when splitting nums[0:i] into j parts
+    dp = new Array(n + 1) x (m + 1)
+    prefixSum = calculatePrefixSum(nums)
+    
+    // Initialize base cases
+    for i in range(0 to n):
+        dp[i][1] = prefixSum[i]
+    
+    // Fill dp table
+    for i in range(1 to n):
+        for j in range(2 to min(i + 1, m)):
+            dp[i][j] = infinity
+            for k in range(0 to i):
+                dp[i][j] = min(dp[i][j],
+                             max(dp[k][j-1],
+                                 prefixSum[i] - prefixSum[k]))
+    
+    return dp[n-1][m]</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [7,2,5,10,8], m = 2</p>
+                    <p class="text-green-400">Output: 18</p>
+                    <p class="text-gray-400">Explanation: Split into [7,2,5] and [10,8]. The largest sum is max(14, 18) = 18.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [1,2,3,4,5], m = 2</p>
+                    <p class="text-green-400">Output: 9</p>
+                    <p class="text-gray-400">Explanation: Split into [1,2,3] and [4,5]. The largest sum is max(6, 9) = 9.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [1,4,4], m = 3</p>
+                    <p class="text-green-400">Output: 4</p>
+                    <p class="text-gray-400">Explanation: Split into [1], [4], [4]. The largest sum is max(1, 4, 4) = 4.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let arr = [];
+        let m = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'binary';
+
+        function switchTab(approach) {
+            currentApproach = approach;
+            document.getElementById('binaryTab').classList.toggle('active', approach === 'binary');
+            document.getElementById('dpTab').classList.toggle('active', approach === 'dp');
+            document.getElementById('binaryPseudoCode').style.display = approach === 'binary' ? 'block' : 'none';
+            document.getElementById('dpPseudoCode').style.display = approach === 'dp' ? 'block' : 'none';
+            initializeVisualization();
+        }
+
+        function canSplit(nums, maxSum, m) {
+            let count = 1;
+            let currentSum = 0;
+            
+            for (const num of nums) {
+                if (currentSum + num > maxSum) {
+                    count++;
+                    currentSum = num;
+                } else {
+                    currentSum += num;
+                }
+            }
+            
+            return count <= m;
+        }
+
+        function generateBinarySteps(nums, m) {
+            const steps = [];
+            let left = Math.max(...nums);
+            let right = nums.reduce((a, b) => a + b, 0);
+            
+            steps.push({
+                nums,
+                m,
+                left,
+                right,
+                explanation: `Initialize binary search with range [${left}, ${right}]`
+            });
+
+            while (left < right) {
+                const mid = Math.floor((left + right) / 2);
+                let count = 1;
+                let currentSum = 0;
+                const splits = [0];
+                
+                steps.push({
+                    nums,
+                    m,
+                    left,
+                    right,
+                    mid,
+                    explanation: `Try splitting array with maximum sum = ${mid}`
+                });
+
+                for (let i = 0; i < nums.length; i++) {
+                    if (currentSum + nums[i] > mid) {
+                        splits.push(i);
+                        count++;
+                        currentSum = nums[i];
+                    } else {
+                        currentSum += nums[i];
+                    }
+                    
+                    steps.push({
+                        nums,
+                        m,
+                        left,
+                        right,
+                        mid,
+                        currentIndex: i,
+                        currentSum,
+                        splits: [...splits],
+                        explanation: `Processing index ${i}, current sum = ${currentSum}`
+                    });
+                }
+
+                if (count <= m) {
+                    steps.push({
+                        nums,
+                        m,
+                        left,
+                        right: mid,
+                        lastMid: mid,
+                        splits,
+                        explanation: `${count} splits ≤ ${m}, try smaller maximum sum`
+                    });
+                    right = mid;
+                } else {
+                    steps.push({
+                        nums,
+                        m,
+                        left: mid + 1,
+                        right,
+                        lastMid: mid,
+                        splits,
+                        explanation: `${count} splits > ${m}, need larger maximum sum`
+                    });
+                    left = mid + 1;
+                }
+            }
+
+            steps.push({
+                nums,
+                m,
+                result: left,
+                explanation: `Found minimum largest sum: ${left}`,
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateDPSteps(nums, m) {
+            const steps = [];
+            const n = nums.length;
+            const dp = Array(n).fill().map(() => Array(m + 1).fill(Infinity));
+            const prefixSum = [0];
+            
+            for (let i = 0; i < n; i++) {
+                prefixSum[i + 1] = prefixSum[i] + nums[i];
+            }
+            
+            steps.push({
+                nums,
+                m,
+                explanation: "Initialize DP table and prefix sums"
+            });
+
+            // Base cases
+            for (let i = 0; i < n; i++) {
+                dp[i][1] = prefixSum[i + 1];
+                steps.push({
+                    nums,
+                    m,
+                    dp: JSON.parse(JSON.stringify(dp)),
+                    i,
+                    j: 1,
+                    explanation: `Set dp[${i}][1] = ${dp[i][1]} (sum of first ${i + 1} elements)`
+                });
+            }
+
+            // Fill DP table
+            for (let j = 2; j <= m; j++) {
+                for (let i = j - 1; i < n; i++) {
+                    for (let k = 0; k < i; k++) {
+                        const value = Math.max(dp[k][j-1], prefixSum[i + 1] - prefixSum[k + 1]);
+                        if (value < dp[i][j]) {
+                            dp[i][j] = value;
+                            steps.push({
+                                nums,
+                                m,
+                                dp: JSON.parse(JSON.stringify(dp)),
+                                i,
+                                j,
+                                k,
+                                split: k,
+                                explanation: `Update dp[${i}][${j}] = ${value} by splitting at index ${k}`
+                            });
+                        }
+                    }
+                }
+            }
+
+            steps.push({
+                nums,
+                m,
+                result: dp[n-1][m],
+                explanation: `Found minimum largest sum: ${dp[n-1][m]}`,
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            arr = document.getElementById('array').value.split(',').map(x => parseInt(x.trim()));
+            m = parseInt(document.getElementById('splits').value);
+            currentStep = 0;
+            steps = currentApproach === 'binary' ? 
+                generateBinarySteps(arr, m) : 
+                generateDPSteps(arr, m);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const splitMarkersDiv = document.getElementById('splitMarkers');
+            const stateDiv = document.getElementById('stateVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            arrayDiv.innerHTML = '';
+            splitMarkersDiv.innerHTML = '';
+            
+            // Create array visualization
+            const elementWidth = 48; // w-12 = 3rem = 48px
+            const elementGap = 8;  // gap-2 = 0.5rem = 8px
+            
+            step.nums.forEach((num, i) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                
+                if (step.currentIndex === i) {
+                    elementDiv.classList.add('current');
+                }
+                if (step.splits && step.splits.includes(i)) {
+                    elementDiv.classList.add('current-split');
+                }
+                
+                elementDiv.textContent = num;
+                arrayDiv.appendChild(elementDiv);
+            });
+            
+            // Add split markers
+            if (step.splits) {
+                step.splits.forEach(splitIndex => {
+                    if (splitIndex > 0) {
+                        const markerDiv = document.createElement('div');
+                        markerDiv.className = 'split-marker';
+                        markerDiv.style.left = `${splitIndex * (elementWidth + elementGap)}px`;
+                        splitMarkersDiv.appendChild(markerDiv);
+                    }
+                });
+            }
+            
+            // Update state
+            let stateText = '';
+            if (!step.done) {
+                if (currentApproach === 'binary') {
+                    stateText = `Range: [${step.left}, ${step.right}]`;
+                    if (step.mid !== undefined) {
+                        stateText += `\nTrying max sum: ${step.mid}`;
+                    }
+                    if (step.currentSum !== undefined) {
+                        stateText += `\nCurrent sum: ${step.currentSum}`;
+                    }
+                } else {
+                    if (step.i !== undefined) {
+                        stateText = `Processing dp[${step.i}][${step.j}]`;
+                        if (step.k !== undefined) {
+                            stateText += `\nTrying split at index ${step.k}`;
+                        }
+                    }
+                }
+            }
+            stateDiv.innerHTML = stateText.replace(/\n/g, '<br>');
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = `Minimum largest sum = ${step.result}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

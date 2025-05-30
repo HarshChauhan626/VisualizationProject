@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container With Most Water Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .height-bar {
+            width: 40px;
+            background-color: #3b82f6;
+            margin: 0 2px;
+            position: relative;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .height-bar.pointer-left {
+            background-color: #4ade80;
+        }
+        .height-bar.pointer-right {
+            background-color: #fb923c;
+        }
+        .height-bar.max-area {
+            background-color: #22c55e;
+        }
+        .water-area {
+            background-color: rgba(59, 130, 246, 0.3);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border: 1px dashed #3b82f6;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Container With Most Water</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the container with the most water using the two-pointer technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Heights (comma-separated numbers)</label>
+                        <input type="text" id="inputHeights" value="1,8,6,2,5,4,8,3,7" 
+                            class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Container Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Height Visualization</h3>
+                    <div id="containerVisualization" class="flex items-end justify-center h-64">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Pointers and Area</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Left Pointer (Green):</p>
+                            <div id="leftPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Right Pointer (Orange):</p>
+                            <div id="rightPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Current Area Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Current Area:</p>
+                            <div id="currentAreaInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Max Area:</p>
+                            <div id="maxAreaInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function maxArea(height):</span>
+<span class="code-line" data-line="2">    left = 0</span>
+<span class="code-line" data-line="3">    right = height.length - 1</span>
+<span class="code-line" data-line="4">    maxArea = 0</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    while left < right:</span>
+<span class="code-line" data-line="7">        // Calculate area between the two lines</span>
+<span class="code-line" data-line="8">        width = right - left</span>
+<span class="code-line" data-line="9">        h = min(height[left], height[right])</span>
+<span class="code-line" data-line="10">        area = width * h</span>
+<span class="code-line" data-line="11">        </span>
+<span class="code-line" data-line="12">        // Update max area if current area is larger</span>
+<span class="code-line" data-line="13">        maxArea = max(maxArea, area)</span>
+<span class="code-line" data-line="14">        </span>
+<span class="code-line" data-line="15">        // Move the pointer with the smaller height</span>
+<span class="code-line" data-line="16">        if height[left] < height[right]:</span>
+<span class="code-line" data-line="17">            left++</span>
+<span class="code-line" data-line="18">        else:</span>
+<span class="code-line" data-line="19">            right--</span>
+<span class="code-line" data-line="20">    </span>
+<span class="code-line" data-line="21">    return maxArea</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the height array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) - constant extra space</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses a two-pointer approach to efficiently find the container with the most water:
+                                <br>1. Start with two pointers at the start and end of the array
+                                <br>2. Calculate the area between the two pointers (width × min height)
+                                <br>3. Track the maximum area seen so far
+                                <br>4. Move the pointer with the smaller height inward
+                                <br>5. Continue until the pointers meet
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">height = [1,8,6,2,5,4,8,3,7]</p>
+                            <p class="text-gray-300">Output: 49</p>
+                            <p class="text-gray-300">Explanation: The max area is formed between heights at index 1 and 8 (values 8 and 7) with area 7 * 7 = 49.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">height = [1,1]</p>
+                            <p class="text-gray-300">Output: 1</p>
+                            <p class="text-gray-300">Explanation: The max area is formed between index 0 and 1 with area 1 * 1 = 1.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let heights = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initializeVisualization() {
+            // Get input values
+            heights = document.getElementById('inputHeights').value.split(',').map(x => parseInt(x.trim()));
+            
+            // Reset visualization state
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Enable buttons
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Reset current step
+            currentStepIndex = -1;
+            
+            // Update visualization
+            nextStep();
+        }
+
+        function createContainerVisualization() {
+            const containerArea = document.getElementById('containerVisualization');
+            containerArea.innerHTML = '';
+            
+            // Find maximum height for scaling
+            const maxHeight = Math.max(...heights, 1);
+            const scale = 95 / maxHeight; // Leaving some space at the top (95%)
+            
+            for (let i = 0; i < heights.length; i++) {
+                const heightPercent = heights[i] * scale;
+                const bar = document.createElement('div');
+                bar.className = 'height-bar';
+                bar.style.height = `${heightPercent}%`;
+                bar.id = `bar-${i}`;
+                
+                // Add height label
+                bar.textContent = heights[i];
+                
+                containerArea.appendChild(bar);
+            }
+        }
+
+        function resetVisualization() {
+            // Clear visualization
+            document.getElementById('containerVisualization').innerHTML = '';
+            document.getElementById('leftPointerInfo').innerHTML = '';
+            document.getElementById('rightPointerInfo').innerHTML = '';
+            document.getElementById('currentAreaInfo').innerHTML = '';
+            document.getElementById('maxAreaInfo').innerHTML = '';
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            
+            // Stop playing if active
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Reset state
+            currentStepIndex = -1;
+            steps = [];
+            
+            // Disable buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function generateSteps() {
+            steps = [];
+            let left = 0;
+            let right = heights.length - 1;
+            let maxArea = 0;
+            let bestLeft = 0, bestRight = 0;
+            
+            steps.push({
+                left,
+                right,
+                area: 0,
+                maxArea: 0,
+                bestLeft: -1,
+                bestRight: -1,
+                activeLines: [2, 3, 4],
+                explanation: "Initialize left and right pointers at opposite ends of the array"
+            });
+
+            while (left < right) {
+                // Calculate current area
+                const width = right - left;
+                const height = Math.min(heights[left], heights[right]);
+                const area = width * height;
+                
+                steps.push({
+                    left,
+                    right,
+                    width,
+                    height,
+                    area,
+                    maxArea,
+                    bestLeft,
+                    bestRight,
+                    calculating: true,
+                    activeLines: [8, 9, 10],
+                    explanation: `Calculate area: width (${width}) × min height (${height}) = ${area}`
+                });
+                
+                // Update max area if needed
+                if (area > maxArea) {
+                    maxArea = area;
+                    bestLeft = left;
+                    bestRight = right;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        width,
+                        height,
+                        area,
+                        maxArea,
+                        bestLeft,
+                        bestRight,
+                        newMax: true,
+                        activeLines: [12, 13],
+                        explanation: `Found new max area: ${maxArea}`
+                    });
+                }
+                
+                // Move pointer with smaller height
+                steps.push({
+                    left,
+                    right,
+                    width,
+                    height,
+                    area,
+                    maxArea,
+                    bestLeft,
+                    bestRight,
+                    comparing: true,
+                    activeLines: [15, 16],
+                    explanation: `Compare heights: left (${heights[left]}) vs right (${heights[right]})`
+                });
+                
+                if (heights[left] < heights[right]) {
+                    steps.push({
+                        left,
+                        right,
+                        width,
+                        height,
+                        area,
+                        maxArea,
+                        bestLeft,
+                        bestRight,
+                        moveLeft: true,
+                        activeLines: [16, 17],
+                        explanation: `Left height (${heights[left]}) is smaller, moving left pointer inward`
+                    });
+                    left++;
+                } else {
+                    steps.push({
+                        left,
+                        right,
+                        width,
+                        height,
+                        area,
+                        maxArea,
+                        bestLeft,
+                        bestRight,
+                        moveRight: true,
+                        activeLines: [18, 19],
+                        explanation: `Right height (${heights[right]}) is smaller or equal, moving right pointer inward`
+                    });
+                    right--;
+                }
+            }
+            
+            steps.push({
+                left,
+                right,
+                maxArea,
+                bestLeft,
+                bestRight,
+                complete: true,
+                activeLines: [21],
+                explanation: `Algorithm completed. Maximum water container has area ${maxArea}`
+            });
+        }
+
+        function updateVisualization() {
+            if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+            
+            const step = steps[currentStepIndex];
+            
+            // Update current step display
+            document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+            
+            // Create container visualization if not created yet
+            if (document.getElementById('containerVisualization').children.length === 0) {
+                createContainerVisualization();
+            }
+            
+            // Reset all bars to default state
+            for (let i = 0; i < heights.length; i++) {
+                const bar = document.getElementById(`bar-${i}`);
+                bar.className = 'height-bar';
+                
+                // Remove any existing water area visualization
+                const existingWater = document.querySelector('.water-area');
+                if (existingWater) {
+                    existingWater.remove();
+                }
+            }
+            
+            // Update the bars based on current step
+            if (step.left < heights.length) {
+                document.getElementById(`bar-${step.left}`).classList.add('pointer-left');
+            }
+            
+            if (step.right < heights.length) {
+                document.getElementById(`bar-${step.right}`).classList.add('pointer-right');
+            }
+            
+            // If we have best pointers, mark them
+            if (step.bestLeft >= 0 && step.bestRight < heights.length && step.complete) {
+                document.getElementById(`bar-${step.bestLeft}`).classList.add('max-area');
+                document.getElementById(`bar-${step.bestRight}`).classList.add('max-area');
+            }
+            
+            // Show water area if we're calculating or found new max
+            if ((step.calculating || step.newMax) && step.left < step.right) {
+                const containerArea = document.getElementById('containerVisualization');
+                const waterArea = document.createElement('div');
+                waterArea.className = 'water-area';
+                
+                const minHeight = Math.min(heights[step.left], heights[step.right]);
+                const maxHeight = Math.max(...heights);
+                const heightPercent = (minHeight / maxHeight) * 95; // Scale to match bars
+                
+                // Position water area between the two pointer bars
+                const leftBar = document.getElementById(`bar-${step.left}`);
+                const rightBar = document.getElementById(`bar-${step.right}`);
+                const leftPos = leftBar.offsetLeft + leftBar.offsetWidth;
+                const rightPos = rightBar.offsetLeft;
+                
+                waterArea.style.left = `${leftPos}px`;
+                waterArea.style.width = `${rightPos - leftPos}px`;
+                waterArea.style.height = `${heightPercent}%`;
+                
+                containerArea.appendChild(waterArea);
+            }
+            
+            // Update pointers info
+            document.getElementById('leftPointerInfo').textContent = 
+                `Index ${step.left}: Height ${heights[step.left]}`;
+            
+            document.getElementById('rightPointerInfo').textContent = 
+                `Index ${step.right}: Height ${heights[step.right]}`;
+            
+            // Update area info
+            document.getElementById('currentAreaInfo').textContent = 
+                step.area !== undefined ? `${step.area}` : "";
+            
+            document.getElementById('maxAreaInfo').textContent = 
+                `${step.maxArea}`;
+            
+            if (step.newMax) {
+                document.getElementById('maxAreaInfo').className = 
+                    "text-green-500 text-lg font-mono";
+            } else {
+                document.getElementById('maxAreaInfo').className = 
+                    "text-lg font-mono";
+            }
+            
+            // Highlight active code lines
+            if (step.activeLines) {
+                document.querySelectorAll('.code-line').forEach(line => {
+                    line.classList.remove('active');
+                });
+                
+                step.activeLines.forEach(lineNum => {
+                    document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+                });
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+            document.getElementById('playBtn').className = isPlaying 
+                ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+                : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+            
+            if (isPlaying) {
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(document.getElementById('speedSlider').value));
+            } else {
+                clearInterval(animationInterval);
+            }
+        }
+
+        // Update speed value display when slider changes
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = `${this.value}ms`;
+            
+            // Update interval if playing
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(this.value));
+            }
+        });
+    </script>
+</body>
+</html>

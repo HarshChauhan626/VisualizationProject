@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Duplicates from Sorted List II - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .duplicate {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .unique {
+            background-color: #0369a1;
+            border-color: #38bdf8;
+        }
+        .dummy {
+            background-color: #4c1d95;
+            border-color: #8b5cf6;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .phase {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .phase.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Remove Duplicates from Sorted List II</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given the head of a sorted linked list, delete all nodes that have duplicate numbers, leaving only distinct numbers from the original list.<br><br>
+                Return the linked list sorted as well.<br><br>
+                For example:<br>
+                Input: 1->2->3->3->4->4->5<br>
+                Output: 1->2->5<br><br>
+                Input: 1->1->1->2->3<br>
+                Output: 2->3
+            </p>
+        </div>
+
+        <!-- Phase Selection -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="dummyNodePhase" class="phase active px-4 py-2 rounded" onclick="switchPhase('dummyNode')">
+                    Dummy Node Approach
+                </div>
+                <div id="twoPointerPhase" class="phase px-4 py-2 rounded" onclick="switchPhase('twoPointer')">
+                    Two Pointer Approach
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Linked List Values (comma-separated)</label>
+                    <input type="text" id="inputValues" placeholder="Enter values" 
+                        class="border p-2 rounded w-full" value="1,2,3,3,4,4,5">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="space-y-8">
+                <!-- Original List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Original List:</h3>
+                    <div id="originalListVisualization" class="relative h-24">
+                    </div>
+                </div>
+                <!-- Working Area -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Working Area:</h3>
+                    <div id="workingAreaVisualization" class="relative h-48">
+                    </div>
+                </div>
+                <!-- Result List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Result List:</h3>
+                    <div id="resultListVisualization" class="relative h-24">
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mt-6">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time: O(n), Space: O(1)
+function deleteDuplicates(head):
+    if !head or !head.next:
+        return head
+
+    // Create dummy node to handle cases where head has duplicates
+    dummy = new ListNode(0)
+    dummy.next = head
+    prev = dummy
+    curr = head
+
+    while curr:
+        // Skip all duplicates
+        while curr.next and curr.val == curr.next.val:
+            curr = curr.next
+        
+        // If no duplicates found, move prev
+        if prev.next == curr:
+            prev = prev.next
+        // Otherwise, skip all duplicates
+        else:
+            prev.next = curr.next
+        
+        curr = curr.next
+
+    return dummy.next</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">head = [1,2,3,3,4,4,5]</p>
+                    <p class="text-green-400">Output: [1,2,5]</p>
+                    <p class="text-gray-400">Explanation: 3 and 4 appear twice, so they are removed.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">head = [1,1,1,2,3]</p>
+                    <p class="text-green-400">Output: [2,3]</p>
+                    <p class="text-gray-400">Explanation: 1 appears three times, so it is removed.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">head = [1,2,2]</p>
+                    <p class="text-green-400">Output: [1]</p>
+                    <p class="text-gray-400">Explanation: 2 appears twice, so it is removed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        let values = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentPhase = 'dummyNode';
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function switchPhase(phase) {
+            currentPhase = phase;
+            document.querySelectorAll('.phase').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(phase + 'Phase').classList.add('active');
+            initializeVisualization();
+        }
+
+        function generateDummyNodeSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [],
+                    result: getListNodes(head),
+                    explanation: !head ? "Empty list" : "Single node list - no duplicates to remove",
+                    done: true
+                });
+                return steps;
+            }
+
+            // Create dummy node
+            const dummy = new ListNode(0);
+            dummy.next = head;
+            let prev = dummy;
+            let curr = head;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: [dummy, ...getListNodes(head)],
+                    y: 0,
+                    dummy: dummy,
+                    prev: prev,
+                    curr: curr
+                }],
+                explanation: "Create dummy node and initialize pointers"
+            });
+
+            while (curr) {
+                let hasDuplicate = false;
+                
+                // Check for duplicates
+                while (curr.next && curr.val === curr.next.val) {
+                    hasDuplicate = true;
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: [dummy, ...getListNodes(head)],
+                            y: 0,
+                            dummy: dummy,
+                            prev: prev,
+                            curr: curr,
+                            duplicate: curr
+                        }],
+                        explanation: `Found duplicate value: ${curr.val}`
+                    });
+                    curr = curr.next;
+                }
+
+                if (hasDuplicate) {
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: [dummy, ...getListNodes(head)],
+                            y: 0,
+                            dummy: dummy,
+                            prev: prev,
+                            curr: curr,
+                            duplicate: curr
+                        }],
+                        explanation: `Skip all nodes with value ${curr.val}`
+                    });
+                    prev.next = curr.next;
+                } else {
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: [dummy, ...getListNodes(head)],
+                            y: 0,
+                            dummy: dummy,
+                            prev: prev,
+                            curr: curr,
+                            unique: curr
+                        }],
+                        explanation: `Node ${curr.val} is unique, keep it`
+                    });
+                    prev = curr;
+                }
+                curr = curr.next;
+            }
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: [dummy, ...getListNodes(dummy.next)],
+                    y: 0,
+                    dummy: dummy,
+                    done: true
+                }],
+                result: getListNodes(dummy.next),
+                explanation: "All duplicates removed",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateTwoPointerSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [],
+                    result: getListNodes(head),
+                    explanation: !head ? "Empty list" : "Single node list - no duplicates to remove",
+                    done: true
+                });
+                return steps;
+            }
+
+            let prev = null;
+            let curr = head;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    prev: prev,
+                    curr: curr
+                }],
+                explanation: "Initialize pointers"
+            });
+
+            while (curr) {
+                let next = curr.next;
+                let hasDuplicate = false;
+
+                while (next && curr.val === next.val) {
+                    hasDuplicate = true;
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: getListNodes(head),
+                            y: 0,
+                            prev: prev,
+                            curr: curr,
+                            duplicate: [curr, next]
+                        }],
+                        explanation: `Found duplicate value: ${curr.val}`
+                    });
+                    next = next.next;
+                }
+
+                if (hasDuplicate) {
+                    if (prev) {
+                        prev.next = next;
+                    } else {
+                        head = next;
+                    }
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: getListNodes(head),
+                            y: 0,
+                            prev: prev,
+                            curr: next
+                        }],
+                        explanation: "Skip all duplicate nodes"
+                    });
+                } else {
+                    steps.push({
+                        original: getListNodes(head),
+                        working: [{
+                            nodes: getListNodes(head),
+                            y: 0,
+                            prev: prev,
+                            curr: curr,
+                            unique: curr
+                        }],
+                        explanation: `Node ${curr.val} is unique, keep it`
+                    });
+                    prev = curr;
+                }
+                curr = next;
+            }
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    done: true
+                }],
+                result: getListNodes(head),
+                explanation: "All duplicates removed",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            values = document.getElementById('inputValues').value.split(',').map(x => parseInt(x.trim()));
+            currentStep = 0;
+            const head = createLinkedList(values);
+            
+            switch (currentPhase) {
+                case 'dummyNode':
+                    steps = generateDummyNodeSteps(head);
+                    break;
+                case 'twoPointer':
+                    steps = generateTwoPointerSteps(head);
+                    break;
+            }
+            
+            updateVisualization();
+        }
+
+        function createNodeElement(node, x, y, className = '') {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg ${className}`;
+            nodeDiv.style.left = `${x}px`;
+            nodeDiv.style.top = `${y}px`;
+            nodeDiv.textContent = node.val;
+            return nodeDiv;
+        }
+
+        function createArrow(startX, startY, endX, endY) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            arrow.style.left = `${startX + 24}px`;
+            arrow.style.top = `${startY + 24}px`;
+            arrow.style.width = `${length - 48}px`;
+            arrow.style.transform = `rotate(${angle}deg)`;
+            
+            return arrow;
+        }
+
+        function updateVisualization() {
+            const originalListDiv = document.getElementById('originalListVisualization');
+            const workingAreaDiv = document.getElementById('workingAreaVisualization');
+            const resultListDiv = document.getElementById('resultListVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            originalListDiv.innerHTML = '';
+            workingAreaDiv.innerHTML = '';
+            resultListDiv.innerHTML = '';
+            
+            // Draw original list
+            if (step.original) {
+                let x = 50;
+                const y = 12;
+                
+                step.original.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    originalListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.original.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        originalListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Draw working area
+            if (step.working) {
+                step.working.forEach(list => {
+                    let x = 50;
+                    const y = list.y + 12;
+                    
+                    list.nodes.forEach((node, index) => {
+                        let className = '';
+                        if (node === list.dummy) className += ' dummy';
+                        if (node === list.curr) className += ' current';
+                        if (node === list.duplicate || (Array.isArray(list.duplicate) && list.duplicate.includes(node))) className += ' duplicate';
+                        if (node === list.unique) className += ' unique';
+                        
+                        const nodeDiv = createNodeElement(node, x, y, className);
+                        workingAreaDiv.appendChild(nodeDiv);
+                        
+                        if (index < list.nodes.length - 1) {
+                            const arrow = createArrow(x, y, x + 100, y);
+                            workingAreaDiv.appendChild(arrow);
+                        }
+                        
+                        x += 100;
+                    });
+                });
+            }
+            
+            // Draw result list
+            if (step.result) {
+                let x = 50;
+                const y = 12;
+                
+                step.result.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    resultListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.result.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        resultListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Phase complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

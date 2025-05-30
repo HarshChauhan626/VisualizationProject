@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .grid {
+            display: grid;
+            gap: 1px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 1;
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .cell.current {
+            background-color: #10b981;
+            color: white;
+            transform: scale(1.1);
+        }
+        .cell.visited {
+            background-color: #fbbf24;
+            color: #1e293b;
+        }
+        .cell.invalid {
+            background-color: #f43f5e;
+            color: white;
+        }
+        .cell.matched {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .word {
+            display: flex;
+            gap: 4px;
+            margin: 8px 0;
+        }
+        .word-char {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background-color: #2d3748;
+            color: #e2e8f0;
+        }
+        .word-char.matched {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .word-char.current {
+            background-color: #10b981;
+            color: white;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Word Search</h1>
+        <p class="text-gray-300 mb-8">Visualize how to search for a word in a 2D grid using backtracking.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Grid Size (rows x cols)</label>
+                            <div class="flex space-x-4">
+                                <input type="number" id="rowsInput" value="3" min="1" max="10"
+                                    class="w-1/2 px-3 py-2 bg-gray-700 rounded text-white">
+                                <input type="number" id="colsInput" value="4" min="1" max="10"
+                                    class="w-1/2 px-3 py-2 bg-gray-700 rounded text-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Word to Search</label>
+                            <input type="text" id="wordInput" value="ABCCED"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Grid</h3>
+                    <div id="grid" class="grid"></div>
+                </div>
+
+                <!-- Word -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Word</h3>
+                    <div id="word" class="word"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def exist(board, word):</span>
+<span class="code-line" data-line="2">    def dfs(row, col, index):</span>
+<span class="code-line" data-line="3">        if index == len(word):</span>
+<span class="code-line" data-line="4">            return True</span>
+<span class="code-line" data-line="5">        </span>
+<span class="code-line" data-line="6">        if (row < 0 or row >= len(board) or</span>
+<span class="code-line" data-line="7">            col < 0 or col >= len(board[0]) or</span>
+<span class="code-line" data-line="8">            board[row][col] != word[index]):</span>
+<span class="code-line" data-line="9">            return False</span>
+<span class="code-line" data-line="10">        </span>
+<span class="code-line" data-line="11">        temp = board[row][col]</span>
+<span class="code-line" data-line="12">        board[row][col] = '#'</span>
+<span class="code-line" data-line="13">        </span>
+<span class="code-line" data-line="14">        found = (dfs(row + 1, col, index + 1) or</span>
+<span class="code-line" data-line="15">                 dfs(row - 1, col, index + 1) or</span>
+<span class="code-line" data-line="16">                 dfs(row, col + 1, index + 1) or</span>
+<span class="code-line" data-line="17">                 dfs(row, col - 1, index + 1))</span>
+<span class="code-line" data-line="18">        </span>
+<span class="code-line" data-line="19">        board[row][col] = temp</span>
+<span class="code-line" data-line="20">        return found</span>
+<span class="code-line" data-line="21">    </span>
+<span class="code-line" data-line="22">    for i in range(len(board)):</span>
+<span class="code-line" data-line="23">        for j in range(len(board[0])):</span>
+<span class="code-line" data-line="24">            if dfs(i, j, 0):</span>
+<span class="code-line" data-line="25">                return True</span>
+<span class="code-line" data-line="26">    return False</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given a 2D board and a word, find if the word exists in the grid. The word can be constructed from letters of sequentially adjacent cells, where "adjacent" cells are horizontally or vertically neighboring.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m * n * 4^L) - where m and n are grid dimensions and L is the word length</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(L) for the recursion stack</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses backtracking to search for the word:
+                                <br>1. Start from each cell in the grid
+                                <br>2. Use DFS to explore all possible paths
+                                <br>3. Mark visited cells to avoid cycles
+                                <br>4. Backtrack when a path doesn't lead to the word
+                                <br>5. Return true if the word is found, false otherwise
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let board = [];
+        let word = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initialize() {
+            const rows = parseInt(document.getElementById('rowsInput').value);
+            const cols = parseInt(document.getElementById('colsInput').value);
+            word = document.getElementById('wordInput').value.toUpperCase();
+
+            if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1 || rows > 10 || cols > 10) {
+                alert('Please enter valid grid dimensions between 1 and 10');
+                return;
+            }
+
+            if (!word) {
+                alert('Please enter a word to search');
+                return;
+            }
+
+            // Generate random board
+            board = Array(rows).fill().map(() => 
+                Array(cols).fill().map(() => 
+                    String.fromCharCode(65 + Math.floor(Math.random() * 26))
+                )
+            );
+
+            const grid = document.getElementById('grid');
+            const wordContainer = document.getElementById('word');
+            
+            grid.innerHTML = '';
+            wordContainer.innerHTML = '';
+            
+            // Set grid size
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            // Create grid cells
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${i}-${j}`;
+                    cell.textContent = board[i][j];
+                    grid.appendChild(cell);
+                }
+            }
+
+            // Create word characters
+            for (let i = 0; i < word.length; i++) {
+                const char = document.createElement('div');
+                char.className = 'word-char';
+                char.id = `word-char-${i}`;
+                char.textContent = word[i];
+                wordContainer.appendChild(char);
+            }
+
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            function dfs(row, col, index) {
+                if (index === word.length) {
+                    steps.push({
+                        type: 'word_found',
+                        description: 'Word found!',
+                        codeLine: 4
+                    });
+                    return true;
+                }
+
+                if (row < 0 || row >= board.length ||
+                    col < 0 || col >= board[0].length ||
+                    board[row][col] !== word[index]) {
+                    steps.push({
+                        type: 'invalid_cell',
+                        description: `Invalid cell at (${row}, ${col})`,
+                        row: row,
+                        col: col,
+                        index: index,
+                        codeLine: 9
+                    });
+                    return false;
+                }
+
+                steps.push({
+                    type: 'visit_cell',
+                    description: `Visiting cell (${row}, ${col})`,
+                    row: row,
+                    col: col,
+                    index: index,
+                    codeLine: 12
+                });
+
+                const temp = board[row][col];
+                board[row][col] = '#';
+
+                const directions = [
+                    [1, 0], [-1, 0], [0, 1], [0, -1]
+                ];
+
+                for (const [dr, dc] of directions) {
+                    steps.push({
+                        type: 'try_direction',
+                        description: `Trying direction (${dr}, ${dc})`,
+                        row: row,
+                        col: col,
+                        dr: dr,
+                        dc: dc,
+                        index: index,
+                        codeLine: 14
+                    });
+
+                    if (dfs(row + dr, col + dc, index + 1)) {
+                        return true;
+                    }
+                }
+
+                board[row][col] = temp;
+                steps.push({
+                    type: 'backtrack',
+                    description: `Backtracking from (${row}, ${col})`,
+                    row: row,
+                    col: col,
+                    index: index,
+                    codeLine: 19
+                });
+
+                return false;
+            }
+
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board[0].length; j++) {
+                    steps.push({
+                        type: 'start_from',
+                        description: `Starting from cell (${i}, ${j})`,
+                        row: i,
+                        col: j,
+                        codeLine: 24
+                    });
+
+                    if (dfs(i, j, 0)) {
+                        return;
+                    }
+                }
+            }
+
+            steps.push({
+                type: 'word_not_found',
+                description: 'Word not found in the grid',
+                codeLine: 26
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = cell.className.replace(' current', '').replace(' visited', '').replace(' invalid', '').replace(' matched', '');
+            });
+
+            // Reset word characters
+            document.querySelectorAll('.word-char').forEach(char => {
+                char.className = char.className.replace(' current', '').replace(' matched', '');
+            });
+
+            if (step.type === 'start_from') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' current';
+            } else if (step.type === 'visit_cell') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                const char = document.getElementById(`word-char-${step.index}`);
+                cell.className += ' visited';
+                char.className += ' current';
+            } else if (step.type === 'invalid_cell') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' invalid';
+            } else if (step.type === 'try_direction') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className += ' current';
+            } else if (step.type === 'backtrack') {
+                const cell = document.getElementById(`cell-${step.row}-${step.col}`);
+                cell.className = cell.className.replace(' visited', '');
+            } else if (step.type === 'word_found') {
+                document.querySelectorAll('.visited').forEach(cell => {
+                    cell.className = cell.className.replace(' visited', ' matched');
+                });
+                document.querySelectorAll('.word-char').forEach(char => {
+                    char.className += ' matched';
+                });
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

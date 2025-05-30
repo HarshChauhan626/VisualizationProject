@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Nth Root of a Number - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .range-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .mid {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .found {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .number-line {
+            height: 4px;
+            background-color: #3b82f6;
+            position: relative;
+            margin: 40px 0;
+        }
+        .number-marker {
+            position: absolute;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+        .number-marker::before {
+            content: '';
+            display: block;
+            width: 2px;
+            height: 12px;
+            background-color: #3b82f6;
+            margin: 0 auto 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Find Nth Root of a Number</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given a number X and integer N, find the Nth root of X with a precision of 6 decimal places.<br><br>
+                Example:<br>
+                Input: X = 27, N = 3<br>
+                Output: 3.000000<br>
+                Explanation: 3 is the cube root of 27<br><br>
+                Input: X = 7, N = 3<br>
+                Output: 1.912931<br>
+                Explanation: The cube root of 7 is approximately 1.912931
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Number (X)</label>
+                    <input type="number" id="number" placeholder="Enter number" step="any"
+                        class="border p-2 rounded w-full" value="27">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Root (N)</label>
+                    <input type="number" id="root" placeholder="Enter root" min="1"
+                        class="border p-2 rounded w-full" value="3">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-8">
+                <h3 class="font-semibold mb-4 text-gray-300">Number Line:</h3>
+                <div id="numberLine" class="number-line">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div id="stateVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(log(X × 10^p)) where p is precision
+// Space Complexity: O(1)
+function findNthRoot(X, N, precision):
+    if X == 0:
+        return 0
+        
+    // Set initial range
+    left = 1
+    right = X
+    
+    // Binary search with precision
+    while right - left > precision:
+        mid = (left + right) / 2
+        
+        // Calculate mid^N
+        value = pow(mid, N)
+        
+        if value == X:
+            return mid
+        else if value < X:
+            left = mid
+        else:
+            right = mid
+    
+    return round(left, 6)  // Round to 6 decimal places</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">X = 27, N = 3</p>
+                    <p class="text-green-400">Output: 3.000000</p>
+                    <p class="text-gray-400">Explanation: 3 is the cube root of 27.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">X = 7, N = 3</p>
+                    <p class="text-green-400">Output: 1.912931</p>
+                    <p class="text-gray-400">Explanation: The cube root of 7 is approximately 1.912931.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">X = 16, N = 4</p>
+                    <p class="text-green-400">Output: 2.000000</p>
+                    <p class="text-gray-400">Explanation: The 4th root of 16 is 2.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let number = 0;
+        let root = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function pow(base, exp) {
+            return Math.pow(base, exp);
+        }
+
+        function generateSteps(X, N) {
+            const steps = [];
+            const precision = 0.000001;
+            let left = 1;
+            let right = X;
+            
+            steps.push({
+                left,
+                right,
+                X,
+                N,
+                explanation: `Initialize binary search with range [${left.toFixed(6)}, ${right.toFixed(6)}]`
+            });
+
+            while (right - left > precision) {
+                const mid = (left + right) / 2;
+                const value = pow(mid, N);
+                
+                steps.push({
+                    left,
+                    right,
+                    mid,
+                    value,
+                    X,
+                    N,
+                    explanation: `Calculate mid=${mid.toFixed(6)}, mid^${N}=${value.toFixed(6)}`
+                });
+
+                if (Math.abs(value - X) < precision) {
+                    steps.push({
+                        result: mid,
+                        explanation: `Found result: ${mid.toFixed(6)}`,
+                        done: true
+                    });
+                    return steps;
+                } else if (value < X) {
+                    steps.push({
+                        left: mid,
+                        right,
+                        lastMid: mid,
+                        X,
+                        N,
+                        explanation: `${value.toFixed(6)} < ${X}, search in right half`
+                    });
+                    left = mid;
+                } else {
+                    steps.push({
+                        left,
+                        right: mid,
+                        lastMid: mid,
+                        X,
+                        N,
+                        explanation: `${value.toFixed(6)} > ${X}, search in left half`
+                    });
+                    right = mid;
+                }
+            }
+
+            steps.push({
+                result: left,
+                explanation: `Final result: ${left.toFixed(6)}`,
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            number = parseFloat(document.getElementById('number').value);
+            root = parseInt(document.getElementById('root').value);
+            currentStep = 0;
+            steps = generateSteps(number, root);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const numberLineDiv = document.getElementById('numberLine');
+            const stateDiv = document.getElementById('stateVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            numberLineDiv.innerHTML = '';
+            
+            if (!step.done) {
+                // Create number line markers
+                const markers = [
+                    { value: step.left, class: 'current' },
+                    { value: step.right, class: 'current' }
+                ];
+                
+                if (step.mid !== undefined) {
+                    markers.push({ value: step.mid, class: 'mid' });
+                }
+                
+                markers.forEach(marker => {
+                    const markerDiv = document.createElement('div');
+                    markerDiv.className = `number-marker ${marker.class}`;
+                    markerDiv.style.left = `${(marker.value / Math.max(step.X, 2)) * 100}%`;
+                    markerDiv.innerHTML = `${marker.value.toFixed(6)}`;
+                    numberLineDiv.appendChild(markerDiv);
+                });
+            }
+            
+            // Update state
+            let stateText = '';
+            if (!step.done) {
+                stateText = `Range: [${step.left.toFixed(6)}, ${step.right.toFixed(6)}]`;
+                if (step.mid !== undefined) {
+                    stateText += `\nMid: ${step.mid.toFixed(6)}`;
+                    if (step.value !== undefined) {
+                        stateText += `\nMid^${step.N}: ${step.value.toFixed(6)}`;
+                    }
+                }
+            }
+            stateDiv.innerHTML = stateText.replace(/\n/g, '<br>');
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = `${root}th root of ${number} = ${step.result.toFixed(6)}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Queens Problem - Recursion Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .chessboard {
+            display: grid;
+            border: 2px solid #4a5568;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto;
+        }
+        .chess-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 1px solid #4a5568;
+        }
+        .white-cell {
+            background-color: #f7fafc;
+        }
+        .black-cell {
+            background-color: #4a5568;
+        }
+        .queen {
+            color: #ed8936;
+            font-size: 2rem;
+        }
+        .attacked {
+            background-color: rgba(229, 62, 62, 0.5) !important;
+        }
+        .current {
+            background-color: rgba(72, 187, 120, 0.5) !important;
+        }
+        .pseudo-code {
+            font-family: monospace;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+        .current-line {
+            background-color: rgba(72, 187, 120, 0.3);
+            font-weight: bold;
+        }
+        .node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        .node text {
+            font-size: 12px;
+        }
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+        .node-success circle {
+            fill: #48bb78;
+        }
+        .node-fail circle {
+            fill: #f56565;
+        }
+        .node-current circle {
+            fill: #ed8936;
+        }
+        .node-default circle {
+            fill: #4299e1;
+        }
+        .tree-container {
+            height: 400px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="text-white font-bold text-xl">N-Queens Visualization</div>
+            <div>
+                <a href="../index.html" class="text-gray-300 hover:text-white mr-4">Home</a>
+                <a href="#" class="text-gray-300 hover:text-white">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Input</h2>
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Board Size (n):</label>
+                    <div class="flex items-center">
+                        <input type="range" id="board-size" min="4" max="8" value="4" class="w-2/3 mr-4">
+                        <span id="board-size-value" class="text-lg">4</span>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Animation Speed:</label>
+                    <input type="range" id="speed" min="1" max="10" value="5" class="w-full">
+                </div>
+                <button id="initialize-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                    Initialize
+                </button>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Controls</h2>
+                <div class="flex flex-wrap gap-2">
+                    <button id="play-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded" disabled>
+                        Play
+                    </button>
+                    <button id="pause-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded" disabled>
+                        Pause
+                    </button>
+                    <button id="next-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded" disabled>
+                        Next Step
+                    </button>
+                    <button id="prev-btn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded" disabled>
+                        Previous Step
+                    </button>
+                    <button id="reset-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" disabled>
+                        Reset
+                    </button>
+                </div>
+                <div class="mt-4">
+                    <p class="text-gray-300">Current Step: <span id="current-step">0</span>/<span id="total-steps">0</span></p>
+                    <p class="text-gray-300">Action: <span id="current-action">Not started</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Chessboard</h2>
+                <div id="chessboard" class="chessboard"></div>
+                <div class="mt-4">
+                    <p class="text-gray-300">Queens Placed: <span id="queens-placed">0</span></p>
+                    <p class="text-gray-300">Backtracking Count: <span id="backtrack-count">0</span></p>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Recursion Tree</h2>
+                <div id="tree-container" class="tree-container"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 mt-6">
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Pseudo Code</h2>
+                <pre class="pseudo-code">
+function solveNQueens(n):
+    result = []
+    board = create empty n×n board
+    
+    function backtrack(row):
+        // Base case: If all queens are placed
+        if row == n:
+            add current board to result
+            return true
+            
+        // Try placing queen at each column in current row
+        for col from 0 to n-1:
+            if isSafe(row, col):
+                // Place queen
+                board[row][col] = 'Q'
+                
+                // Recursively place rest of queens
+                if backtrack(row + 1):
+                    return true
+                    
+                // Backtrack if placing queen doesn't lead to solution
+                board[row][col] = '.'
+                
+        return false
+    
+    function isSafe(row, col):
+        // Check if no queen threatens this position
+        
+        // Check column
+        for i from 0 to row-1:
+            if board[i][col] == 'Q':
+                return false
+                
+        // Check upper-left diagonal
+        for i, j = row-1, col-1; i >= 0 and j >= 0; i--, j--:
+            if board[i][j] == 'Q':
+                return false
+                
+        // Check upper-right diagonal
+        for i, j = row-1, col+1; i >= 0 and j < n; i--, j++:
+            if board[i][j] == 'Q':
+                return false
+                
+        return true
+    
+    backtrack(0)
+    return result
+                </pre>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+                <h2 class="text-xl font-bold mb-4">Algorithm Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Problem Description</h3>
+                        <p class="text-gray-300">
+                            The N-Queens problem involves placing N queens on an N×N chessboard so that no two queens 
+                            threaten each other. This means no two queens share the same row, column, or diagonal.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">Time Complexity</h3>
+                        <p class="text-gray-300">O(N!)</p>
+                        <p class="text-gray-400 text-sm">
+                            The time complexity is factorial because in the worst case, we need to explore all possible 
+                            arrangements of queens.
+                        </p>
+
+                        <h3 class="font-bold text-lg mt-4 mb-2">Space Complexity</h3>
+                        <p class="text-gray-300">O(N²)</p>
+                        <p class="text-gray-400 text-sm">
+                            We need O(N²) space to store the board configuration, and O(N) space for the recursion stack.
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h3 class="font-bold text-lg mb-2">How It Works</h3>
+                    <p class="text-gray-300">
+                        The algorithm uses backtracking to find a valid configuration:
+                    </p>
+                    <ol class="list-decimal list-inside text-gray-300 mt-2 pl-4">
+                        <li>Start with an empty board.</li>
+                        <li>Place a queen in the first available safe position in the current row.</li>
+                        <li>Recursively place queens in the next rows.</li>
+                        <li>If at any point we can't place a queen safely, backtrack by removing the previously placed queen and try another position.</li>
+                        <li>Continue until all N queens are placed successfully or all possibilities are exhausted.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-6 text-center text-gray-500">
+            <p>© 2023 Algorithm Visualizer</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const boardSizeInput = document.getElementById('board-size');
+            const boardSizeValue = document.getElementById('board-size-value');
+            const speedInput = document.getElementById('speed');
+            const initializeBtn = document.getElementById('initialize-btn');
+            const playBtn = document.getElementById('play-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const currentStepEl = document.getElementById('current-step');
+            const totalStepsEl = document.getElementById('total-steps');
+            const currentActionEl = document.getElementById('current-action');
+            const queensPlacedEl = document.getElementById('queens-placed');
+            const backtrackCountEl = document.getElementById('backtrack-count');
+            const chessboardEl = document.getElementById('chessboard');
+            const treeContainerEl = document.getElementById('tree-container');
+            const pseudoCodeEl = document.querySelector('.pseudo-code');
+
+            // Variables
+            let boardSize = 4;
+            let board = [];
+            let steps = [];
+            let currentStep = -1;
+            let animationInterval = null;
+            let animationSpeed = 5;
+            let backtrackCount = 0;
+            let queensPlaced = 0;
+            let nodeId = 0;
+            let treeData = {
+                name: "Start",
+                id: nodeId++,
+                children: [],
+                status: 'default'
+            };
+            let treeNodes = [treeData];
+            let treeLinks = [];
+            let currentNode = treeData;
+
+            // Initialize listeners
+            boardSizeInput.addEventListener('input', function() {
+                boardSize = parseInt(this.value);
+                boardSizeValue.textContent = boardSize;
+            });
+
+            speedInput.addEventListener('input', function() {
+                animationSpeed = parseInt(this.value);
+            });
+
+            initializeBtn.addEventListener('click', initialize);
+            playBtn.addEventListener('click', startAnimation);
+            pauseBtn.addEventListener('click', pauseAnimation);
+            nextBtn.addEventListener('click', nextStep);
+            prevBtn.addEventListener('click', prevStep);
+            resetBtn.addEventListener('click', resetVisualization);
+
+            // Functions
+            function initialize() {
+                // Reset everything
+                board = Array(boardSize).fill().map(() => Array(boardSize).fill('.'));
+                steps = [];
+                currentStep = -1;
+                backtrackCount = 0;
+                queensPlaced = 0;
+                nodeId = 0;
+                treeData = {
+                    name: "Start",
+                    id: nodeId++,
+                    children: [],
+                    status: 'default'
+                };
+                treeNodes = [treeData];
+                treeLinks = [];
+                currentNode = treeData;
+
+                // Update UI
+                updateChessboard();
+                updateTree();
+                clearPseudoCodeHighlight();
+                
+                // Generate steps
+                generateSteps();
+                
+                // Update counters
+                currentStepEl.textContent = "0";
+                totalStepsEl.textContent = steps.length;
+                queensPlacedEl.textContent = "0";
+                backtrackCountEl.textContent = "0";
+                currentActionEl.textContent = "Initialized";
+                
+                // Enable buttons
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+                nextBtn.disabled = false;
+                prevBtn.disabled = true;
+                resetBtn.disabled = false;
+            }
+
+            function generateSteps() {
+                // Initialize board and call backtracking
+                let boardCopy = Array(boardSize).fill().map(() => Array(boardSize).fill('.'));
+                backtrack(0, boardCopy, treeData);
+            }
+
+            function backtrack(row, boardState, parentNode) {
+                // Base case: If all queens are placed, we found a solution
+                if (row === boardSize) {
+                    steps.push({
+                        type: 'solution',
+                        board: deepCopy(boardState),
+                        queensPlaced: boardSize,
+                        message: `Solution found! All ${boardSize} queens placed.`,
+                        highlightLine: 4,
+                        node: parentNode
+                    });
+                    return true;
+                }
+
+                // Try placing queen in each column of the current row
+                for (let col = 0; col < boardSize; col++) {
+                    // Create child node for tree visualization
+                    const childNode = {
+                        name: `R${row},C${col}`,
+                        id: nodeId++,
+                        children: [],
+                        status: 'default',
+                        row: row,
+                        col: col
+                    };
+                    parentNode.children.push(childNode);
+                    
+                    // Check if it's safe to place a queen
+                    const attacks = getAttackedPositions(boardState, row, col);
+                    const isSafePosition = attacks.length === 0;
+                    
+                    steps.push({
+                        type: 'check',
+                        board: deepCopy(boardState),
+                        row: row,
+                        col: col,
+                        attacks: attacks,
+                        isSafe: isSafePosition,
+                        queensPlaced: getQueenCount(boardState),
+                        message: `Checking if position (${row}, ${col}) is safe...`,
+                        highlightLine: 20,
+                        node: childNode
+                    });
+
+                    if (isSafePosition) {
+                        // Place queen
+                        boardState[row][col] = 'Q';
+                        steps.push({
+                            type: 'place',
+                            board: deepCopy(boardState),
+                            row: row,
+                            col: col,
+                            queensPlaced: getQueenCount(boardState),
+                            message: `Placed queen at position (${row}, ${col})`,
+                            highlightLine: 9,
+                            node: childNode
+                        });
+
+                        // Recursively try to place queens in next rows
+                        if (backtrack(row + 1, boardState, childNode)) {
+                            childNode.status = 'success';
+                            return true;
+                        }
+
+                        // Backtrack
+                        boardState[row][col] = '.';
+                        backtrackCount++;
+                        steps.push({
+                            type: 'backtrack',
+                            board: deepCopy(boardState),
+                            row: row,
+                            col: col,
+                            queensPlaced: getQueenCount(boardState),
+                            backtrackCount: backtrackCount,
+                            message: `Backtracking from position (${row}, ${col})`,
+                            highlightLine: 14,
+                            node: childNode
+                        });
+                        childNode.status = 'fail';
+                    } else {
+                        steps.push({
+                            type: 'invalid',
+                            board: deepCopy(boardState),
+                            row: row,
+                            col: col,
+                            attacks: attacks,
+                            queensPlaced: getQueenCount(boardState),
+                            message: `Position (${row}, ${col}) is under attack. Cannot place queen.`,
+                            highlightLine: 21,
+                            node: childNode
+                        });
+                        childNode.status = 'fail';
+                    }
+                }
+
+                return false;
+            }
+
+            function getAttackedPositions(boardState, row, col) {
+                let attacks = [];
+                
+                // Check column conflicts
+                for (let i = 0; i < row; i++) {
+                    if (boardState[i][col] === 'Q') {
+                        attacks.push({row: i, col: col});
+                    }
+                }
+                
+                // Check upper-left diagonal
+                for (let i = row - 1, j = col - 1; i >= 0 && j >= 0; i--, j--) {
+                    if (boardState[i][j] === 'Q') {
+                        attacks.push({row: i, col: j});
+                    }
+                }
+                
+                // Check upper-right diagonal
+                for (let i = row - 1, j = col + 1; i >= 0 && j < boardSize; i--, j++) {
+                    if (boardState[i][j] === 'Q') {
+                        attacks.push({row: i, col: j});
+                    }
+                }
+                
+                return attacks;
+            }
+
+            function getQueenCount(boardState) {
+                let count = 0;
+                for (let i = 0; i < boardState.length; i++) {
+                    for (let j = 0; j < boardState[i].length; j++) {
+                        if (boardState[i][j] === 'Q') {
+                            count++;
+                        }
+                    }
+                }
+                return count;
+            }
+
+            function startAnimation() {
+                if (currentStep >= steps.length - 1) {
+                    currentStep = -1;
+                }
+                
+                playBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                animationInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        pauseAnimation();
+                    }
+                }, 1000 / animationSpeed);
+            }
+
+            function pauseAnimation() {
+                clearInterval(animationInterval);
+                animationInterval = null;
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+
+            function nextStep() {
+                if (currentStep < steps.length - 1) {
+                    currentStep++;
+                    updateVisualization();
+                    prevBtn.disabled = false;
+                    
+                    if (currentStep === steps.length - 1) {
+                        nextBtn.disabled = true;
+                    }
+                }
+            }
+
+            function prevStep() {
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateVisualization();
+                    nextBtn.disabled = false;
+                    
+                    if (currentStep === 0) {
+                        prevBtn.disabled = true;
+                    }
+                }
+            }
+
+            function resetVisualization() {
+                pauseAnimation();
+                currentStep = -1;
+                board = Array(boardSize).fill().map(() => Array(boardSize).fill('.'));
+                queensPlaced = 0;
+                backtrackCount = 0;
+                
+                updateChessboard();
+                currentStepEl.textContent = "0";
+                queensPlacedEl.textContent = "0";
+                backtrackCountEl.textContent = "0";
+                currentActionEl.textContent = "Reset";
+                
+                clearPseudoCodeHighlight();
+                updateTree();
+                
+                playBtn.disabled = false;
+                pauseBtn.disabled = true;
+                nextBtn.disabled = false;
+                prevBtn.disabled = true;
+            }
+
+            function updateVisualization() {
+                if (currentStep >= 0 && currentStep < steps.length) {
+                    const step = steps[currentStep];
+                    
+                    // Update board
+                    board = deepCopy(step.board);
+                    updateChessboard(step);
+                    
+                    // Update counters
+                    currentStepEl.textContent = (currentStep + 1).toString();
+                    queensPlacedEl.textContent = step.queensPlaced.toString();
+                    if (step.backtrackCount !== undefined) {
+                        backtrackCount = step.backtrackCount;
+                        backtrackCountEl.textContent = backtrackCount.toString();
+                    }
+                    
+                    // Update message
+                    currentActionEl.textContent = step.message;
+                    
+                    // Highlight pseudo code
+                    highlightPseudoCode(step.highlightLine);
+                    
+                    // Update tree
+                    updateTreeHighlight(step.node);
+                }
+            }
+
+            function updateChessboard(step = null) {
+                // Clear existing chessboard
+                chessboardEl.innerHTML = '';
+                
+                // Set grid template
+                chessboardEl.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+                chessboardEl.style.gridTemplateRows = `repeat(${boardSize}, 1fr)`;
+                
+                // Create cells
+                for (let i = 0; i < boardSize; i++) {
+                    for (let j = 0; j < boardSize; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'chess-cell';
+                        
+                        // Set cell color (alternating black and white)
+                        if ((i + j) % 2 === 0) {
+                            cell.classList.add('white-cell');
+                        } else {
+                            cell.classList.add('black-cell');
+                        }
+                        
+                        // If there's a queen, add queen symbol
+                        if (board[i][j] === 'Q') {
+                            const queen = document.createElement('span');
+                            queen.className = 'queen';
+                            queen.textContent = '♛';
+                            cell.appendChild(queen);
+                        }
+                        
+                        // Highlight current cell and attacks in the current step
+                        if (step) {
+                            if (step.row === i && step.col === j) {
+                                cell.classList.add('current');
+                            }
+                            
+                            if (step.attacks && step.attacks.some(pos => pos.row === i && pos.col === j)) {
+                                cell.classList.add('attacked');
+                            }
+                        }
+                        
+                        chessboardEl.appendChild(cell);
+                    }
+                }
+            }
+
+            function updateTree() {
+                const width = treeContainerEl.clientWidth;
+                const height = 350;
+                
+                // Clear previous tree
+                d3.select("#tree-container svg").remove();
+                
+                // Create new tree
+                const svg = d3.select("#tree-container")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height);
+                
+                const g = svg.append("g")
+                    .attr("transform", "translate(50, 20)");
+                
+                // Create tree layout
+                const treeLayout = d3.tree()
+                    .size([width - 100, height - 40]);
+                
+                // Create hierarchy from data
+                const root = d3.hierarchy(treeData);
+                
+                // Assign x and y coordinates
+                treeLayout(root);
+                
+                // Add links
+                g.selectAll(".link")
+                    .data(root.links())
+                    .enter()
+                    .append("path")
+                    .attr("class", "link")
+                    .attr("d", d3.linkHorizontal()
+                        .x(d => d.y * 0.6)
+                        .y(d => d.x)
+                    );
+                
+                // Add nodes
+                const nodes = g.selectAll(".node")
+                    .data(root.descendants())
+                    .enter()
+                    .append("g")
+                    .attr("class", d => {
+                        let className = "node";
+                        if (d.data.status === 'success') className += " node-success";
+                        else if (d.data.status === 'fail') className += " node-fail";
+                        else if (d.data.status === 'current') className += " node-current";
+                        else className += " node-default";
+                        return className;
+                    })
+                    .attr("transform", d => `translate(${d.y * 0.6}, ${d.x})`);
+                
+                // Add circles to nodes
+                nodes.append("circle")
+                    .attr("r", 8);
+                
+                // Add text to nodes
+                nodes.append("text")
+                    .attr("dy", ".31em")
+                    .attr("x", d => d.children ? -12 : 12)
+                    .style("text-anchor", d => d.children ? "end" : "start")
+                    .text(d => d.data.name);
+            }
+
+            function updateTreeHighlight(node) {
+                // Reset all nodes to their original status
+                treeNodes.forEach(node => {
+                    if (node.status === 'current') {
+                        node.status = 'default';
+                    }
+                });
+                
+                // Set current node
+                if (node) {
+                    node.status = 'current';
+                }
+                
+                // Update tree visualization
+                updateTree();
+            }
+
+            function highlightPseudoCode(lineNumber) {
+                clearPseudoCodeHighlight();
+                
+                const lines = pseudoCodeEl.textContent.split('\n');
+                const highlightedLines = [];
+                
+                for (let i = 0; i < lines.length; i++) {
+                    if (i === lineNumber) {
+                        highlightedLines.push(`<span class="current-line">${lines[i]}</span>`);
+                    } else {
+                        highlightedLines.push(lines[i]);
+                    }
+                }
+                
+                pseudoCodeEl.innerHTML = highlightedLines.join('\n');
+            }
+
+            function clearPseudoCodeHighlight() {
+                const lines = pseudoCodeEl.textContent.split('\n');
+                pseudoCodeEl.innerHTML = lines.join('\n');
+            }
+
+            function deepCopy(arr) {
+                return JSON.parse(JSON.stringify(arr));
+            }
+        });
+    </script>
+</body>
+</html> 

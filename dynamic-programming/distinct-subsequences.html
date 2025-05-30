@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distinct Subsequences</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+        }
+        .char-element.current {
+            background-color: #eab308;
+        }
+        .char-element.processed {
+            background-color: #22c55e;
+        }
+        .char-element.matched {
+            background-color: #8b5cf6;
+        }
+        .char-element.unmatched {
+            background-color: #ef4444;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .subsequence-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Distinct Subsequences</h1>
+        <p class="text-gray-300 mb-8">Visualize how to count the number of distinct subsequences of a string that match another string using dynamic programming.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Main String (s)</label>
+                            <input type="text" id="sInput" value="rabbbit" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter main string">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Subsequence (t)</label>
+                            <input type="text" id="tInput" value="rabbit" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter subsequence">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyCustomStrings()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Strings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- String Visualizations -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Main String (s)</h3>
+                    <div id="sContainer" class="flex flex-wrap gap-2 mb-6"></div>
+                    <h3 class="text-lg font-medium mb-4">Subsequence (t)</h3>
+                    <div id="tContainer" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Subsequence Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current State</h3>
+                    <div id="subsequenceInfo" class="subsequence-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Number of Subsequences: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function numDistinct(s, t):</span>
+<span class="code-line" data-line="2">    m, n = len(s), len(t)</span>
+<span class="code-line" data-line="3">    if n == 0: return 1</span>
+<span class="code-line" data-line="4">    if m < n: return 0</span>
+<span class="code-line" data-line="5">    // Initialize dp array</span>
+<span class="code-line" data-line="6">    dp = [[0] * (n + 1) for _ in range(m + 1)]</span>
+<span class="code-line" data-line="7">    // Base case: empty subsequence</span>
+<span class="code-line" data-line="8">    for i in range(m + 1): dp[i][0] = 1</span>
+<span class="code-line" data-line="9">    // Fill dp array</span>
+<span class="code-line" data-line="10">    for i = 1 to m:</span>
+<span class="code-line" data-line="11">        for j = 1 to n:</span>
+<span class="code-line" data-line="12">            if s[i-1] == t[j-1]:</span>
+<span class="code-line" data-line="13">                dp[i][j] = dp[i-1][j-1] + dp[i-1][j]</span>
+<span class="code-line" data-line="14">            else:</span>
+<span class="code-line" data-line="15">                dp[i][j] = dp[i-1][j]</span>
+<span class="code-line" data-line="16">    return dp[m][n]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m*n) where m and n are the lengths of s and t</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m*n) for the dp array, can be optimized to O(n)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Initialize dp array with base cases
+                                <br>2. For each character in s:
+                                <br>&nbsp;&nbsp;&nbsp;- For each character in t:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- If characters match: add ways from diagonal and above
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- If not: copy ways from above
+                                <br>3. Return total number of ways
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let s = '';
+        let t = '';
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyCustomStrings() {
+            const sInput = document.getElementById('sInput').value;
+            const tInput = document.getElementById('tInput').value;
+            try {
+                if (sInput.length === 0 || tInput.length === 0) throw new Error('Both strings must be non-empty');
+                s = sInput;
+                t = tInput;
+                createStringElements();
+                generateSteps();  // Only generate steps, don't start visualization
+                toggleControls(true);  // Enable controls
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid strings');
+            }
+        }
+
+        function createStringElements() {
+            const sContainer = document.getElementById('sContainer');
+            const tContainer = document.getElementById('tContainer');
+            sContainer.innerHTML = '';
+            tContainer.innerHTML = '';
+            
+            s.split('').forEach((char, index) => {
+                const element = document.createElement('div');
+                element.className = 'char-element';
+                element.id = `s-${index}`;
+                element.textContent = char;
+                sContainer.appendChild(element);
+            });
+
+            t.split('').forEach((char, index) => {
+                const element = document.createElement('div');
+                element.className = 'char-element';
+                element.id = `t-${index}`;
+                element.textContent = char;
+                tContainer.appendChild(element);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            const m = s.length;
+            const n = t.length;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                i: -1,
+                j: -1,
+                description: 'Starting the algorithm',
+                codeLine: 1
+            });
+
+            // Check base cases
+            if (n === 0) {
+                steps.push({
+                    type: 'empty_t',
+                    description: 'Empty subsequence, number of ways: 1',
+                    codeLine: 3
+                });
+                return;
+            }
+
+            if (m < n) {
+                steps.push({
+                    type: 's_shorter',
+                    description: 'Main string shorter than subsequence, number of ways: 0',
+                    codeLine: 4
+                });
+                return;
+            }
+
+            // Initialize dp array
+            const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));
+            for (let i = 0; i <= m; i++) dp[i][0] = 1;
+            
+            steps.push({
+                type: 'init_dp',
+                i: -1,
+                j: -1,
+                description: 'Initializing dp array with base cases',
+                codeLine: 8
+            });
+
+            // Fill dp array
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (s[i-1] === t[j-1]) {
+                        dp[i][j] = dp[i-1][j-1] + dp[i-1][j];
+                        steps.push({
+                            type: 'match',
+                            i: i-1,
+                            j: j-1,
+                            dp: dp[i][j],
+                            prevDiag: dp[i-1][j-1],
+                            prevAbove: dp[i-1][j],
+                            description: `Characters match: ${s[i-1]} = ${t[j-1]}, adding ${dp[i-1][j-1]} + ${dp[i-1][j]} = ${dp[i][j]} ways`,
+                            codeLine: 13
+                        });
+                    } else {
+                        dp[i][j] = dp[i-1][j];
+                        steps.push({
+                            type: 'no_match',
+                            i: i-1,
+                            j: j-1,
+                            dp: dp[i][j],
+                            prevAbove: dp[i-1][j],
+                            description: `Characters don't match: ${s[i-1]} != ${t[j-1]}, copying ${dp[i-1][j]} ways`,
+                            codeLine: 15
+                        });
+                    }
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                result: dp[m][n],
+                description: `Algorithm complete. Number of subsequences: ${dp[m][n]}`,
+                codeLine: 16
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Number of Subsequences: 0';
+            document.getElementById('subsequenceInfo').textContent = '';
+            highlightCodeLine(1);
+            createStringElements();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const sElements = document.querySelectorAll('#sContainer .char-element');
+            const tElements = document.querySelectorAll('#tContainer .char-element');
+            sElements.forEach(element => element.className = 'char-element');
+            tElements.forEach(element => element.className = 'char-element');
+
+            // Update current elements
+            if (step.i >= 0) {
+                document.getElementById(`s-${step.i}`).classList.add('current');
+            }
+            if (step.j >= 0) {
+                document.getElementById(`t-${step.j}`).classList.add('current');
+            }
+
+            // Update subsequence info
+            let subsequenceInfo = '';
+            if (step.type === 'match') {
+                subsequenceInfo = `Characters match: ${s[step.i]} = ${t[step.j]}
+                    \ndp[${step.i+1}][${step.j+1}] = dp[${step.i}][${step.j}] + dp[${step.i}][${step.j+1}]
+                    \n= ${step.prevDiag} + ${step.prevAbove} = ${step.dp}`;
+            } else if (step.type === 'no_match') {
+                subsequenceInfo = `Characters don't match: ${s[step.i]} != ${t[step.j]}
+                    \ndp[${step.i+1}][${step.j+1}] = dp[${step.i}][${step.j+1}]
+                    \n= ${step.prevAbove}`;
+            }
+
+            document.getElementById('subsequenceInfo').textContent = subsequenceInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Number of Subsequences: ${step.result}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyCustomStrings();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

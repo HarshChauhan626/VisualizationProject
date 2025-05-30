@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Size Subarray Sum Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-elem {
+            width: 50px;
+            height: 50px;
+            margin: 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            background-color: #3b82f6;
+            color: white;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .array-elem.pointer-left {
+            background-color: #4ade80;
+            border: 2px solid #86efac;
+        }
+        .array-elem.pointer-right {
+            background-color: #f59e0b;
+            border: 2px solid #fbbf24;
+        }
+        .array-elem.current-window {
+            background-color: #93c5fd;
+        }
+        .array-elem.min-window {
+            border: 2px solid #8b5cf6;
+            background-color: #a78bfa;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .array-element {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            margin: 0 4px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid #475569;
+        }
+        .array-element.current-window {
+            background-color: #93c5fd;
+            color: #0f1729;
+        }
+        .array-element.min-window {
+            background-color: #a78bfa;
+            color: #ffffff;
+            border: 2px solid #8b5cf6;
+        }
+        .array-element.pointer-left {
+            background-color: #4ade80;
+            color: #0f1729;
+            border: 2px solid #86efac;
+        }
+        .array-element.pointer-right {
+            background-color: #f59e0b;
+            color: #0f1729;
+            border: 2px solid #fbbf24;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Minimum Size Subarray Sum Visualization</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimal length subarray whose sum is greater than or equal to a target value using the sliding window technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Array (comma-separated numbers)</label>
+                            <input type="text" id="inputArray" value="2,3,1,2,4,3" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Target Sum</label>
+                            <input type="number" id="inputTarget" value="7" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array Visualization</h3>
+                    <div id="arrayVisualization" class="flex flex-wrap justify-center">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Pointers</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Left Pointer (Green):</p>
+                            <div id="leftPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Right Pointer (Orange):</p>
+                            <div id="rightPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Window Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Current Window Sum:</p>
+                            <div id="windowSumInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Current Window Length:</p>
+                            <div id="windowLengthInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Minimum Length</h3>
+                    <div id="minLengthInfo" class="text-xl font-mono text-center text-gray-400">
+                        Execute the algorithm to see the result.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm leading-relaxed">
+<span class="code-line" data-line="1">function minSubArrayLen(target, nums):</span>
+<span class="code-line" data-line="2">    left = 0</span>
+<span class="code-line" data-line="3">    sum = 0</span>
+<span class="code-line" data-line="4">    minLength = Infinity</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    for right from 0 to nums.length-1:</span>
+<span class="code-line" data-line="7">        sum += nums[right]</span>
+<span class="code-line" data-line="8">        </span>
+<span class="code-line" data-line="9">        while sum >= target:</span>
+<span class="code-line" data-line="10">            // Update minimum length when we find a valid window</span>
+<span class="code-line" data-line="11">            minLength = min(minLength, right - left + 1)</span>
+<span class="code-line" data-line="12">            </span>
+<span class="code-line" data-line="13">            // Shrink the window by removing element at left</span>
+<span class="code-line" data-line="14">            sum -= nums[left]</span>
+<span class="code-line" data-line="15">            left++</span>
+<span class="code-line" data-line="16">    </span>
+<span class="code-line" data-line="17">    return minLength === Infinity ? 0 : minLength</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) - constant extra space</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The Minimum Size Subarray Sum algorithm uses a sliding window approach to efficiently find the shortest subarray with a sum at least equal to the target:
+                                <br><br>1. We use two pointers to maintain a window: left and right
+                                <br>2. The right pointer expands the window by adding new elements to increase the sum
+                                <br>3. When the window sum becomes >= target, we have a valid window
+                                <br>4. We then try to minimize this window by moving the left pointer right (shrinking from the left)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Problem Statement -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+                    <p class="text-gray-300">
+                        Given an array of positive integers nums and a positive integer target, return the minimal length of a subarray whose sum is greater than or equal to target.<br><br>
+                        If there is no such subarray, return 0 instead.
+                    </p>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-700 pb-4">
+                            <p class="font-semibold">Test Case 1:</p>
+                            <p class="text-gray-300">nums = [2,3,1,2,4,3], target = 7</p>
+                            <p class="text-gray-300">Output: 2</p>
+                            <p class="text-gray-300">Explanation: The subarray [4,3] has the minimal length under the problem constraint.</p>
+                        </div>
+                        <div class="border-b border-gray-700 pb-4">
+                            <p class="font-semibold">Test Case 2:</p>
+                            <p class="text-gray-300">nums = [1,4,4], target = 4</p>
+                            <p class="text-gray-300">Output: 1</p>
+                            <p class="text-gray-300">Explanation: The subarray [4] has the minimal length under the problem constraint.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let target = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let activeLine = 0;
+
+        // Initialize the visualization when page loads
+        window.onload = function() {
+            // Update the speed value display
+            document.getElementById('speedSlider').addEventListener('input', function() {
+                document.getElementById('speedValue').textContent = this.value + 'ms';
+            });
+            
+            initializeVisualization();
+        };
+
+        function initializeVisualization() {
+            // Parse input values
+            const inputArrayStr = document.getElementById('inputArray').value;
+            nums = inputArrayStr.split(',').map(n => parseInt(n.trim()));
+            target = parseInt(document.getElementById('inputTarget').value);
+            
+            if (nums.some(isNaN) || isNaN(target)) {
+                alert('Please enter valid numbers for the array and target.');
+                return;
+            }
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            isPlaying = false;
+            clearInterval(playInterval);
+            
+            // Enable control buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('playBtn').textContent = 'Play';
+            document.getElementById('playBtn').classList.remove('bg-red-600');
+            document.getElementById('playBtn').classList.add('bg-blue-600');
+            
+            // Generate algorithm steps
+            generateSteps();
+            
+            // Update the visualization to the initial state
+            updateVisualization();
+        }
+
+        function resetVisualization() {
+            // Reset to default values
+            document.getElementById('inputArray').value = '2,3,1,2,4,3';
+            document.getElementById('inputTarget').value = '7';
+            
+            // Stop any running animation
+            isPlaying = false;
+            clearInterval(playInterval);
+            
+            // Initialize with new defaults
+            initializeVisualization();
+        }
+        
+        function generateSteps() {
+            steps = [];
+            let left = 0;
+            let sum = 0;
+            let minLength = Infinity;
+            
+            // Initial state
+            steps.push({
+                left: 0,
+                right: -1,
+                sum: 0,
+                minLength: Infinity,
+                activeLineNum: 2,
+                description: "Initialize left=0, sum=0, minLength=Infinity"
+            });
+            
+            // Main algorithm
+            for (let right = 0; right < nums.length; right++) {
+                // Expand window by adding the current element
+                sum += nums[right];
+                steps.push({
+                    left,
+                    right,
+                    sum,
+                    minLength,
+                    activeLineNum: 7,
+                    description: `Add nums[${right}] = ${nums[right]} to sum, making sum = ${sum}`
+                });
+                
+                // Check if we have a valid window
+                while (sum >= target) {
+                    // We have a valid window, update minLength if needed
+                    const currentLength = right - left + 1;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        sum,
+                        minLength,
+                        currentLength,
+                        activeLineNum: 9,
+                        description: `Window sum ${sum} ≥ target ${target}. Check if current length ${currentLength} is smaller than minLength ${minLength === Infinity ? "Infinity" : minLength}.`
+                    });
+                    
+                    // Update minLength if current window is smaller
+                    const oldMinLength = minLength;
+                    minLength = Math.min(minLength, currentLength);
+                    
+                    if (minLength !== oldMinLength) {
+                        steps.push({
+                            left,
+                            right,
+                            sum,
+                            minLength,
+                            minWindowStart: left,
+                            minWindowEnd: right,
+                            activeLineNum: 11,
+                            description: `Found new minimum length: ${minLength} (from index ${left} to ${right})`
+                        });
+                    }
+                    
+                    // Shrink window from the left
+                    const oldLeft = left;
+                    const removedValue = nums[left];
+                    sum -= removedValue;
+                    left++;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        sum,
+                        minLength,
+                        activeLineNum: 14,
+                        minWindowStart: minLength < Infinity ? left - 1 : null,
+                        minWindowEnd: minLength < Infinity ? right : null,
+                        description: `Shrink window: remove nums[${oldLeft}] = ${removedValue}, sum = ${sum}, left = ${left}`
+                    });
+                }
+            }
+            
+            // Final result
+            steps.push({
+                left,
+                right: nums.length - 1,
+                sum,
+                minLength: minLength === Infinity ? 0 : minLength,
+                activeLineNum: 17,
+                description: minLength === Infinity ? 
+                    "No valid subarray found. Return 0." : 
+                    `Final result: Minimum length subarray is ${minLength}`
+            });
+        }
+        
+        function updateVisualization() {
+            if (steps.length === 0) return;
+            
+            const step = steps[currentStep];
+            
+            // Update step counter
+            document.getElementById('currentStep').textContent = `Step ${currentStep + 1} of ${steps.length}`;
+            
+            // Update array visualization
+            updateArrayVisualization(step);
+            
+            // Update pointer information
+            document.getElementById('leftPointerInfo').textContent = `Index: ${step.left}`;
+            document.getElementById('rightPointerInfo').textContent = step.right >= 0 ? `Index: ${step.right}` : 'Not set';
+            
+            // Update window information
+            document.getElementById('windowSumInfo').textContent = step.sum;
+            const windowLength = step.right >= step.left ? step.right - step.left + 1 : 0;
+            document.getElementById('windowLengthInfo').textContent = windowLength;
+            
+            // Update minimum length
+            document.getElementById('minLengthInfo').textContent = step.minLength === Infinity ? 
+                "Not found yet" : step.minLength;
+                
+            // Update active code line
+            highlightCodeLine(step.activeLineNum);
+            
+            // Update prev/next buttons
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === steps.length - 1;
+        }
+        
+        function updateArrayVisualization(step) {
+            const arrayContainer = document.getElementById('arrayVisualization');
+            arrayContainer.innerHTML = '';
+            
+            for (let i = 0; i < nums.length; i++) {
+                const elem = document.createElement('div');
+                elem.className = 'array-elem';
+                elem.textContent = nums[i];
+                
+                // Add appropriate classes based on current step state
+                if (i === step.left) {
+                    elem.classList.add('pointer-left');
+                }
+                if (i === step.right) {
+                    elem.classList.add('pointer-right');
+                }
+                if (i >= step.left && i <= step.right) {
+                    elem.classList.add('current-window');
+                }
+                if (step.minWindowStart !== undefined && i >= step.minWindowStart && i <= step.minWindowEnd) {
+                    elem.classList.add('min-window');
+                }
+                
+                arrayContainer.appendChild(elem);
+            }
+        }
+        
+        function highlightCodeLine(lineNum) {
+            // Remove previous highlight
+            document.querySelectorAll('.code-line').forEach(line => {
+                line.classList.remove('active');
+            });
+            
+            // Add highlight to current line
+            const activeLine = document.querySelector(`.code-line[data-line="${lineNum}"]`);
+            if (activeLine) {
+                activeLine.classList.add('active');
+            }
+        }
+        
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+        
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            if (isPlaying) {
+                // Start the animation
+                document.getElementById('playBtn').textContent = 'Pause';
+                document.getElementById('playBtn').classList.remove('bg-blue-600');
+                document.getElementById('playBtn').classList.add('bg-red-600');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        // Reached the end, stop playing
+                        togglePlay();
+                    }
+                }, 101 - parseInt(document.getElementById('speedSlider').value));
+            } else {
+                // Stop the animation
+                document.getElementById('playBtn').textContent = 'Play';
+                document.getElementById('playBtn').classList.remove('bg-red-600');
+                document.getElementById('playBtn').classList.add('bg-blue-600');
+                clearInterval(playInterval);
+            }
+        }
+    </script>
+</body>
+</html> 

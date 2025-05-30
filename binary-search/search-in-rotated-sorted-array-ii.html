@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search in Rotated Sorted Array II - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .left {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .right {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .mid {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .found {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .duplicate {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Search in Rotated Sorted Array II</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given a rotated sorted array nums that may contain duplicates and a target value, return true if target is in nums, or false if it is not in nums.<br><br>
+                The array may be rotated at an unknown pivot index k (0 ≤ k < nums.length) such that the resulting array is [nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]] (0-indexed).<br><br>
+                Example: For nums = [2,5,6,0,0,1,2] and target = 0, return true.<br>
+                For nums = [2,5,6,0,0,1,2] and target = 3, return false.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                    <input type="text" id="inputArray" placeholder="2,5,6,0,0,1,2" 
+                        class="border p-2 rounded w-full" value="2,5,6,0,0,1,2">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Target Value</label>
+                    <input type="number" id="target" placeholder="Enter target value" 
+                        class="border p-2 rounded w-full" value="0">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="flex flex-wrap items-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div id="stateVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n) worst case (with duplicates), O(log n) best case
+// Space Complexity: O(1)
+function search(nums, target):
+    left = 0
+    right = nums.length - 1
+    
+    while left <= right:
+        mid = left + (right - left) // 2
+        
+        if nums[mid] == target:
+            return true
+            
+        // Handle duplicates at left and mid
+        if nums[left] == nums[mid]:
+            left++
+            continue
+            
+        // Left half is sorted
+        if nums[left] <= nums[mid]:
+            if nums[left] <= target < nums[mid]:
+                right = mid - 1  // target in left half
+            else:
+                left = mid + 1   // target in right half
+        // Right half is sorted
+        else:
+            if nums[mid] < target <= nums[right]:
+                left = mid + 1   // target in right half
+            else:
+                right = mid - 1  // target in left half
+    
+    return false</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [2,5,6,0,0,1,2], target = 0</p>
+                    <p class="text-green-400">Output: true</p>
+                    <p class="text-gray-400">Explanation: Target 0 exists in the array.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [2,5,6,0,0,1,2], target = 3</p>
+                    <p class="text-green-400">Output: false</p>
+                    <p class="text-gray-400">Explanation: Target 3 does not exist in the array.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [1,0,1,1,1], target = 0</p>
+                    <p class="text-green-400">Output: true</p>
+                    <p class="text-gray-400">Explanation: Target 0 exists in the array, but duplicates make it harder to determine which half is sorted.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let target = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function generateSteps(nums, target) {
+            const steps = [];
+            
+            if (nums.length === 0) {
+                steps.push({
+                    array: [],
+                    explanation: "Array is empty",
+                    done: true,
+                    result: false
+                });
+                return steps;
+            }
+
+            let left = 0;
+            let right = nums.length - 1;
+            
+            steps.push({
+                array: nums,
+                left,
+                right,
+                explanation: "Initialize binary search with left = 0 and right = " + right
+            });
+
+            while (left <= right) {
+                const mid = Math.floor(left + (right - left) / 2);
+                
+                steps.push({
+                    array: nums,
+                    left,
+                    right,
+                    mid,
+                    explanation: `Calculate mid = ${mid}, compare nums[${mid}] = ${nums[mid]} with target = ${target}`
+                });
+
+                if (nums[mid] === target) {
+                    steps.push({
+                        array: nums,
+                        left,
+                        right,
+                        mid,
+                        found: mid,
+                        explanation: `Found target ${target} at index ${mid}`,
+                        done: true,
+                        result: true
+                    });
+                    return steps;
+                }
+
+                if (nums[left] === nums[mid]) {
+                    steps.push({
+                        array: nums,
+                        left,
+                        right,
+                        mid,
+                        duplicate: true,
+                        explanation: `Duplicate found: nums[${left}] = nums[${mid}] = ${nums[left]}, increment left pointer`
+                    });
+                    left++;
+                    continue;
+                }
+
+                if (nums[left] <= nums[mid]) {
+                    steps.push({
+                        array: nums,
+                        left,
+                        right,
+                        mid,
+                        sortedHalf: 'left',
+                        explanation: `Left half [${left}..${mid}] is sorted`
+                    });
+
+                    if (nums[left] <= target && target < nums[mid]) {
+                        steps.push({
+                            array: nums,
+                            left,
+                            right: mid - 1,
+                            lastMid: mid,
+                            explanation: `Target ${target} is in left half, search [${left}..${mid-1}]`
+                        });
+                        right = mid - 1;
+                    } else {
+                        steps.push({
+                            array: nums,
+                            left: mid + 1,
+                            right,
+                            lastMid: mid,
+                            explanation: `Target ${target} is in right half, search [${mid+1}..${right}]`
+                        });
+                        left = mid + 1;
+                    }
+                } else {
+                    steps.push({
+                        array: nums,
+                        left,
+                        right,
+                        mid,
+                        sortedHalf: 'right',
+                        explanation: `Right half [${mid}..${right}] is sorted`
+                    });
+
+                    if (nums[mid] < target && target <= nums[right]) {
+                        steps.push({
+                            array: nums,
+                            left: mid + 1,
+                            right,
+                            lastMid: mid,
+                            explanation: `Target ${target} is in right half, search [${mid+1}..${right}]`
+                        });
+                        left = mid + 1;
+                    } else {
+                        steps.push({
+                            array: nums,
+                            left,
+                            right: mid - 1,
+                            lastMid: mid,
+                            explanation: `Target ${target} is in left half, search [${left}..${mid-1}]`
+                        });
+                        right = mid - 1;
+                    }
+                }
+            }
+
+            steps.push({
+                array: nums,
+                left,
+                right,
+                explanation: "Search complete, target not found",
+                done: true,
+                result: false
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            array = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            target = parseInt(document.getElementById('target').value);
+            currentStep = 0;
+            steps = generateSteps(array, target);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const stateDiv = document.getElementById('stateVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            arrayDiv.innerHTML = '';
+            
+            // Create array visualization
+            for (let i = 0; i < step.array.length; i++) {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                
+                if (step.found === i) {
+                    elementDiv.classList.add('found');
+                } else if (step.mid === i) {
+                    elementDiv.classList.add('mid');
+                } else if (step.left === i) {
+                    elementDiv.classList.add('left');
+                } else if (step.right === i) {
+                    elementDiv.classList.add('right');
+                } else if (step.duplicate && (i === step.left || i === step.mid)) {
+                    elementDiv.classList.add('duplicate');
+                } else if (step.sortedHalf === 'left' && i >= step.left && i <= step.mid) {
+                    elementDiv.classList.add('current');
+                } else if (step.sortedHalf === 'right' && i >= step.mid && i <= step.right) {
+                    elementDiv.classList.add('current');
+                }
+                
+                elementDiv.textContent = step.array[i];
+                arrayDiv.appendChild(elementDiv);
+            }
+            
+            // Update state
+            stateDiv.innerHTML = step.left !== undefined ? 
+                `Left: ${step.left}, Right: ${step.right}${step.mid !== undefined ? `, Mid: ${step.mid}` : ''}` :
+                '';
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = `Target ${target} ${step.result ? 'found' : 'not found'} in array`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

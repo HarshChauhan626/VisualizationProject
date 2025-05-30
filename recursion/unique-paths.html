@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unique Paths - Recursion + Memoization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .grid-container {
+            display: grid;
+            gap: 2px;
+            background-color: #1e293b;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .grid-cell {
+            width: 40px;
+            height: 40px;
+            background-color: #1e293b;
+            border: 1px solid #3b82f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e2e8f0;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .grid-cell.current {
+            background-color: #3b82f6;
+        }
+        .grid-cell.visited {
+            background-color: #10b981;
+        }
+        .grid-cell.path {
+            background-color: #f59e0b;
+        }
+        .memo-table {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .memo-table td {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            text-align: center;
+        }
+        .memo-table th {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            background-color: #1e293b;
+        }
+        .highlight {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .tower {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            border-bottom: 4px solid #3b82f6;
+            margin: 20px auto;
+        }
+        .disk {
+            height: 30px;
+            background-color: #3b82f6;
+            border-radius: 4px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.5s;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../../index.html" class="text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Unique Paths</h1>
+        <p class="text-gray-400 mb-8">Visualize the recursion and memoization approach to find unique paths in a grid.</p>
+
+        <!-- Input Section -->
+        <div class="mb-8 p-6 bg-gray-800 rounded-lg">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Grid Size (m x n)</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="rowsInput" min="1" max="5" value="3" 
+                            class="w-20 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                        <span class="text-gray-300">x</span>
+                        <input type="number" id="colsInput" min="1" max="5" value="3" 
+                            class="w-20 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Animation Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="100" max="2000" value="500" step="100"
+                        class="w-48">
+                    <span id="speedValue" class="ml-2 text-gray-300">500ms</span>
+                </div>
+                <button onclick="initialize()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Initialize
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Grid Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Grid Visualization</h2>
+                <div class="grid-container" id="gridContainer"></div>
+            </div>
+
+            <!-- Memoization Table -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Memoization Table</h2>
+                <div class="overflow-x-auto">
+                    <table class="memo-table" id="memoTable"></table>
+                </div>
+            </div>
+
+            <!-- Controls and Info -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Controls</h2>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="startAnimation()" id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Play
+                    </button>
+                    <button onclick="pauseAnimation()" id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 hidden">
+                        Pause
+                    </button>
+                    <button onclick="nextStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Next Step
+                    </button>
+                    <button onclick="prevStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Previous Step
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-300">Current Step: <span id="currentStep" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Total Steps: <span id="totalSteps" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Current Position: <span id="currentPos" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Memoized Values: <span id="memoCount" class="font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 overflow-x-auto" id="pseudoCode">
+function uniquePaths(m, n, memo = {}) {
+    const key = `${m},${n}`;
+    if (key in memo) return memo[key];
+    if (m === 1 || n === 1) return 1;
+    
+    memo[key] = uniquePaths(m-1, n, memo) + uniquePaths(m, n-1, memo);
+    return memo[key];
+}</pre>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4 text-gray-300">
+                <p><strong>Problem Description:</strong> Find the number of unique paths from the top-left to the bottom-right corner of an m x n grid, moving only right or down.</p>
+                <p><strong>Time Complexity:</strong> O(m * n) with memoization, O(2^(m+n)) without memoization</p>
+                <p><strong>Space Complexity:</strong> O(m * n) for recursion stack and memoization table</p>
+                <p><strong>How it works:</strong></p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>Start from the bottom-right corner (m,n)</li>
+                    <li>Number of paths to (m,n) = paths to (m-1,n) + paths to (m,n-1)</li>
+                    <li>Base case: if m=1 or n=1, only 1 path exists</li>
+                    <li>Use memoization to store previously calculated results</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let steps = [];
+        let currentStepIndex = 0;
+        let animationInterval;
+        let memo = {};
+        let speed = 500;
+        let grid = [];
+
+        function initialize() {
+            const m = parseInt(document.getElementById('rowsInput').value);
+            const n = parseInt(document.getElementById('colsInput').value);
+            
+            if (m < 1 || m > 5 || n < 1 || n > 5) {
+                alert('Please enter grid dimensions between 1 and 5');
+                return;
+            }
+
+            // Reset state
+            steps = [];
+            currentStepIndex = 0;
+            memo = {};
+            grid = Array(m).fill().map(() => Array(n).fill(0));
+            
+            // Generate steps
+            generateSteps(m, n);
+            
+            // Update UI
+            updateGridVisualization(m, n);
+            updateMemoTable(m, n);
+            updateControls();
+        }
+
+        function generateSteps(m, n) {
+            function uniquePaths(m, n, path = []) {
+                const key = `${m},${n}`;
+                if (key in memo) {
+                    steps.push({
+                        type: 'memo',
+                        m: m,
+                        n: n,
+                        path: [...path],
+                        memo: {...memo}
+                    });
+                    return memo[key];
+                }
+                if (m === 1 || n === 1) {
+                    steps.push({
+                        type: 'base',
+                        m: m,
+                        n: n,
+                        path: [...path],
+                        memo: {...memo}
+                    });
+                    return 1;
+                }
+
+                steps.push({
+                    type: 'recursion',
+                    m: m,
+                    n: n,
+                    path: [...path],
+                    memo: {...memo}
+                });
+
+                const result = uniquePaths(m-1, n, [...path, 'down']) + 
+                             uniquePaths(m, n-1, [...path, 'right']);
+                
+                memo[key] = result;
+                steps.push({
+                    type: 'result',
+                    m: m,
+                    n: n,
+                    result: result,
+                    path: [...path],
+                    memo: {...memo}
+                });
+
+                return result;
+            }
+
+            uniquePaths(m, n);
+            document.getElementById('totalSteps').textContent = steps.length;
+        }
+
+        function updateGridVisualization(m, n) {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${n}, 40px)`;
+            
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.textContent = `${i+1},${j+1}`;
+                    cell.id = `cell-${i}-${j}`;
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function updateMemoTable(m, n) {
+            const table = document.getElementById('memoTable');
+            table.innerHTML = `
+                <tr>
+                    <th>Position</th>
+                    <th>Paths</th>
+                </tr>
+            `;
+            
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    const row = table.insertRow();
+                    row.insertCell().textContent = `${i},${j}`;
+                    row.insertCell().textContent = '-';
+                    row.id = `memo-row-${i}-${j}`;
+                }
+            }
+        }
+
+        function updateControls() {
+            document.getElementById('currentStep').textContent = currentStepIndex;
+            document.getElementById('memoCount').textContent = Object.keys(memo).length;
+            
+            const currentStep = steps[currentStepIndex];
+            if (currentStep) {
+                document.getElementById('currentPos').textContent = `${currentStep.m},${currentStep.n}`;
+                
+                // Update grid visualization
+                document.querySelectorAll('.grid-cell').forEach(cell => {
+                    cell.classList.remove('current', 'visited', 'path');
+                });
+                const currentCell = document.getElementById(`cell-${currentStep.m-1}-${currentStep.n-1}`);
+                if (currentCell) {
+                    currentCell.classList.add('current');
+                }
+                
+                // Update memo table
+                if (currentStep.type === 'result') {
+                    const memoRow = document.getElementById(`memo-row-${currentStep.m}-${currentStep.n}`);
+                    if (memoRow) {
+                        memoRow.cells[1].textContent = currentStep.result;
+                        memoRow.cells[1].classList.add('highlight');
+                        setTimeout(() => {
+                            memoRow.cells[1].classList.remove('highlight');
+                        }, 500);
+                    }
+                }
+                
+                // Update pseudo code highlighting
+                updatePseudoCodeHighlight(currentStep.type);
+            }
+        }
+
+        function updatePseudoCodeHighlight(stepType) {
+            const code = document.getElementById('pseudoCode');
+            code.innerHTML = code.innerHTML.replace(/class="highlight"/g, '');
+            
+            const lines = code.textContent.split('\n');
+            let highlightLine = -1;
+            
+            switch(stepType) {
+                case 'base':
+                    highlightLine = 3; // if (m === 1 || n === 1) return 1;
+                    break;
+                case 'memo':
+                    highlightLine = 2; // if (key in memo) return memo[key];
+                    break;
+                case 'recursion':
+                    highlightLine = 5; // memo[key] = uniquePaths(m-1, n, memo) + uniquePaths(m, n-1, memo);
+                    break;
+                case 'result':
+                    highlightLine = 6; // return memo[key];
+                    break;
+            }
+            
+            if (highlightLine !== -1) {
+                lines[highlightLine] = `<span class="highlight">${lines[highlightLine]}</span>`;
+                code.innerHTML = lines.join('\n');
+            }
+        }
+
+        function startAnimation() {
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    updateControls();
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateControls();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateControls();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = `${speed}ms`;
+            if (animationInterval) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html> 

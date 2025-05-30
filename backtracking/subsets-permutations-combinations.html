@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subsets, Permutations, Combinations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array {
+            display: flex;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .element {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .element.current {
+            background-color: #eab308;
+            transform: scale(1.1);
+        }
+        .element.selected {
+            background-color: #10b981;
+        }
+        .element.used {
+            background-color: #f43f5e;
+        }
+        .subset, .permutation, .combination {
+            display: flex;
+            gap: 4px;
+            margin: 4px 0;
+            padding: 4px;
+            background-color: #2d3748;
+            border-radius: 4px;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Subsets, Permutations, Combinations</h1>
+        <p class="text-gray-300 mb-8">Visualize how to generate all possible subsets, permutations, and combinations of a given array.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input Array</label>
+                            <input type="text" id="arrayInput" value="1,2,3"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter comma-separated numbers">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Problem Type</label>
+                            <select id="problemType" class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                                <option value="subsets">Subsets</option>
+                                <option value="permutations">Permutations</option>
+                                <option value="combinations">Combinations</option>
+                            </select>
+                        </div>
+                        <div id="kInputContainer" class="hidden">
+                            <label class="block text-sm font-medium mb-2">Combination Size (k)</label>
+                            <input type="number" id="kInput" value="2" min="1" max="5"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array</h3>
+                    <div id="arrayContainer" class="array"></div>
+                </div>
+
+                <!-- Current Selection -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Selection</h3>
+                    <div id="currentSelection" class="array"></div>
+                </div>
+
+                <!-- Results -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Results</h3>
+                    <div id="resultsContainer" class="space-y-2"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def generate(nums):</span>
+<span class="code-line" data-line="2">    result = []</span>
+<span class="code-line" data-line="3">    current = []</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    def backtrack(start):</span>
+<span class="code-line" data-line="6">        result.append(current.copy())</span>
+<span class="code-line" data-line="7">        </span>
+<span class="code-line" data-line="8">        for i in range(start, len(nums)):</span>
+<span class="code-line" data-line="9">            current.append(nums[i])</span>
+<span class="code-line" data-line="10">            backtrack(i + 1)</span>
+<span class="code-line" data-line="11">            current.pop()</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Generate all possible subsets, permutations, or combinations of a given array.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">
+                                Subsets: O(2^n)<br>
+                                Permutations: O(n!)<br>
+                                Combinations: O(n choose k)
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the recursion stack</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses backtracking to generate all possible combinations:
+                                <br>1. For subsets: Include or exclude each element
+                                <br>2. For permutations: Try all possible positions for each element
+                                <br>3. For combinations: Select k elements in order
+                                <br>4. Backtrack by removing the last added element and try other options
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let result = [];
+        let current = [];
+        let problemType = 'subsets';
+        let k = 0;
+
+        function initialize() {
+            const input = document.getElementById('arrayInput').value;
+            nums = input.split(',').map(num => parseInt(num.trim()));
+            if (nums.some(isNaN)) {
+                alert('Please enter valid comma-separated numbers');
+                return;
+            }
+
+            problemType = document.getElementById('problemType').value;
+            if (problemType === 'combinations') {
+                k = parseInt(document.getElementById('kInput').value);
+                if (isNaN(k) || k < 1 || k > nums.length) {
+                    alert('Please enter a valid combination size');
+                    return;
+                }
+            }
+
+            const arrayContainer = document.getElementById('arrayContainer');
+            const currentSelection = document.getElementById('currentSelection');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            arrayContainer.innerHTML = '';
+            currentSelection.innerHTML = '';
+            resultsContainer.innerHTML = '';
+            
+            nums.forEach((num, index) => {
+                const element = document.createElement('div');
+                element.className = 'element';
+                element.id = `element-${index}`;
+                element.textContent = num;
+                arrayContainer.appendChild(element);
+            });
+
+            result = [];
+            current = [];
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function generateSteps() {
+            steps = [];
+            result = [];
+            current = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            if (problemType === 'subsets') {
+                function backtrack(start) {
+                    steps.push({
+                        type: 'add_subset',
+                        description: 'Adding current subset to result',
+                        subset: [...current],
+                        codeLine: 6
+                    });
+
+                    for (let i = start; i < nums.length; i++) {
+                        steps.push({
+                            type: 'select_element',
+                            description: `Selecting element ${nums[i]}`,
+                            index: i,
+                            codeLine: 9
+                        });
+
+                        current.push(nums[i]);
+                        backtrack(i + 1);
+                        current.pop();
+
+                        steps.push({
+                            type: 'deselect_element',
+                            description: `Deselecting element ${nums[i]}`,
+                            index: i,
+                            codeLine: 11
+                        });
+                    }
+                }
+                backtrack(0);
+            } else if (problemType === 'permutations') {
+                function backtrack(used) {
+                    if (current.length === nums.length) {
+                        steps.push({
+                            type: 'add_permutation',
+                            description: 'Adding current permutation to result',
+                            permutation: [...current],
+                            codeLine: 6
+                        });
+                        return;
+                    }
+
+                    for (let i = 0; i < nums.length; i++) {
+                        if (!used[i]) {
+                            steps.push({
+                                type: 'select_element',
+                                description: `Selecting element ${nums[i]}`,
+                                index: i,
+                                codeLine: 9
+                            });
+
+                            used[i] = true;
+                            current.push(nums[i]);
+                            backtrack(used);
+                            current.pop();
+                            used[i] = false;
+
+                            steps.push({
+                                type: 'deselect_element',
+                                description: `Deselecting element ${nums[i]}`,
+                                index: i,
+                                codeLine: 11
+                            });
+                        }
+                    }
+                }
+                backtrack(new Array(nums.length).fill(false));
+            } else if (problemType === 'combinations') {
+                function backtrack(start) {
+                    if (current.length === k) {
+                        steps.push({
+                            type: 'add_combination',
+                            description: 'Adding current combination to result',
+                            combination: [...current],
+                            codeLine: 6
+                        });
+                        return;
+                    }
+
+                    for (let i = start; i < nums.length; i++) {
+                        steps.push({
+                            type: 'select_element',
+                            description: `Selecting element ${nums[i]}`,
+                            index: i,
+                            codeLine: 9
+                        });
+
+                        current.push(nums[i]);
+                        backtrack(i + 1);
+                        current.pop();
+
+                        steps.push({
+                            type: 'deselect_element',
+                            description: `Deselecting element ${nums[i]}`,
+                            index: i,
+                            codeLine: 11
+                        });
+                    }
+                }
+                backtrack(0);
+            }
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            document.querySelectorAll('.element').forEach(el => {
+                el.className = el.className.replace(' current', '').replace(' selected', '').replace(' used', '');
+            });
+
+            const currentSelection = document.getElementById('currentSelection');
+            currentSelection.innerHTML = '';
+
+            if (step.type === 'select_element') {
+                const element = document.getElementById(`element-${step.index}`);
+                element.className += ' current';
+                
+                // Update current selection
+                current.forEach(num => {
+                    const el = document.createElement('div');
+                    el.className = 'element selected';
+                    el.textContent = num;
+                    currentSelection.appendChild(el);
+                });
+            } else if (step.type === 'deselect_element') {
+                const element = document.getElementById(`element-${step.index}`);
+                element.className += ' used';
+            } else if (step.type === 'add_subset' || step.type === 'add_permutation' || step.type === 'add_combination') {
+                const resultsContainer = document.getElementById('resultsContainer');
+                const result = document.createElement('div');
+                result.className = problemType === 'subsets' ? 'subset' : 
+                                 problemType === 'permutations' ? 'permutation' : 'combination';
+                
+                step[problemType].forEach(num => {
+                    const el = document.createElement('div');
+                    el.className = 'element selected';
+                    el.textContent = num;
+                    result.appendChild(el);
+                });
+                
+                resultsContainer.appendChild(result);
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle problem type change
+        document.getElementById('problemType').addEventListener('change', function() {
+            const kInputContainer = document.getElementById('kInputContainer');
+            if (this.value === 'combinations') {
+                kInputContainer.classList.remove('hidden');
+            } else {
+                kInputContainer.classList.add('hidden');
+            }
+        });
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

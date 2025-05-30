@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Nth Node From End - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .target {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .ahead {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .removed {
+            opacity: 0.3;
+            background-color: #4c1d95;
+            border-color: #8b5cf6;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .phase {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .phase.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Remove Nth Node From End</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given the head of a linked list, remove the nth node from the end of the list and return its head.<br><br>
+                For example, if the linked list is 1->2->3->4->5 and n = 2, after removing the second node from the end, 
+                the linked list becomes 1->2->3->5.
+            </p>
+        </div>
+
+        <!-- Phase Selection -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="twoPassPhase" class="phase active px-4 py-2 rounded" onclick="switchPhase('twoPass')">
+                    Two Pass Solution
+                </div>
+                <div id="onePassPhase" class="phase px-4 py-2 rounded" onclick="switchPhase('onePass')">
+                    One Pass Solution
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Linked List Values (comma-separated)</label>
+                    <input type="text" id="inputValues" placeholder="Enter values" 
+                        class="border p-2 rounded w-full" value="1,2,3,4,5">
+                </div>
+                <div class="w-32">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Remove Nth from End</label>
+                    <input type="number" id="inputN" placeholder="n" 
+                        class="border p-2 rounded w-full" value="2" min="1">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="space-y-8">
+                <!-- Original List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Original List:</h3>
+                    <div id="originalListVisualization" class="relative h-24">
+                    </div>
+                </div>
+                <!-- Working Area -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Working Area:</h3>
+                    <div id="workingAreaVisualization" class="relative h-48">
+                    </div>
+                </div>
+                <!-- Result List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Result List:</h3>
+                    <div id="resultListVisualization" class="relative h-24">
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mt-6">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="twoPassPseudoCode" class="phase-code">
+                <pre class="p-4 rounded text-gray-300">
+// Two Pass Solution (Time: O(n), Space: O(1))
+function removeNthFromEnd(head, n):
+    // First pass: count length
+    length = 0
+    current = head
+    while current:
+        length++
+        current = current.next
+    
+    // Handle edge case: removing first node
+    if length == n:
+        return head.next
+    
+    // Second pass: find node before target
+    current = head
+    for i = 1 to length - n - 1:
+        current = current.next
+    
+    // Remove target node
+    current.next = current.next.next
+    return head</pre>
+            </div>
+            <div id="onePassPseudoCode" class="phase-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// One Pass Solution (Time: O(n), Space: O(1))
+function removeNthFromEnd(head, n):
+    // Create dummy node to handle edge cases
+    dummy = new ListNode(0)
+    dummy.next = head
+    
+    // Move ahead pointer n steps
+    ahead = dummy
+    for i = 1 to n + 1:
+        ahead = ahead.next
+    
+    // Move both pointers until ahead reaches end
+    current = dummy
+    while ahead:
+        current = current.next
+        ahead = ahead.next
+    
+    // Remove target node
+    current.next = current.next.next
+    return dummy.next</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">head = [1,2,3,4,5], n = 2</p>
+                    <p class="text-green-400">Output: [1,2,3,5]</p>
+                    <p class="text-gray-400">Explanation: The second node from the end (4) is removed.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">head = [1], n = 1</p>
+                    <p class="text-green-400">Output: []</p>
+                    <p class="text-gray-400">Explanation: Removing the only node results in empty list.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">head = [1,2], n = 1</p>
+                    <p class="text-green-400">Output: [1]</p>
+                    <p class="text-gray-400">Explanation: Remove the last node.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        let values = [];
+        let n = 2;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentPhase = 'twoPass';
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function switchPhase(phase) {
+            currentPhase = phase;
+            document.querySelectorAll('.phase').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(phase + 'Phase').classList.add('active');
+            document.querySelectorAll('.phase-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(phase + 'PseudoCode').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function generateTwoPassSteps(head, n) {
+            const steps = [];
+            if (!head) {
+                steps.push({
+                    original: [],
+                    working: [],
+                    result: [],
+                    explanation: "Empty list",
+                    done: true
+                });
+                return steps;
+            }
+
+            // First pass: count length
+            let length = 0;
+            let current = head;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    current: head
+                }],
+                explanation: "Start counting length from head"
+            });
+
+            while (current) {
+                length++;
+                current = current.next;
+                
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        current,
+                        length
+                    }],
+                    explanation: `Count node ${length}`
+                });
+            }
+
+            // Handle edge case
+            if (length === n) {
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        target: head
+                    }],
+                    result: getListNodes(head.next),
+                    explanation: "Remove first node",
+                    done: true
+                });
+                return steps;
+            }
+
+            // Second pass: find node before target
+            current = head;
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    current
+                }],
+                explanation: `Move to position ${length - n}`
+            });
+
+            for (let i = 1; i < length - n; i++) {
+                current = current.next;
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: getListNodes(head),
+                        y: 0,
+                        current,
+                        target: current.next
+                    }],
+                    explanation: `Move to position ${i + 1}`
+                });
+            }
+
+            // Remove target node
+            const targetNode = current.next;
+            current.next = current.next.next;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: getListNodes(head),
+                    y: 0,
+                    current,
+                    target: targetNode,
+                    removed: true
+                }],
+                result: getListNodes(head),
+                explanation: "Remove target node",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateOnePassSteps(head, n) {
+            const steps = [];
+            if (!head) {
+                steps.push({
+                    original: [],
+                    working: [],
+                    result: [],
+                    explanation: "Empty list",
+                    done: true
+                });
+                return steps;
+            }
+
+            // Create dummy node
+            const dummy = new ListNode(0);
+            dummy.next = head;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: [{...dummy}, ...getListNodes(head)],
+                    y: 0
+                }],
+                explanation: "Create dummy node to handle edge cases"
+            });
+
+            // Move ahead pointer
+            let ahead = dummy;
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: [{...dummy}, ...getListNodes(head)],
+                    y: 0,
+                    ahead
+                }],
+                explanation: "Start ahead pointer at dummy node"
+            });
+
+            for (let i = 0; i < n + 1; i++) {
+                ahead = ahead.next;
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: [{...dummy}, ...getListNodes(head)],
+                        y: 0,
+                        ahead
+                    }],
+                    explanation: `Move ahead pointer ${i + 1} steps`
+                });
+            }
+
+            // Move both pointers
+            let current = dummy;
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: [{...dummy}, ...getListNodes(head)],
+                    y: 0,
+                    current,
+                    ahead
+                }],
+                explanation: "Start current pointer at dummy node"
+            });
+
+            while (ahead) {
+                current = current.next;
+                ahead = ahead.next;
+                steps.push({
+                    original: getListNodes(head),
+                    working: [{
+                        nodes: [{...dummy}, ...getListNodes(head)],
+                        y: 0,
+                        current,
+                        ahead,
+                        target: current.next
+                    }],
+                    explanation: "Move both pointers one step"
+                });
+            }
+
+            // Remove target node
+            const targetNode = current.next;
+            current.next = current.next.next;
+
+            steps.push({
+                original: getListNodes(head),
+                working: [{
+                    nodes: [{...dummy}, ...getListNodes(head)],
+                    y: 0,
+                    current,
+                    target: targetNode,
+                    removed: true
+                }],
+                result: getListNodes(dummy.next),
+                explanation: "Remove target node",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            values = document.getElementById('inputValues').value.split(',').map(x => parseInt(x.trim()));
+            n = parseInt(document.getElementById('inputN').value);
+            currentStep = 0;
+            const head = createLinkedList(values);
+            
+            steps = currentPhase === 'twoPass' 
+                ? generateTwoPassSteps(head, n)
+                : generateOnePassSteps(head, n);
+            
+            updateVisualization();
+        }
+
+        function createNodeElement(node, x, y, className = '') {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg ${className}`;
+            nodeDiv.style.left = `${x}px`;
+            nodeDiv.style.top = `${y}px`;
+            nodeDiv.textContent = node.val;
+            return nodeDiv;
+        }
+
+        function createArrow(startX, startY, endX, endY) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            arrow.style.left = `${startX + 24}px`;
+            arrow.style.top = `${startY + 24}px`;
+            arrow.style.width = `${length - 48}px`;
+            arrow.style.transform = `rotate(${angle}deg)`;
+            
+            return arrow;
+        }
+
+        function updateVisualization() {
+            const originalListDiv = document.getElementById('originalListVisualization');
+            const workingAreaDiv = document.getElementById('workingAreaVisualization');
+            const resultListDiv = document.getElementById('resultListVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            originalListDiv.innerHTML = '';
+            workingAreaDiv.innerHTML = '';
+            resultListDiv.innerHTML = '';
+            
+            // Draw original list
+            if (step.original) {
+                let x = 50;
+                const y = 12;
+                
+                step.original.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    originalListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.original.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        originalListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Draw working area
+            if (step.working) {
+                step.working.forEach(list => {
+                    let x = 50;
+                    const y = list.y + 12;
+                    
+                    list.nodes.forEach((node, index) => {
+                        let className = list.className || '';
+                        if (node === list.current) className += ' current';
+                        if (node === list.target) className += ' target';
+                        if (node === list.ahead) className += ' ahead';
+                        if (list.removed && node === list.target) className += ' removed';
+                        
+                        const nodeDiv = createNodeElement(node, x, y, className);
+                        workingAreaDiv.appendChild(nodeDiv);
+                        
+                        if (index < list.nodes.length - 1) {
+                            const arrow = createArrow(x, y, x + 100, y);
+                            workingAreaDiv.appendChild(arrow);
+                        }
+                        
+                        x += 100;
+                    });
+                });
+            }
+            
+            // Draw result list
+            if (step.result) {
+                let x = 50;
+                const y = 12;
+                
+                step.result.forEach((node, index) => {
+                    const nodeDiv = createNodeElement(node, x, y);
+                    resultListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.result.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        resultListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Phase complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

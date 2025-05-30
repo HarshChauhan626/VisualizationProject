@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huffman Coding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .node {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 10px;
+            position: relative;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            transition: all 0.3s ease-in-out;
+        }
+        .node.internal {
+            background-color: #22c55e;
+        }
+        .node.leaf {
+            background-color: #eab308;
+        }
+        .node.current {
+            box-shadow: 0 0 0 3px #ef4444;
+        }
+        .node::before {
+            content: attr(data-freq);
+            position: absolute;
+            top: -20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .node::after {
+            content: attr(data-code);
+            position: absolute;
+            bottom: -20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 20px 0;
+        }
+        .connection {
+            position: absolute;
+            background-color: #94a3b8;
+            height: 2px;
+            transform-origin: left center;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .huffman-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .frequency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .frequency-table th, .frequency-table td {
+            border: 1px solid #2d3748;
+            padding: 8px;
+            text-align: center;
+        }
+        .frequency-table th {
+            background-color: #1f2937;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Huffman Coding</h1>
+        <p class="text-gray-300 mb-8">Visualize how to build a Huffman tree and generate optimal prefix codes for characters based on their frequencies.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">String</label>
+                            <input type="text" id="stringInput" value="aabbbccccdddddeeeee" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter string">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Tree Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Huffman Tree</h3>
+                    <div id="tree" class="tree"></div>
+                </div>
+
+                <!-- Frequency Table -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Character Frequencies</h3>
+                    <table id="frequencyTable" class="frequency-table"></table>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Average Code Length: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function buildHuffmanTree(frequencies):</span>
+<span class="code-line" data-line="2">    nodes = [Node(char, freq) for char, freq in frequencies]</span>
+<span class="code-line" data-line="3">    heap = MinHeap(nodes)</span>
+<span class="code-line" data-line="4">    while len(heap) > 1:</span>
+<span class="code-line" data-line="5">        left = heap.pop()</span>
+<span class="code-line" data-line="6">        right = heap.pop()</span>
+<span class="code-line" data-line="7">        internal = Node(None, left.freq + right.freq)</span>
+<span class="code-line" data-line="8">        internal.left = left</span>
+<span class="code-line" data-line="9">        internal.right = right</span>
+<span class="code-line" data-line="10">        heap.push(internal)</span>
+<span class="code-line" data-line="11">    return heap.pop()</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n log n) where n is the number of unique characters</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for storing the tree and codes</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Count character frequencies
+                                <br>2. Create leaf nodes for each character
+                                <br>3. Build tree by repeatedly:
+                                <br>&nbsp;&nbsp;&nbsp;- Take two lowest frequency nodes
+                                <br>&nbsp;&nbsp;&nbsp;- Create internal node with sum
+                                <br>&nbsp;&nbsp;&nbsp;- Add back to heap
+                                <br>4. Generate codes by traversing tree
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Node {
+            constructor(char, freq) {
+                this.char = char;
+                this.freq = freq;
+                this.left = null;
+                this.right = null;
+                this.code = '';
+            }
+        }
+
+        let frequencies = {};
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let huffmanTree = null;
+
+        function applyInputs() {
+            const stringInput = document.getElementById('stringInput').value;
+            try {
+                if (!stringInput) {
+                    throw new Error('Empty string');
+                }
+                frequencies = {};
+                for (const char of stringInput) {
+                    frequencies[char] = (frequencies[char] || 0) + 1;
+                }
+                createFrequencyTable();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter a valid string');
+            }
+        }
+
+        function createFrequencyTable() {
+            const table = document.getElementById('frequencyTable');
+            table.innerHTML = `
+                <tr>
+                    <th>Character</th>
+                    <th>Frequency</th>
+                    <th>Code</th>
+                </tr>
+            `;
+            for (const [char, freq] of Object.entries(frequencies)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${char}</td>
+                    <td>${freq}</td>
+                    <td id="code-${char}"></td>
+                `;
+                table.appendChild(row);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const nodes = Object.entries(frequencies).map(([char, freq]) => new Node(char, freq));
+            
+            steps.push({
+                type: 'init',
+                nodes: nodes.map(node => ({...node})),
+                description: 'Creating leaf nodes for each character',
+                codeLine: 2
+            });
+
+            const heap = [...nodes].sort((a, b) => a.freq - b.freq);
+            
+            steps.push({
+                type: 'heap',
+                heap: heap.map(node => ({...node})),
+                description: 'Building initial min-heap',
+                codeLine: 3
+            });
+
+            while (heap.length > 1) {
+                const left = heap.shift();
+                const right = heap.shift();
+                
+                steps.push({
+                    type: 'pop',
+                    left: {...left},
+                    right: {...right},
+                    description: `Popping two lowest frequency nodes: '${left.char || 'internal'}'(${left.freq}) and '${right.char || 'internal'}'(${right.freq})`,
+                    codeLine: 5
+                });
+
+                const internal = new Node(null, left.freq + right.freq);
+                internal.left = left;
+                internal.right = right;
+                
+                steps.push({
+                    type: 'merge',
+                    internal: {...internal},
+                    description: `Creating internal node with frequency ${internal.freq}`,
+                    codeLine: 7
+                });
+
+                heap.push(internal);
+                heap.sort((a, b) => a.freq - b.freq);
+                
+                steps.push({
+                    type: 'push',
+                    heap: heap.map(node => ({...node})),
+                    description: 'Adding internal node back to heap',
+                    codeLine: 10
+                });
+            }
+
+            huffmanTree = heap[0];
+            generateCodes(huffmanTree, '');
+            
+            steps.push({
+                type: 'complete',
+                tree: huffmanTree,
+                description: 'Huffman tree complete',
+                codeLine: 11
+            });
+        }
+
+        function generateCodes(node, code) {
+            if (!node) return;
+            node.code = code;
+            if (node.char) {
+                document.getElementById(`code-${node.char}`).textContent = code;
+            }
+            generateCodes(node.left, code + '0');
+            generateCodes(node.right, code + '1');
+        }
+
+        function createTree() {
+            const tree = document.getElementById('tree');
+            tree.innerHTML = '';
+            
+            if (!huffmanTree) return;
+            
+            const levels = [];
+            const queue = [{node: huffmanTree, level: 0}];
+            
+            while (queue.length) {
+                const {node, level} = queue.shift();
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(node);
+                
+                if (node.left) queue.push({node: node.left, level: level + 1});
+                if (node.right) queue.push({node: node.right, level: level + 1});
+            }
+            
+            levels.forEach((levelNodes, levelIndex) => {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'tree-level';
+                
+                levelNodes.forEach(node => {
+                    const nodeDiv = document.createElement('div');
+                    nodeDiv.className = 'node';
+                    if (node.char) {
+                        nodeDiv.classList.add('leaf');
+                        nodeDiv.textContent = node.char;
+                    } else {
+                        nodeDiv.classList.add('internal');
+                        nodeDiv.textContent = node.freq;
+                    }
+                    nodeDiv.dataset.freq = node.freq;
+                    nodeDiv.dataset.code = node.code;
+                    levelDiv.appendChild(nodeDiv);
+                });
+                
+                tree.appendChild(levelDiv);
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Average Code Length: 0';
+            highlightCodeLine(1);
+            createFrequencyTable();
+            createTree();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            if (step.type === 'init' || step.type === 'heap' || step.type === 'push') {
+                huffmanTree = step.heap[0];
+                createTree();
+            } else if (step.type === 'pop' || step.type === 'merge') {
+                // Highlight nodes being processed
+                const nodes = document.querySelectorAll('.node');
+                nodes.forEach(node => {
+                    node.classList.remove('current');
+                    if (node.textContent === step.left.char || node.textContent === step.left.freq.toString()) {
+                        node.classList.add('current');
+                    }
+                    if (node.textContent === step.right.char || node.textContent === step.right.freq.toString()) {
+                        node.classList.add('current');
+                    }
+                });
+            }
+
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

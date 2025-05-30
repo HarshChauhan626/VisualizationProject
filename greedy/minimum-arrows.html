@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Number of Arrows to Burst Balloons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .balloon {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 4px 0;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+            position: relative;
+        }
+        .balloon.selected {
+            background-color: #eab308;
+        }
+        .balloon.popped {
+            background-color: #22c55e;
+        }
+        .balloon.current {
+            background-color: #ef4444;
+        }
+        .balloon-label {
+            position: absolute;
+            left: -30px;
+            width: 20px;
+            text-align: right;
+        }
+        .arrow {
+            position: absolute;
+            width: 2px;
+            background-color: #f43f5e;
+            z-index: 10;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -4px;
+            border-style: solid;
+            border-width: 0 5px 10px 5px;
+            border-color: transparent transparent #f43f5e transparent;
+            transform: rotate(90deg);
+        }
+        .balloon-container {
+            position: relative;
+            margin-left: 40px;
+            margin-right: 20px;
+        }
+        .timeline {
+            height: 2px;
+            background-color: #94a3b8;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+        }
+        .tick {
+            position: absolute;
+            width: 1px;
+            height: 10px;
+            background-color: #94a3b8;
+            top: 0;
+        }
+        .tick-label {
+            position: absolute;
+            font-size: 10px;
+            color: #94a3b8;
+            top: 12px;
+            transform: translateX(-50%);
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Minimum Number of Arrows to Burst Balloons</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum number of arrows needed to burst all balloons.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Balloons (start,end)</label>
+                            <input type="text" id="balloonInput" value="10,16|2,8|1,6|7,12|14,18" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter balloons as start,end|start,end|...">
+                            <div class="text-xs text-gray-400 mt-1">Format: x1,y1|x2,y2|... (e.g., 10,16|2,8|1,6|7,12|14,18)</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Balloons Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Balloons</h3>
+                    <div id="balloonTimeline" class="mb-2 relative h-10">
+                        <div class="timeline"></div>
+                    </div>
+                    <div id="balloons" class="balloon-container relative"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Minimum Arrows: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function findMinArrowShots(points):</span>
+<span class="code-line" data-line="2">    if points.length == 0:</span>
+<span class="code-line" data-line="3">        return 0</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    # Sort balloons by end position</span>
+<span class="code-line" data-line="6">    points.sort(key = lambda x: x[1])</span>
+<span class="code-line" data-line="7">    </span>
+<span class="code-line" data-line="8">    arrows = 1</span>
+<span class="code-line" data-line="9">    end = points[0][1]</span>
+<span class="code-line" data-line="10">    </span>
+<span class="code-line" data-line="11">    for i in range(1, points.length):</span>
+<span class="code-line" data-line="12">        # If current balloon starts after arrow position</span>
+<span class="code-line" data-line="13">        if points[i][0] > end:</span>
+<span class="code-line" data-line="14">            # Need another arrow</span>
+<span class="code-line" data-line="15">            arrows += 1</span>
+<span class="code-line" data-line="16">            # Update arrow position</span>
+<span class="code-line" data-line="17">            end = points[i][1]</span>
+<span class="code-line" data-line="18">    </span>
+<span class="code-line" data-line="19">    return arrows</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n log n) where n is the number of balloons, due to sorting</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) extra space (not counting input)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Sorting balloons by their end positions
+                                <br>2. Placing an arrow at the end position of the first balloon
+                                <br>3. For each subsequent balloon:
+                                <br>&nbsp;&nbsp;&nbsp;- If it starts after the current arrow, add a new arrow
+                                <br>&nbsp;&nbsp;&nbsp;- Otherwise, it's burst by the existing arrow
+                                <br>4. Return the total number of arrows
+                                <br><br>This is optimal because placing arrows at end positions maximizes the number of balloons each arrow can burst.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let balloons = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let maxX = 0;
+        let minX = Infinity;
+
+        function applyInputs() {
+            const balloonInput = document.getElementById('balloonInput').value;
+            try {
+                if (!balloonInput) {
+                    throw new Error('Empty input');
+                }
+                
+                const pairs = balloonInput.split('|');
+                balloons = pairs.map((pair, index) => {
+                    const [start, end] = pair.split(',').map(Number);
+                    if (isNaN(start) || isNaN(end) || start > end) {
+                        throw new Error(`Invalid balloon coordinates: ${pair}`);
+                    }
+                    minX = Math.min(minX, start);
+                    maxX = Math.max(maxX, end);
+                    return { start, end, id: index };
+                });
+                
+                createBalloonsVisualization();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid balloon coordinates: ' + error.message);
+            }
+        }
+
+        function createBalloonsVisualization() {
+            const balloonsDiv = document.getElementById('balloons');
+            balloonsDiv.innerHTML = '';
+            
+            const timelineDiv = document.getElementById('balloonTimeline');
+            timelineDiv.innerHTML = '<div class="timeline"></div>';
+            
+            // Create timeline ticks
+            const range = maxX - minX;
+            const step = Math.max(1, Math.ceil(range / 10));
+            
+            for (let i = minX; i <= maxX; i += step) {
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = `${((i - minX) / range) * 100}%`;
+                
+                const tickLabel = document.createElement('div');
+                tickLabel.className = 'tick-label';
+                tickLabel.textContent = i;
+                tickLabel.style.left = `${((i - minX) / range) * 100}%`;
+                
+                timelineDiv.appendChild(tick);
+                timelineDiv.appendChild(tickLabel);
+            }
+            
+            // Create balloon elements
+            balloons.forEach((balloon, index) => {
+                const balloonDiv = document.createElement('div');
+                balloonDiv.className = 'balloon';
+                balloonDiv.id = `balloon-${index}`;
+                
+                const startPercent = ((balloon.start - minX) / range) * 100;
+                const endPercent = ((balloon.end - minX) / range) * 100;
+                
+                balloonDiv.style.marginLeft = `${startPercent}%`;
+                balloonDiv.style.width = `${endPercent - startPercent}%`;
+                balloonDiv.textContent = `${balloon.start} - ${balloon.end}`;
+                
+                const label = document.createElement('div');
+                label.className = 'balloon-label';
+                label.textContent = `B${index}`;
+                
+                balloonDiv.appendChild(label);
+                balloonsDiv.appendChild(balloonDiv);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            steps.push({
+                type: 'init',
+                description: 'Initialize the algorithm with the given balloon positions',
+                codeLine: 1
+            });
+            
+            // Sort balloons by end position
+            const sortedBalloons = [...balloons].sort((a, b) => a.end - b.end);
+            
+            steps.push({
+                type: 'sort',
+                sortedBalloons: [...sortedBalloons],
+                description: 'Sort balloons by their end positions',
+                codeLine: 6
+            });
+            
+            if (sortedBalloons.length === 0) {
+                steps.push({
+                    type: 'empty',
+                    description: 'No balloons to burst, return 0 arrows',
+                    codeLine: 3,
+                    arrows: 0
+                });
+                return;
+            }
+            
+            let arrows = 1;
+            let end = sortedBalloons[0].end;
+            let poppedBalloons = [sortedBalloons[0].id];
+            
+            steps.push({
+                type: 'first_arrow',
+                arrowPos: end,
+                balloonId: sortedBalloons[0].id,
+                arrows: arrows,
+                poppedBalloons: [...poppedBalloons],
+                description: `Place first arrow at position ${end}, popping balloon B${sortedBalloons[0].id}`,
+                codeLine: 9
+            });
+            
+            for (let i = 1; i < sortedBalloons.length; i++) {
+                const currentBalloon = sortedBalloons[i];
+                
+                steps.push({
+                    type: 'check',
+                    currentBalloon: currentBalloon.id,
+                    arrowPos: end,
+                    description: `Checking balloon B${currentBalloon.id} (${currentBalloon.start}-${currentBalloon.end}) against arrow at position ${end}`,
+                    codeLine: 13
+                });
+                
+                if (currentBalloon.start > end) {
+                    // Need a new arrow
+                    arrows++;
+                    end = currentBalloon.end;
+                    poppedBalloons.push(currentBalloon.id);
+                    
+                    steps.push({
+                        type: 'new_arrow',
+                        arrowPos: end,
+                        balloonId: currentBalloon.id,
+                        arrows: arrows,
+                        poppedBalloons: [...poppedBalloons],
+                        description: `Need a new arrow at position ${end}, popping balloon B${currentBalloon.id}`,
+                        codeLine: 15
+                    });
+                } else {
+                    // Current arrow pops this balloon too
+                    poppedBalloons.push(currentBalloon.id);
+                    
+                    steps.push({
+                        type: 'use_existing',
+                        arrowPos: end,
+                        balloonId: currentBalloon.id,
+                        arrows: arrows,
+                        poppedBalloons: [...poppedBalloons],
+                        description: `Existing arrow at position ${end} pops balloon B${currentBalloon.id}`,
+                        codeLine: 13
+                    });
+                }
+            }
+            
+            steps.push({
+                type: 'result',
+                arrows: arrows,
+                poppedBalloons: poppedBalloons,
+                description: `Final result: ${arrows} arrows needed`,
+                codeLine: 19
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all balloons
+            const balloonElements = document.querySelectorAll('.balloon');
+            balloonElements.forEach(b => {
+                b.className = 'balloon';
+            });
+            
+            // Remove existing arrows
+            document.querySelectorAll('.arrow').forEach(a => a.remove());
+            
+            if (step.type === 'sort') {
+                // Highlight sorted balloons
+                step.sortedBalloons.forEach((balloon, index) => {
+                    const balloonElement = document.getElementById(`balloon-${balloon.id}`);
+                    if (balloonElement) {
+                        balloonElement.classList.add('selected');
+                    }
+                });
+            } else if (['first_arrow', 'new_arrow', 'use_existing'].includes(step.type)) {
+                // Draw arrow
+                const arrowDiv = document.createElement('div');
+                arrowDiv.className = 'arrow';
+                
+                const range = maxX - minX;
+                const arrowPercent = ((step.arrowPos - minX) / range) * 100;
+                
+                arrowDiv.style.left = `${arrowPercent}%`;
+                arrowDiv.style.height = `${(balloons.length * 48)}px`;
+                
+                document.getElementById('balloons').appendChild(arrowDiv);
+                
+                // Highlight popped balloons
+                step.poppedBalloons.forEach(id => {
+                    const balloonElement = document.getElementById(`balloon-${id}`);
+                    if (balloonElement) {
+                        balloonElement.classList.add('popped');
+                    }
+                });
+                
+                // Highlight current balloon
+                if (step.balloonId !== undefined) {
+                    const currentBalloon = document.getElementById(`balloon-${step.balloonId}`);
+                    if (currentBalloon) {
+                        currentBalloon.classList.add('current');
+                    }
+                }
+            } else if (step.type === 'check') {
+                // Draw existing arrow
+                const arrowDiv = document.createElement('div');
+                arrowDiv.className = 'arrow';
+                
+                const range = maxX - minX;
+                const arrowPercent = ((step.arrowPos - minX) / range) * 100;
+                
+                arrowDiv.style.left = `${arrowPercent}%`;
+                arrowDiv.style.height = `${(balloons.length * 48)}px`;
+                
+                document.getElementById('balloons').appendChild(arrowDiv);
+                
+                // Highlight current balloon
+                const currentBalloon = document.getElementById(`balloon-${step.currentBalloon}`);
+                if (currentBalloon) {
+                    currentBalloon.classList.add('current');
+                }
+            } else if (step.type === 'result') {
+                // Show all popped balloons
+                step.poppedBalloons.forEach(id => {
+                    const balloonElement = document.getElementById(`balloon-${id}`);
+                    if (balloonElement) {
+                        balloonElement.classList.add('popped');
+                    }
+                });
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.arrows !== undefined) {
+                document.getElementById('result').textContent = `Minimum Arrows: ${step.arrows}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

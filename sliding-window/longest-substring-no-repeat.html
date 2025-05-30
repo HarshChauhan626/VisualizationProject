@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Substring Without Repeating Characters - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .window {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current-window {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .max-window {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .character {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+            border-radius: 4px;
+        }
+        .character.highlighted {
+            background-color: #2563eb;
+            color: white;
+        }
+        .character.included {
+            background-color: #059669;
+            color: white;
+        }
+        .character.duplicate {
+            background-color: #dc2626;
+            color: white;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Longest Substring Without Repeating Characters</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given a string s, find the length of the longest substring without repeating characters.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Input String</label>
+                    <input type="text" id="inputString" placeholder="Enter string" 
+                        class="border p-2 rounded w-full" value="abcabcbb">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">String:</h3>
+                <div id="stringVisualization" class="relative h-32 mb-4 flex items-center justify-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-green-400">Current Window:</h4>
+                        <div id="currentWindowVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-orange-400">Maximum Length:</h4>
+                        <div id="maxLengthVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Character Set:</h3>
+                <div id="charSetVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+function lengthOfLongestSubstring(s):
+    if s.length == 0: return 0
+    
+    charSet = new Set()
+    maxLength = 0
+    left = 0
+    
+    for right = 0 to s.length-1:
+        while charSet.has(s[right]):
+            charSet.delete(s[left])
+            left++
+        
+        charSet.add(s[right])
+        maxLength = max(maxLength, right - left + 1)
+    
+    return maxLength</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">s = "abcabcbb"</p>
+                    <p class="text-green-400">Output: 3</p>
+                    <p class="text-gray-400">Explanation: The longest substring is "abc" with length 3.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">s = "bbbbb"</p>
+                    <p class="text-green-400">Output: 1</p>
+                    <p class="text-gray-400">Explanation: The longest substring is "b" with length 1.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">s = "pwwkew"</p>
+                    <p class="text-green-400">Output: 3</p>
+                    <p class="text-gray-400">Explanation: The longest substring is "wke" with length 3.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let steps = [];
+        let isPlaying = false;
+        let playInterval;
+
+        function generateSteps(s) {
+            const steps = [];
+            const charSet = new Set();
+            let maxLength = 0;
+            let left = 0;
+
+            for (let right = 0; right < s.length; right++) {
+                // Add step before checking for duplicates
+                steps.push({
+                    left,
+                    right,
+                    charSet: new Set(charSet),
+                    maxLength,
+                    currentLength: right - left,
+                    explanation: `Checking character '${s[right]}' at position ${right}`,
+                    duplicate: charSet.has(s[right])
+                });
+
+                while (charSet.has(s[right])) {
+                    charSet.delete(s[left]);
+                    left++;
+                    steps.push({
+                        left,
+                        right,
+                        charSet: new Set(charSet),
+                        maxLength,
+                        currentLength: right - left,
+                        explanation: `Found duplicate '${s[right]}', removing '${s[left-1]}' from window`,
+                        duplicate: true
+                    });
+                }
+
+                charSet.add(s[right]);
+                const currentLength = right - left + 1;
+                const newMax = Math.max(maxLength, currentLength);
+                
+                if (newMax > maxLength) {
+                    maxLength = newMax;
+                    steps.push({
+                        left,
+                        right,
+                        charSet: new Set(charSet),
+                        maxLength,
+                        currentLength,
+                        explanation: `New maximum length found: ${maxLength}`,
+                        newMax: true
+                    });
+                } else {
+                    steps.push({
+                        left,
+                        right,
+                        charSet: new Set(charSet),
+                        maxLength,
+                        currentLength,
+                        explanation: `Added '${s[right]}' to window`,
+                        newChar: true
+                    });
+                }
+            }
+
+            return steps;
+        }
+
+        function updateVisualization(step) {
+            const s = document.getElementById('inputString').value;
+            const stringViz = document.getElementById('stringVisualization');
+            const currentWindowViz = document.getElementById('currentWindowVisualization');
+            const maxLengthViz = document.getElementById('maxLengthVisualization');
+            const charSetViz = document.getElementById('charSetVisualization');
+            const explanation = document.getElementById('explanation');
+
+            // Clear previous visualization
+            stringViz.innerHTML = '';
+
+            // Create character boxes
+            for (let i = 0; i < s.length; i++) {
+                const charBox = document.createElement('div');
+                charBox.className = 'character';
+                charBox.textContent = s[i];
+
+                if (i >= step.left && i <= step.right) {
+                    if (step.duplicate && i === step.right) {
+                        charBox.classList.add('duplicate');
+                    } else {
+                        charBox.classList.add('included');
+                    }
+                }
+                if (i === step.left) {
+                    charBox.style.borderLeftColor = '#34d399';
+                    charBox.style.borderLeftWidth = '4px';
+                }
+                if (i === step.right) {
+                    charBox.style.borderRightColor = '#fb923c';
+                    charBox.style.borderRightWidth = '4px';
+                }
+
+                stringViz.appendChild(charBox);
+            }
+
+            // Update current window
+            currentWindowViz.textContent = `[${step.left}, ${step.right}] Length: ${step.currentLength}`;
+
+            // Update max length
+            maxLengthViz.textContent = step.maxLength;
+
+            // Update character set
+            charSetViz.textContent = `{${Array.from(step.charSet).join(', ')}}`;
+
+            // Update explanation
+            explanation.textContent = step.explanation;
+            if (step.newMax) {
+                explanation.classList.add('text-green-400');
+            } else if (step.duplicate) {
+                explanation.classList.add('text-red-400');
+            } else {
+                explanation.classList.remove('text-green-400', 'text-red-400');
+            }
+        }
+
+        function initializeVisualization() {
+            const s = document.getElementById('inputString').value;
+            steps = generateSteps(s);
+            currentStep = 0;
+            updateVisualization(steps[0]);
+            stopPlay();
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization(steps[currentStep]);
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization(steps[currentStep]);
+            } else {
+                stopPlay();
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stopPlay();
+            } else {
+                startPlay();
+            }
+        }
+
+        function startPlay() {
+            isPlaying = true;
+            document.getElementById('playBtn').textContent = 'Pause';
+            document.getElementById('playBtn').classList.remove('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('playBtn').classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            playInterval = setInterval(() => {
+                if (currentStep < steps.length - 1) {
+                    next();
+                } else {
+                    stopPlay();
+                }
+            }, 1000);
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            document.getElementById('playBtn').textContent = 'Play';
+            document.getElementById('playBtn').classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+            document.getElementById('playBtn').classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+
+        // Initialize visualization on page load
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

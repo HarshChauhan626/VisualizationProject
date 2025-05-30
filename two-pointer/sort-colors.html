@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sort Colors Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-elem {
+            width: 50px;
+            height: 50px;
+            margin: 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .color-0 {
+            background-color: #ef4444;
+        }
+        .color-1 {
+            background-color: #ffffff;
+        }
+        .color-2 {
+            background-color: #3b82f6;
+        }
+        .pointer-low {
+            border: 2px solid #4ade80;
+        }
+        .pointer-mid {
+            border: 2px solid #f59e0b;
+        }
+        .pointer-high {
+            border: 2px solid #f87171;
+        }
+        .swapped {
+            opacity: 0.7;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Sort Colors Visualization (Dutch National Flag)</h1>
+        <p class="text-gray-300 mb-8">Visualize how to sort an array with three colors (red, white, blue) represented as 0, 1, and 2 using the Dutch National Flag algorithm.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Array (comma-separated numbers 0, 1, or 2)</label>
+                        <input type="text" id="inputArray" value="2,0,2,1,1,0" 
+                            class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array Visualization</h3>
+                    <div id="arrayVisualization" class="flex flex-wrap justify-center">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Pointers</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Low Pointer (Green):</p>
+                            <div id="lowPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Mid Pointer (Yellow):</p>
+                            <div id="midPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">High Pointer (Red):</p>
+                            <div id="highPointerInfo" class="text-lg font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Color Legend -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Color Legend</h3>
+                    <div class="flex space-x-4">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-red-500 mr-2"></div>
+                            <span>Red (0)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-white mr-2"></div>
+                            <span>White (1)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-blue-500 mr-2"></div>
+                            <span>Blue (2)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm leading-relaxed">
+<span class="code-line" data-line="1">function sortColors(nums):</span>
+<span class="code-line" data-line="2">    low = 0      // boundary for 0s (red)</span>
+<span class="code-line" data-line="3">    mid = 0      // current element</span>
+<span class="code-line" data-line="4">    high = nums.length - 1  // boundary for 2s (blue)</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    while mid <= high:</span>
+<span class="code-line" data-line="7">        if nums[mid] == 0:</span>
+<span class="code-line" data-line="8">            swap(nums[low], nums[mid])</span>
+<span class="code-line" data-line="9">            low++</span>
+<span class="code-line" data-line="10">            mid++</span>
+<span class="code-line" data-line="11">        else if nums[mid] == 1:</span>
+<span class="code-line" data-line="12">            mid++</span>
+<span class="code-line" data-line="13">        else:  // nums[mid] == 2</span>
+<span class="code-line" data-line="14">            swap(nums[mid], nums[high])</span>
+<span class="code-line" data-line="15">            high--</span>
+<span class="code-line" data-line="16">    </span>
+<span class="code-line" data-line="17">    return nums</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) - constant extra space (in-place operation)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The Dutch National Flag algorithm is a one-pass solution that uses three pointers:
+                                <br><br>1. <strong>Low Pointer</strong>: Keeps track of the boundary for 0s (red elements)
+                                <br>2. <strong>Mid Pointer</strong>: Scans through the array
+                                <br>3. <strong>High Pointer</strong>: Keeps track of the boundary for 2s (blue elements)
+                                <br><br>As we process the array:
+                                <br>- If the current element is 0, we swap it with the element at the low pointer and increment both low and mid pointers
+                                <br>- If the current element is 1, we simply increment the mid pointer
+                                <br>- If the current element is 2, we swap it with the element at the high pointer and decrement the high pointer
+                                <br><br>This approach ensures that all 0s are moved to the left, all 2s to the right, and all 1s remain in the middle.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">nums = [2,0,2,1,1,0]</p>
+                            <p class="text-gray-300">Output: [0,0,1,1,2,2]</p>
+                            <p class="text-gray-300">Explanation: Red (0) elements come first, followed by white (1) elements, and finally blue (2) elements.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">nums = [2,0,1]</p>
+                            <p class="text-gray-300">Output: [0,1,2]</p>
+                            <p class="text-gray-300">Explanation: The Dutch National Flag algorithm efficiently sorts the three colors in a single pass.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 3:</h3>
+                            <p class="text-gray-300">nums = [0]</p>
+                            <p class="text-gray-300">Output: [0]</p>
+                            <p class="text-gray-300">Explanation: The array has only one element, so it's already sorted.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initializeVisualization() {
+            // Get input values
+            nums = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            
+            // Reset visualization state
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Enable buttons
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Reset current step
+            currentStepIndex = -1;
+            
+            // Update visualization
+            nextStep();
+        }
+
+        function createArrayVisualization() {
+            const arrayArea = document.getElementById('arrayVisualization');
+            arrayArea.innerHTML = '';
+            
+            for (let i = 0; i < nums.length; i++) {
+                const elem = document.createElement('div');
+                elem.className = `array-elem color-${nums[i]}`;
+                elem.textContent = nums[i];
+                elem.id = `elem-${i}`;
+                
+                arrayArea.appendChild(elem);
+            }
+        }
+
+        function resetVisualization() {
+            // Clear visualization
+            document.getElementById('arrayVisualization').innerHTML = '';
+            document.getElementById('lowPointerInfo').innerHTML = '';
+            document.getElementById('midPointerInfo').innerHTML = '';
+            document.getElementById('highPointerInfo').innerHTML = '';
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            
+            // Stop playing if active
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Reset state
+            currentStepIndex = -1;
+            steps = [];
+            
+            // Disable buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function generateSteps() {
+            steps = [];
+            let low = 0;
+            let mid = 0;
+            let high = nums.length - 1;
+            let array = [...nums];
+            
+            // Initialize
+            steps.push({
+                array: [...array],
+                low,
+                mid,
+                high,
+                activeLines: [1, 2, 3, 4],
+                explanation: "Initialize pointers: low and mid at start, high at end"
+            });
+
+            // Main algorithm
+            while (mid <= high) {
+                steps.push({
+                    array: [...array],
+                    low,
+                    mid,
+                    high,
+                    activeLines: [6, 7],
+                    explanation: `Examining element ${array[mid]} at mid pointer (index ${mid})`
+                });
+
+                if (array[mid] === 0) {
+                    steps.push({
+                        array: [...array],
+                        low,
+                        mid,
+                        high,
+                        activeLines: [7],
+                        explanation: `Current element is 0 (red), need to move it to the left section`
+                    });
+                    
+                    if (low !== mid) {
+                        steps.push({
+                            array: [...array],
+                            low,
+                            mid,
+                            high,
+                            swapping: [low, mid],
+                            activeLines: [8],
+                            explanation: `Swapping elements at indices ${low} (${array[low]}) and ${mid} (${array[mid]})`
+                        });
+
+                        [array[low], array[mid]] = [array[mid], array[low]];
+                    } else {
+                        steps.push({
+                            array: [...array],
+                            low,
+                            mid,
+                            high,
+                            activeLines: [8],
+                            explanation: `No swap needed since low and mid pointers are at the same position (${low})`
+                        });
+                    }
+                    
+                    steps.push({
+                        array: [...array],
+                        low,
+                        mid,
+                        high,
+                        activeLines: [9, 10],
+                        explanation: `Incrementing low pointer to ${low + 1} and mid pointer to ${mid + 1}`
+                    });
+                    
+                    low++;
+                    mid++;
+                } else if (array[mid] === 1) {
+                    steps.push({
+                        array: [...array],
+                        low,
+                        mid,
+                        high,
+                        activeLines: [11, 12],
+                        explanation: `Current element is 1 (white), leave it in the middle section and move mid pointer`
+                    });
+                    mid++;
+                } else {  // array[mid] === 2
+                    steps.push({
+                        array: [...array],
+                        low,
+                        mid,
+                        high,
+                        activeLines: [13, 14],
+                        explanation: `Current element is 2 (blue), need to move it to the right section`
+                    });
+
+                    steps.push({
+                        array: [...array],
+                        low,
+                        mid,
+                        high,
+                        swapping: [mid, high],
+                        activeLines: [14],
+                        explanation: `Swapping elements at indices ${mid} (${array[mid]}) and ${high} (${array[high]})`
+                    });
+
+                    [array[mid], array[high]] = [array[high], array[mid]];
+                    
+                    steps.push({
+                        array: [...array],
+                        low,
+                        mid,
+                        high,
+                        activeLines: [15],
+                        explanation: `Decrementing high pointer to ${high - 1}`
+                    });
+                    
+                    high--;
+                }
+            }
+            
+            // Final result
+            steps.push({
+                array: [...array],
+                low,
+                mid,
+                high,
+                completed: true,
+                activeLines: [17],
+                explanation: `Algorithm completed. Array is sorted with red (0), white (1), and blue (2) elements in order.`
+            });
+        }
+
+        function updateVisualization() {
+            if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+            
+            const step = steps[currentStepIndex];
+            
+            // Update current step display
+            document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+            
+            // Create array visualization if not created yet
+            if (document.getElementById('arrayVisualization').children.length === 0) {
+                createArrayVisualization();
+            }
+            
+            // Update array elements based on current step's array
+            if (step.array) {
+                for (let i = 0; i < step.array.length; i++) {
+                    const elem = document.getElementById(`elem-${i}`);
+                    if (elem) {
+                        // Reset classes
+                        elem.className = `array-elem color-${step.array[i]}`;
+                        
+                        // Update content
+                        elem.textContent = step.array[i];
+                    }
+                }
+            }
+            
+            // Reset all pointers
+            document.querySelectorAll('.array-elem').forEach(elem => {
+                elem.classList.remove('pointer-low', 'pointer-mid', 'pointer-high', 'swapped');
+            });
+            
+            // Update pointers
+            if (step.low !== undefined && step.low < nums.length) {
+                const lowElem = document.getElementById(`elem-${step.low}`);
+                if (lowElem) lowElem.classList.add('pointer-low');
+            }
+            
+            if (step.mid !== undefined && step.mid < nums.length) {
+                const midElem = document.getElementById(`elem-${step.mid}`);
+                if (midElem) midElem.classList.add('pointer-mid');
+            }
+            
+            if (step.high !== undefined && step.high >= 0) {
+                const highElem = document.getElementById(`elem-${step.high}`);
+                if (highElem) highElem.classList.add('pointer-high');
+            }
+            
+            // Highlight swapped elements
+            if (step.swapping) {
+                for (const idx of step.swapping) {
+                    const elem = document.getElementById(`elem-${idx}`);
+                    if (elem) elem.classList.add('swapped');
+                }
+            }
+            
+            // Update pointers info
+            updatePointersInfo(step);
+            
+            // Highlight active code lines
+            if (step.activeLines) {
+                document.querySelectorAll('.code-line').forEach(line => {
+                    line.classList.remove('active');
+                });
+                
+                step.activeLines.forEach(lineNum => {
+                    document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+                });
+            }
+        }
+        
+        function updatePointersInfo(step) {
+            if (step.low !== undefined) {
+                document.getElementById('lowPointerInfo').textContent = 
+                    `Index ${step.low}${step.array ? ': ' + step.array[step.low] : ''}`;
+            } else {
+                document.getElementById('lowPointerInfo').textContent = 'Not initialized';
+            }
+            
+            if (step.mid !== undefined) {
+                document.getElementById('midPointerInfo').textContent = 
+                    `Index ${step.mid}${step.array && step.mid < step.array.length ? ': ' + step.array[step.mid] : ''}`;
+            } else {
+                document.getElementById('midPointerInfo').textContent = 'Not initialized';
+            }
+            
+            if (step.high !== undefined) {
+                document.getElementById('highPointerInfo').textContent = 
+                    `Index ${step.high}${step.array && step.high >= 0 ? ': ' + step.array[step.high] : ''}`;
+            } else {
+                document.getElementById('highPointerInfo').textContent = 'Not initialized';
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+            document.getElementById('playBtn').className = isPlaying 
+                ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+                : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+            
+            if (isPlaying) {
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(document.getElementById('speedSlider').value));
+            } else {
+                clearInterval(animationInterval);
+            }
+        }
+
+        // Update speed value display when slider changes
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = `${this.value}ms`;
+            
+            // Update interval if playing
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(this.value));
+            }
+        });
+    </script>
+</body>
+</html> 

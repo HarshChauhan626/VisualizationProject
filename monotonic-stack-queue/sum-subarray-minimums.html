@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sum of Subarray Minimums</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+            position: relative;
+        }
+        .array-element.current {
+            background-color: #eab308;
+        }
+        .array-element.subarray {
+            background-color: #8b5cf6;
+        }
+        .array-element.minimum {
+            background-color: #22c55e;
+        }
+        .array-element::after {
+            content: attr(data-index);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .stack-item {
+            width: 100px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .subarray-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Sum of Subarray Minimums</h1>
+        <p class="text-gray-300 mb-8">Visualize how to calculate the sum of minimums for all possible subarrays using a monotonic stack approach.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input Array</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="arrayInput" value="3,1,2,4" 
+                                    class="flex-1 px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400"
+                                    placeholder="Enter comma-separated numbers">
+                                <button onclick="applyCustomArray()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">Example: 3,1,2,4</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="generateNewArray()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            New Array
+                        </button>
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array</h3>
+                    <div id="arrayContainer" class="flex flex-wrap justify-center gap-2"></div>
+                </div>
+
+                <!-- Stack Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Monotonic Stack</h3>
+                    <div class="flex flex-col items-center">
+                        <div id="stackContainer" class="flex flex-col-reverse items-center border-2 border-gray-600 p-2 min-h-[200px] w-[200px]"></div>
+                        <div class="mt-2 text-gray-400">Stack Bottom</div>
+                    </div>
+                </div>
+
+                <!-- Subarray Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Subarray</h3>
+                    <div id="subarrayInfo" class="subarray-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Sum: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function sumSubarrayMins(arr):</span>
+<span class="code-line" data-line="2">    n = arr.length</span>
+<span class="code-line" data-line="3">    left = new Array(n)  // previous smaller</span>
+<span class="code-line" data-line="4">    right = new Array(n) // next smaller</span>
+<span class="code-line" data-line="5">    stack = []</span>
+<span class="code-line" data-line="6">    // Find previous smaller element</span>
+<span class="code-line" data-line="7">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="8">        while stack and arr[stack.top] > arr[i]:</span>
+<span class="code-line" data-line="9">            stack.pop()</span>
+<span class="code-line" data-line="10">        left[i] = stack.empty ? -1 : stack.top</span>
+<span class="code-line" data-line="11">        stack.push(i)</span>
+<span class="code-line" data-line="12">    // Find next smaller element</span>
+<span class="code-line" data-line="13">    stack = []</span>
+<span class="code-line" data-line="14">    for i = n-1 to 0:</span>
+<span class="code-line" data-line="15">        while stack and arr[stack.top] >= arr[i]:</span>
+<span class="code-line" data-line="16">            stack.pop()</span>
+<span class="code-line" data-line="17">        right[i] = stack.empty ? n : stack.top</span>
+<span class="code-line" data-line="18">        stack.push(i)</span>
+<span class="code-line" data-line="19">    // Calculate sum</span>
+<span class="code-line" data-line="20">    sum = 0</span>
+<span class="code-line" data-line="21">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="22">        sum += arr[i] * (i - left[i]) * (right[i] - i)</span>
+<span class="code-line" data-line="23">    return sum</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the stack and arrays</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Finding previous smaller element for each number
+                                <br>2. Finding next smaller element for each number
+                                <br>3. For each element i:
+                                <br>&nbsp;&nbsp;&nbsp;- Calculate number of subarrays where i is minimum
+                                <br>&nbsp;&nbsp;&nbsp;- Multiply by the element value
+                                <br>4. Sum all contributions
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function generateNewArray() {
+            const size = Math.floor(Math.random() * 3) + 4; // 4-6 elements
+            array = Array(size).fill().map(() => Math.floor(Math.random() * 9) + 1);
+            document.getElementById('arrayInput').value = array.join(',');
+            createArrayElements();
+            resetVisualization();
+        }
+
+        function applyCustomArray() {
+            const input = document.getElementById('arrayInput').value;
+            const numbers = input.split(',').map(n => parseInt(n.trim()));
+            
+            if (numbers.length < 2) {
+                alert('Please enter at least 2 numbers');
+                return;
+            }
+            
+            if (numbers.some(n => isNaN(n))) {
+                alert('Please enter valid numbers');
+                return;
+            }
+            
+            array = numbers;
+            createArrayElements();
+            resetVisualization();
+        }
+
+        function createArrayElements() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            array.forEach((num, idx) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                element.id = `element-${idx}`;
+                element.textContent = num;
+                element.setAttribute('data-index', idx);
+                container.appendChild(element);
+            });
+        }
+
+        function updateStack(stack) {
+            const container = document.getElementById('stackContainer');
+            container.innerHTML = '';
+            
+            stack.forEach(idx => {
+                const item = document.createElement('div');
+                item.className = 'stack-item';
+                item.textContent = `[${idx}] = ${array[idx]}`;
+                container.appendChild(item);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = array.length;
+            const left = new Array(n);
+            const right = new Array(n);
+            let stack = [];
+            let sum = 0;
+
+            // Initial state
+            steps.push({
+                type: 'init',
+                stack: [],
+                left: new Array(n),
+                right: new Array(n),
+                current: -1,
+                sum: 0,
+                description: 'Starting the algorithm',
+                codeLine: 1
+            });
+
+            // Find previous smaller element
+            for (let i = 0; i < n; i++) {
+                while (stack.length > 0 && array[stack[stack.length - 1]] > array[i]) {
+                    steps.push({
+                        type: 'pop_left',
+                        stack: [...stack],
+                        left: [...left],
+                        right: [...right],
+                        current: i,
+                        popping: stack[stack.length - 1],
+                        sum: sum,
+                        description: `Popping ${array[stack[stack.length - 1]]} from stack as it's greater than ${array[i]}`,
+                        codeLine: 9
+                    });
+                    stack.pop();
+                }
+                
+                left[i] = stack.length === 0 ? -1 : stack[stack.length - 1];
+                
+                steps.push({
+                    type: 'left',
+                    stack: [...stack],
+                    left: [...left],
+                    right: [...right],
+                    current: i,
+                    sum: sum,
+                    description: `Previous smaller element for ${array[i]} is at index ${left[i]}`,
+                    codeLine: 10
+                });
+                
+                stack.push(i);
+                
+                steps.push({
+                    type: 'push_left',
+                    stack: [...stack],
+                    left: [...left],
+                    right: [...right],
+                    current: i,
+                    sum: sum,
+                    description: `Pushing index ${i} to stack`,
+                    codeLine: 11
+                });
+            }
+
+            // Reset stack for next smaller element
+            stack = [];
+            steps.push({
+                type: 'reset',
+                stack: [],
+                left: [...left],
+                right: [...right],
+                current: -1,
+                sum: sum,
+                description: 'Resetting stack for finding next smaller elements',
+                codeLine: 13
+            });
+
+            // Find next smaller element
+            for (let i = n - 1; i >= 0; i--) {
+                while (stack.length > 0 && array[stack[stack.length - 1]] >= array[i]) {
+                    steps.push({
+                        type: 'pop_right',
+                        stack: [...stack],
+                        left: [...left],
+                        right: [...right],
+                        current: i,
+                        popping: stack[stack.length - 1],
+                        sum: sum,
+                        description: `Popping ${array[stack[stack.length - 1]]} from stack as it's greater than or equal to ${array[i]}`,
+                        codeLine: 16
+                    });
+                    stack.pop();
+                }
+                
+                right[i] = stack.length === 0 ? n : stack[stack.length - 1];
+                
+                steps.push({
+                    type: 'right',
+                    stack: [...stack],
+                    left: [...left],
+                    right: [...right],
+                    current: i,
+                    sum: sum,
+                    description: `Next smaller element for ${array[i]} is at index ${right[i]}`,
+                    codeLine: 17
+                });
+                
+                stack.push(i);
+                
+                steps.push({
+                    type: 'push_right',
+                    stack: [...stack],
+                    left: [...left],
+                    right: [...right],
+                    current: i,
+                    sum: sum,
+                    description: `Pushing index ${i} to stack`,
+                    codeLine: 18
+                });
+            }
+
+            // Calculate sum
+            steps.push({
+                type: 'sum_init',
+                stack: [],
+                left: [...left],
+                right: [...right],
+                current: -1,
+                sum: 0,
+                description: 'Starting sum calculation',
+                codeLine: 20
+            });
+
+            for (let i = 0; i < n; i++) {
+                const contribution = array[i] * (i - left[i]) * (right[i] - i);
+                sum += contribution;
+                
+                steps.push({
+                    type: 'sum',
+                    stack: [],
+                    left: [...left],
+                    right: [...right],
+                    current: i,
+                    sum: sum,
+                    contribution: contribution,
+                    leftBound: left[i],
+                    rightBound: right[i],
+                    description: `Adding contribution of ${array[i]}: ${contribution} (${i - left[i]} * ${right[i] - i} subarrays)`,
+                    codeLine: 22
+                });
+            }
+
+            steps.push({
+                type: 'complete',
+                stack: [],
+                left: [...left],
+                right: [...right],
+                current: -1,
+                sum: sum,
+                description: `Algorithm complete. Total sum: ${sum}`,
+                codeLine: 23
+            });
+        }
+
+        function startVisualization() {
+            if (array.length === 0) {
+                alert('Please generate or enter an array first');
+                return;
+            }
+
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Sum: 0';
+            document.getElementById('subarrayInfo').textContent = '';
+            highlightCodeLine(1);
+            createArrayElements();
+            updateStack([]);
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const elements = document.querySelectorAll('.array-element');
+            elements.forEach(element => {
+                element.className = 'array-element';
+            });
+
+            // Update stack
+            updateStack(step.stack);
+
+            // Update current element
+            if (step.current >= 0) {
+                document.getElementById(`element-${step.current}`).classList.add('current');
+            }
+
+            // Update subarray info
+            let subarrayInfo = '';
+            if (step.type === 'sum') {
+                const leftBound = step.leftBound === -1 ? 0 : step.leftBound + 1;
+                const rightBound = step.rightBound === array.length ? array.length - 1 : step.rightBound - 1;
+                subarrayInfo = `Element ${array[step.current]} at index ${step.current} is minimum for:
+                    \n${step.contribution} = ${array[step.current]} × ${step.current - step.leftBound} × ${step.rightBound - step.current} subarrays
+                    \nRange: [${leftBound}..${rightBound}]`;
+                
+                // Highlight range
+                for (let i = leftBound; i <= rightBound; i++) {
+                    document.getElementById(`element-${i}`).classList.add('subarray');
+                }
+                document.getElementById(`element-${step.current}`).classList.add('minimum');
+            }
+            document.getElementById('subarrayInfo').textContent = subarrayInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            document.getElementById('result').textContent = `Sum: ${step.sum}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            generateNewArray();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

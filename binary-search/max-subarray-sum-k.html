@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Length of Subarray With Sum ≤ K - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current-window {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .current {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .optimal {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Maximum Length of Subarray With Sum ≤ K</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an array of positive integers nums and a positive integer k, find the length of the longest subarray whose sum is less than or equal to k.<br><br>
+                Example:<br>
+                Input: nums = [3,1,2,7,4,2,1,1,5], k = 8<br>
+                Output: 4<br>
+                Explanation: The longest subarray with sum ≤ 8 is [4,2,1,1], which has length 4.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                    <input type="text" id="array" placeholder="3,1,2,7,4,2,1,1,5" 
+                        class="border p-2 rounded w-full" value="3,1,2,7,4,2,1,1,5">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Target Sum (K)</label>
+                    <input type="number" id="target" placeholder="Target sum" 
+                        class="border p-2 rounded w-full" value="8">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="flex flex-wrap items-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div id="stateVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(1)
+function maxSubArrayLen(nums, k):
+    if nums.length == 0:
+        return 0
+    
+    maxLen = 0
+    left = 0
+    currentSum = 0
+    
+    // Sliding window approach
+    for right in range(0 to nums.length - 1):
+        // Add current element to window sum
+        currentSum += nums[right]
+        
+        // Shrink window while sum > k
+        while currentSum > k && left <= right:
+            currentSum -= nums[left]
+            left++
+        
+        // Update max length if current window is valid
+        if currentSum <= k:
+            maxLen = max(maxLen, right - left + 1)
+    
+    return maxLen</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [3,1,2,7,4,2,1,1,5], k = 8</p>
+                    <p class="text-green-400">Output: 4</p>
+                    <p class="text-gray-400">Explanation: The subarray [4,2,1,1] has sum = 8 and length 4.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [1,2,3], k = 4</p>
+                    <p class="text-green-400">Output: 2</p>
+                    <p class="text-gray-400">Explanation: The subarray [1,2] has sum = 3 ≤ 4 and length 2.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [2,2,2,2], k = 8</p>
+                    <p class="text-green-400">Output: 4</p>
+                    <p class="text-gray-400">Explanation: The entire array has sum = 8 ≤ 8 and length 4.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let arr = [];
+        let target = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function generateSteps(arr, k) {
+            const steps = [];
+            let maxLen = 0;
+            let left = 0;
+            let currentSum = 0;
+            let optimalWindow = null;
+
+            steps.push({
+                arr,
+                k,
+                left: 0,
+                right: -1,
+                currentSum: 0,
+                maxLen: 0,
+                explanation: "Initialize variables: left=0, currentSum=0, maxLen=0"
+            });
+
+            for (let right = 0; right < arr.length; right++) {
+                currentSum += arr[right];
+                
+                steps.push({
+                    arr,
+                    k,
+                    left,
+                    right,
+                    currentSum,
+                    maxLen,
+                    explanation: `Add nums[${right}]=${arr[right]} to window, currentSum=${currentSum}`
+                });
+
+                while (currentSum > k && left <= right) {
+                    steps.push({
+                        arr,
+                        k,
+                        left,
+                        right,
+                        currentSum,
+                        maxLen,
+                        shrinking: true,
+                        explanation: `Sum ${currentSum} > ${k}, shrink window from left`
+                    });
+
+                    currentSum -= arr[left];
+                    left++;
+
+                    steps.push({
+                        arr,
+                        k,
+                        left,
+                        right,
+                        currentSum,
+                        maxLen,
+                        shrinking: true,
+                        explanation: `Remove nums[${left-1}]=${arr[left-1]}, new sum=${currentSum}`
+                    });
+                }
+
+                if (currentSum <= k) {
+                    const newLen = right - left + 1;
+                    if (newLen > maxLen) {
+                        maxLen = newLen;
+                        optimalWindow = [left, right];
+                        steps.push({
+                            arr,
+                            k,
+                            left,
+                            right,
+                            currentSum,
+                            maxLen,
+                            optimalWindow,
+                            explanation: `Found new maximum length ${maxLen} with sum ${currentSum} ≤ ${k}`
+                        });
+                    } else {
+                        steps.push({
+                            arr,
+                            k,
+                            left,
+                            right,
+                            currentSum,
+                            maxLen,
+                            optimalWindow,
+                            explanation: `Current window length ${newLen} ≤ maximum length ${maxLen}`
+                        });
+                    }
+                }
+            }
+
+            steps.push({
+                arr,
+                k,
+                maxLen,
+                optimalWindow,
+                done: true,
+                explanation: `Maximum subarray length with sum ≤ ${k} is ${maxLen}`
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            arr = document.getElementById('array').value.split(',').map(x => parseInt(x.trim()));
+            target = parseInt(document.getElementById('target').value);
+            currentStep = 0;
+            steps = generateSteps(arr, target);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const stateDiv = document.getElementById('stateVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            arrayDiv.innerHTML = '';
+            
+            // Create array visualization
+            step.arr.forEach((num, i) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                
+                if (step.optimalWindow && i >= step.optimalWindow[0] && i <= step.optimalWindow[1]) {
+                    elementDiv.classList.add('optimal');
+                } else if (!step.done && i >= step.left && i <= step.right) {
+                    elementDiv.classList.add('current-window');
+                }
+                if (!step.done && (i === step.left || i === step.right)) {
+                    elementDiv.classList.add('current');
+                }
+                
+                elementDiv.textContent = num;
+                arrayDiv.appendChild(elementDiv);
+            });
+            
+            // Update state
+            let stateText = '';
+            if (!step.done) {
+                stateText = `Window: [${step.left},${step.right}], Sum: ${step.currentSum}, Max Length: ${step.maxLen}`;
+            } else {
+                stateText = `Final Max Length: ${step.maxLen}`;
+            }
+            stateDiv.innerHTML = stateText;
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = `Maximum length subarray with sum ≤ ${step.k} has length ${step.maxLen}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

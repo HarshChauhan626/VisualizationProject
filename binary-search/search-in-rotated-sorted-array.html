@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search in Rotated Sorted Array - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .left {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .right {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .mid {
+            background-color: #eab308;
+            border-color: #facc15;
+        }
+        .result {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .pivot {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+        .sorted {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .phase {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .phase.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Search in Rotated Sorted Array</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                There is an integer array nums sorted in ascending order (with distinct values).<br><br>
+                Prior to being passed to your function, nums is possibly rotated at an unknown pivot index k (1 <= k < nums.length) 
+                such that the resulting array is [nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]] (0-indexed).<br><br>
+                For example, [0,1,2,4,5,6,7] might be rotated at pivot index 3 and become [4,5,6,7,0,1,2].<br><br>
+                Given the array nums after the possible rotation and an integer target, return the index of target if it is in nums, 
+                or -1 if it is not in nums.<br><br>
+                You must write an algorithm with O(log n) runtime complexity.
+            </p>
+        </div>
+
+        <!-- Solution Approach Tabs -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="binarySearchTab" class="tab active px-4 py-2 rounded" onclick="switchApproach('binarySearch')">
+                    Binary Search (O(log n))
+                </div>
+                <div id="linearSearchTab" class="tab px-4 py-2 rounded" onclick="switchApproach('linearSearch')">
+                    Linear Search (O(n))
+                </div>
+            </div>
+            <div id="phaseSelector" class="flex gap-4 mt-4">
+                <div id="findPivotPhase" class="phase active px-4 py-2 rounded" onclick="switchPhase('findPivot')">
+                    Find Pivot
+                </div>
+                <div id="searchTargetPhase" class="phase px-4 py-2 rounded" onclick="switchPhase('searchTarget')">
+                    Search Target
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                    <input type="text" id="inputArray" placeholder="Enter array values" 
+                        class="border p-2 rounded w-full" value="4,5,6,7,0,1,2">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Target</label>
+                    <input type="number" id="target" placeholder="Enter target value" 
+                        class="border p-2 rounded w-full" value="0">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="relative h-32 flex items-center justify-center gap-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-orange-400">Left:</h4>
+                        <div id="leftVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-yellow-400">Mid:</h4>
+                        <div id="midVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-indigo-400">Right:</h4>
+                        <div id="rightVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="binarySearchCode" class="approach-code">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(log n), Space Complexity: O(1)
+function search(nums, target):
+    if nums.length == 0:
+        return -1
+    
+    // Find pivot index where rotation starts
+    left = 0
+    right = nums.length - 1
+    
+    while left < right:
+        mid = left + (right - left) // 2
+        
+        if nums[mid] > nums[right]:
+            left = mid + 1  // Pivot is in right half
+        else:
+            right = mid  // Pivot is in left half or at mid
+    
+    // left is now at pivot
+    pivot = left
+    
+    // Decide which half to search
+    if target >= nums[pivot] && target <= nums[nums.length - 1]:
+        left = pivot
+        right = nums.length - 1
+    else:
+        left = 0
+        right = pivot - 1
+    
+    // Standard binary search
+    while left <= right:
+        mid = left + (right - left) // 2
+        
+        if nums[mid] == target:
+            return mid
+        elif nums[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    
+    return -1</pre>
+            </div>
+            <div id="linearSearchCode" class="approach-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(1)
+function search(nums, target):
+    for i in range(nums.length):
+        if nums[i] == target:
+            return i
+    return -1</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [4,5,6,7,0,1,2], target = 0</p>
+                    <p class="text-green-400">Output: 4</p>
+                    <p class="text-gray-400">Explanation: Target 0 is found at index 4.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [4,5,6,7,0,1,2], target = 3</p>
+                    <p class="text-green-400">Output: -1</p>
+                    <p class="text-gray-400">Explanation: Target 3 is not in the array.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [1], target = 0</p>
+                    <p class="text-green-400">Output: -1</p>
+                    <p class="text-gray-400">Explanation: Target 0 is not in the array.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 4:</p>
+                    <p class="text-gray-400">nums = [3,1], target = 1</p>
+                    <p class="text-green-400">Output: 1</p>
+                    <p class="text-gray-400">Explanation: Target 1 is found at index 1.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let target = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'binarySearch';
+        let currentPhase = 'findPivot';
+        let pivotIndex = -1;
+        let resultIndex = -1;
+
+        function switchApproach(approach) {
+            currentApproach = approach;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(approach + 'Tab').classList.add('active');
+            document.querySelectorAll('.approach-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(approach + 'Code').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function switchPhase(phase) {
+            if (currentApproach === 'linearSearch') return;
+            currentPhase = phase;
+            document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+            document.getElementById(phase + 'Phase').classList.add('active');
+            currentStep = 0;
+            steps = phase === 'findPivot' ?
+                generateBinarySearchStepsFindPivot(array) :
+                generateBinarySearchStepsSearch(array, target, pivotIndex);
+            updateVisualization();
+        }
+
+        function generateBinarySearchStepsFindPivot(nums) {
+            const steps = [];
+            let left = 0;
+            let right = nums.length - 1;
+
+            steps.push({
+                array: [...nums],
+                left,
+                right,
+                explanation: "Initialize left and right pointers to find pivot"
+            });
+
+            while (left < right) {
+                const mid = Math.floor(left + (right - left) / 2);
+                
+                steps.push({
+                    array: [...nums],
+                    left,
+                    right,
+                    mid,
+                    explanation: `Calculate mid = ${mid}`
+                });
+
+                if (nums[mid] > nums[right]) {
+                    steps.push({
+                        array: [...nums],
+                        left,
+                        right,
+                        mid,
+                        explanation: `${nums[mid]} > ${nums[right]}, pivot is in right half`
+                    });
+                    left = mid + 1;
+                } else {
+                    steps.push({
+                        array: [...nums],
+                        left,
+                        right,
+                        mid,
+                        explanation: `${nums[mid]} <= ${nums[right]}, pivot is in left half or at mid`
+                    });
+                    right = mid;
+                }
+            }
+
+            steps.push({
+                array: [...nums],
+                pivot: left,
+                explanation: `Found pivot at index ${left} (value = ${nums[left]})`,
+                done: true
+            });
+
+            pivotIndex = left;
+            return steps;
+        }
+
+        function generateBinarySearchStepsSearch(nums, target, pivot) {
+            const steps = [];
+            let left, right;
+
+            if (target >= nums[pivot] && target <= nums[nums.length - 1]) {
+                left = pivot;
+                right = nums.length - 1;
+                steps.push({
+                    array: [...nums],
+                    left,
+                    right,
+                    pivot,
+                    explanation: `${target} is in range [${nums[pivot]}, ${nums[nums.length - 1]}], search right half`
+                });
+            } else {
+                left = 0;
+                right = pivot - 1;
+                steps.push({
+                    array: [...nums],
+                    left,
+                    right,
+                    pivot,
+                    explanation: `${target} is in range [${nums[0]}, ${nums[pivot - 1]}], search left half`
+                });
+            }
+
+            while (left <= right) {
+                const mid = Math.floor(left + (right - left) / 2);
+                
+                steps.push({
+                    array: [...nums],
+                    left,
+                    right,
+                    mid,
+                    pivot,
+                    explanation: `Calculate mid = ${mid}`
+                });
+
+                if (nums[mid] === target) {
+                    steps.push({
+                        array: [...nums],
+                        result: mid,
+                        pivot,
+                        explanation: `Found target ${target} at index ${mid}`,
+                        done: true
+                    });
+                    resultIndex = mid;
+                    return steps;
+                }
+
+                if (nums[mid] < target) {
+                    steps.push({
+                        array: [...nums],
+                        left,
+                        right,
+                        mid,
+                        pivot,
+                        explanation: `${nums[mid]} < ${target}, look in right half`
+                    });
+                    left = mid + 1;
+                } else {
+                    steps.push({
+                        array: [...nums],
+                        left,
+                        right,
+                        mid,
+                        pivot,
+                        explanation: `${nums[mid]} > ${target}, look in left half`
+                    });
+                    right = mid - 1;
+                }
+            }
+
+            steps.push({
+                array: [...nums],
+                pivot,
+                explanation: `Target ${target} not found in array`,
+                done: true
+            });
+
+            resultIndex = -1;
+            return steps;
+        }
+
+        function generateLinearSearchSteps(nums, target) {
+            const steps = [];
+            
+            steps.push({
+                array: [...nums],
+                explanation: "Start linear search from beginning"
+            });
+
+            for (let i = 0; i < nums.length; i++) {
+                steps.push({
+                    array: [...nums],
+                    current: i,
+                    explanation: `Check if ${nums[i]} equals ${target}`
+                });
+
+                if (nums[i] === target) {
+                    steps.push({
+                        array: [...nums],
+                        result: i,
+                        explanation: `Found target ${target} at index ${i}`,
+                        done: true
+                    });
+                    resultIndex = i;
+                    return steps;
+                }
+            }
+
+            steps.push({
+                array: [...nums],
+                explanation: `Target ${target} not found in array`,
+                done: true
+            });
+
+            resultIndex = -1;
+            return steps;
+        }
+
+        function initializeVisualization() {
+            array = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            target = parseInt(document.getElementById('target').value);
+            currentStep = 0;
+            pivotIndex = -1;
+            resultIndex = -1;
+            
+            if (currentApproach === 'binarySearch') {
+                steps = currentPhase === 'findPivot' ?
+                    generateBinarySearchStepsFindPivot(array) :
+                    generateBinarySearchStepsSearch(array, target, pivotIndex);
+            } else {
+                steps = generateLinearSearchSteps(array, target);
+            }
+            
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const leftDiv = document.getElementById('leftVisualization');
+            const midDiv = document.getElementById('midVisualization');
+            const rightDiv = document.getElementById('rightVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            arrayDiv.innerHTML = '';
+            
+            // Create array visualization
+            step.array.forEach((num, index) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                
+                if (index === step.result) {
+                    elementDiv.classList.add('result');
+                } else if (index === step.pivot) {
+                    elementDiv.classList.add('pivot');
+                } else if (currentApproach === 'binarySearch') {
+                    if (index === step.mid) {
+                        elementDiv.classList.add('mid');
+                    } else if (step.left !== undefined && step.right !== undefined && 
+                             index >= step.left && index <= step.right) {
+                        if (index === step.left) {
+                            elementDiv.classList.add('left');
+                        } else if (index === step.right) {
+                            elementDiv.classList.add('right');
+                        }
+                    }
+                } else if (index === step.current) {
+                    elementDiv.classList.add('current');
+                }
+                
+                elementDiv.textContent = num;
+                arrayDiv.appendChild(elementDiv);
+            });
+            
+            // Update pointers
+            if (currentApproach === 'binarySearch') {
+                leftDiv.textContent = step.left !== undefined ? `Index: ${step.left}` : "Not set";
+                midDiv.textContent = step.mid !== undefined ? `Index: ${step.mid}` : "Not set";
+                rightDiv.textContent = step.right !== undefined ? `Index: ${step.right}` : "Not set";
+            } else {
+                leftDiv.textContent = "N/A";
+                midDiv.textContent = "N/A";
+                rightDiv.textContent = "N/A";
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                if (currentPhase === 'findPivot' && currentApproach === 'binarySearch') {
+                    resultDiv.textContent = `Pivot found at index ${pivotIndex} (value = ${array[pivotIndex]})`;
+                } else {
+                    resultDiv.textContent = resultIndex === -1 ? 
+                        "Target not found (-1)" : 
+                        `Target found at index ${resultIndex}`;
+                }
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

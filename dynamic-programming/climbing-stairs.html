@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Climbing Stairs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .stair {
+            width: 100px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+            position: relative;
+        }
+        .stair.current {
+            background-color: #eab308;
+        }
+        .stair.visited {
+            background-color: #22c55e;
+        }
+        .stair::after {
+            content: attr(data-ways);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .stair-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Climbing Stairs</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the number of distinct ways to climb n stairs using dynamic programming.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Number of Stairs (n)</label>
+                            <input type="number" id="stairsInput" value="5" min="1" max="10" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                onchange="validateStairs()">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors w-full" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Stairs Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Stairs</h3>
+                    <div id="stairsContainer" class="flex flex-col items-center gap-2"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Total Ways: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function climbStairs(n):</span>
+<span class="code-line" data-line="2">    if n <= 2: return n</span>
+<span class="code-line" data-line="3">    // Initialize base cases</span>
+<span class="code-line" data-line="4">    dp = [0] * (n + 1)</span>
+<span class="code-line" data-line="5">    dp[1] = 1</span>
+<span class="code-line" data-line="6">    dp[2] = 2</span>
+<span class="code-line" data-line="7">    // Fill dp array</span>
+<span class="code-line" data-line="8">    for i = 3 to n:</span>
+<span class="code-line" data-line="9">        dp[i] = dp[i-1] + dp[i-2]</span>
+<span class="code-line" data-line="10">    return dp[n]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the number of stairs</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the dp array, can be optimized to O(1)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Using dynamic programming to store number of ways to reach each stair
+                                <br>2. Base cases: 1 way for 1 stair, 2 ways for 2 stairs
+                                <br>3. For each stair i > 2:
+                                <br>&nbsp;&nbsp;&nbsp;- Ways[i] = Ways[i-1] + Ways[i-2]
+                                <br>&nbsp;&nbsp;&nbsp;- Can reach i from i-1 (1 step) or i-2 (2 steps)
+                                <br>4. Return the number of ways to reach the top
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let n = 5;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function validateStairs() {
+            const input = document.getElementById('stairsInput');
+            let num = parseInt(input.value);
+            if (num < 1) num = 1;
+            if (num > 10) num = 10;
+            input.value = num;
+            n = num;
+            resetVisualization();
+        }
+
+        function createStairs() {
+            const container = document.getElementById('stairsContainer');
+            container.innerHTML = '';
+            
+            for (let i = n; i >= 0; i--) {
+                const stair = document.createElement('div');
+                stair.className = 'stair';
+                stair.id = `stair-${i}`;
+                stair.textContent = i;
+                stair.setAttribute('data-ways', '0');
+                container.appendChild(stair);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const dp = new Array(n + 1).fill(0);
+
+            // Initial state
+            steps.push({
+                type: 'init',
+                stair: -1,
+                ways: 0,
+                description: 'Starting the algorithm',
+                codeLine: 1
+            });
+
+            // Base cases
+            if (n <= 2) {
+                steps.push({
+                    type: 'base',
+                    stair: n,
+                    ways: n,
+                    description: `Base case: ${n} stairs can be climbed in ${n} ways`,
+                    codeLine: 2
+                });
+                return;
+            }
+
+            // Initialize base cases
+            dp[1] = 1;
+            steps.push({
+                type: 'base',
+                stair: 1,
+                ways: 1,
+                description: 'Base case: 1 stair can be climbed in 1 way',
+                codeLine: 5
+            });
+
+            dp[2] = 2;
+            steps.push({
+                type: 'base',
+                stair: 2,
+                ways: 2,
+                description: 'Base case: 2 stairs can be climbed in 2 ways',
+                codeLine: 6
+            });
+
+            // Fill dp array
+            for (let i = 3; i <= n; i++) {
+                dp[i] = dp[i-1] + dp[i-2];
+                steps.push({
+                    type: 'compute',
+                    stair: i,
+                    ways: dp[i],
+                    prev1: i-1,
+                    prev2: i-2,
+                    description: `Computing ways for ${i} stairs: ${dp[i-1]} + ${dp[i-2]} = ${dp[i]}`,
+                    codeLine: 9
+                });
+            }
+
+            steps.push({
+                type: 'complete',
+                stair: n,
+                ways: dp[n],
+                description: `Algorithm complete. Total ways to climb ${n} stairs: ${dp[n]}`,
+                codeLine: 10
+            });
+        }
+
+        function startVisualization() {
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Total Ways: 0';
+            highlightCodeLine(1);
+            createStairs();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all stairs
+            const stairs = document.querySelectorAll('.stair');
+            stairs.forEach(stair => {
+                stair.className = 'stair';
+            });
+
+            // Update current stair
+            if (step.stair >= 0) {
+                const currentStair = document.getElementById(`stair-${step.stair}`);
+                currentStair.classList.add('current');
+                currentStair.setAttribute('data-ways', step.ways);
+            }
+
+            // Update previous stairs if computing
+            if (step.type === 'compute') {
+                document.getElementById(`stair-${step.prev1}`).classList.add('visited');
+                document.getElementById(`stair-${step.prev2}`).classList.add('visited');
+            }
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            document.getElementById('result').textContent = `Total Ways: ${step.ways}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            createStairs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

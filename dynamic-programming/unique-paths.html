@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unique Paths</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .grid-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+            position: relative;
+        }
+        .grid-cell.current {
+            background-color: #eab308;
+        }
+        .grid-cell.processed {
+            background-color: #22c55e;
+        }
+        .grid-cell.path {
+            background-color: #8b5cf6;
+        }
+        .grid-cell::after {
+            content: attr(data-ways);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .path-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Unique Paths</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the number of unique paths from top-left to bottom-right in a grid using dynamic programming.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Rows (m)</label>
+                            <input type="number" id="rowsInput" value="3" min="1" max="6" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                onchange="validateGrid()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Columns (n)</label>
+                            <input type="number" id="colsInput" value="3" min="1" max="6" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                onchange="validateGrid()">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors w-full" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Grid Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Grid</h3>
+                    <div id="gridContainer" class="flex flex-col items-center gap-2"></div>
+                </div>
+
+                <!-- Path Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Cell</h3>
+                    <div id="pathInfo" class="path-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Total Paths: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function uniquePaths(m, n):</span>
+<span class="code-line" data-line="2">    // Initialize dp array</span>
+<span class="code-line" data-line="3">    dp = [[0] * n for _ in range(m)]</span>
+<span class="code-line" data-line="4">    // Base case: first row and column</span>
+<span class="code-line" data-line="5">    for i in range(m): dp[i][0] = 1</span>
+<span class="code-line" data-line="6">    for j in range(n): dp[0][j] = 1</span>
+<span class="code-line" data-line="7">    // Fill dp array</span>
+<span class="code-line" data-line="8">    for i = 1 to m-1:</span>
+<span class="code-line" data-line="9">        for j = 1 to n-1:</span>
+<span class="code-line" data-line="10">            dp[i][j] = dp[i-1][j] + dp[i][j-1]</span>
+<span class="code-line" data-line="11">    return dp[m-1][n-1]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(m*n) where m and n are the grid dimensions</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m*n) for the dp array, can be optimized to O(n)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Using dynamic programming to store number of paths to each cell
+                                <br>2. Base cases: 1 path for first row and column cells
+                                <br>3. For each cell (i,j):
+                                <br>&nbsp;&nbsp;&nbsp;- Paths[i][j] = Paths[i-1][j] + Paths[i][j-1]
+                                <br>&nbsp;&nbsp;&nbsp;- Can reach (i,j) from above or left
+                                <br>4. Return the number of paths to the bottom-right cell
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let m = 3;
+        let n = 3;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function validateGrid() {
+            const rowsInput = document.getElementById('rowsInput');
+            const colsInput = document.getElementById('colsInput');
+            let rows = parseInt(rowsInput.value);
+            let cols = parseInt(colsInput.value);
+            
+            if (rows < 1) rows = 1;
+            if (rows > 6) rows = 6;
+            if (cols < 1) cols = 1;
+            if (cols > 6) cols = 6;
+            
+            rowsInput.value = rows;
+            colsInput.value = cols;
+            
+            m = rows;
+            n = cols;
+            resetVisualization();
+        }
+
+        function createGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < m; i++) {
+                const row = document.createElement('div');
+                row.className = 'flex gap-2';
+                
+                for (let j = 0; j < n; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.id = `cell-${i}-${j}`;
+                    cell.textContent = '0';
+                    cell.setAttribute('data-ways', '0');
+                    row.appendChild(cell);
+                }
+                
+                container.appendChild(row);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const dp = Array(m).fill().map(() => Array(n).fill(0));
+
+            // Initial state
+            steps.push({
+                type: 'init',
+                row: -1,
+                col: -1,
+                ways: 0,
+                description: 'Starting the algorithm',
+                codeLine: 1
+            });
+
+            // Initialize dp array
+            steps.push({
+                type: 'init_dp',
+                row: -1,
+                col: -1,
+                ways: 0,
+                description: 'Initializing dp array',
+                codeLine: 3
+            });
+
+            // Base cases: first row
+            for (let i = 0; i < m; i++) {
+                dp[i][0] = 1;
+                steps.push({
+                    type: 'base_row',
+                    row: i,
+                    col: 0,
+                    ways: 1,
+                    description: `Setting base case for first column cell (${i},0)`,
+                    codeLine: 5
+                });
+            }
+
+            // Base cases: first column
+            for (let j = 0; j < n; j++) {
+                dp[0][j] = 1;
+                steps.push({
+                    type: 'base_col',
+                    row: 0,
+                    col: j,
+                    ways: 1,
+                    description: `Setting base case for first row cell (0,${j})`,
+                    codeLine: 6
+                });
+            }
+
+            // Fill dp array
+            for (let i = 1; i < m; i++) {
+                for (let j = 1; j < n; j++) {
+                    dp[i][j] = dp[i-1][j] + dp[i][j-1];
+                    steps.push({
+                        type: 'compute',
+                        row: i,
+                        col: j,
+                        ways: dp[i][j],
+                        prevRow: i-1,
+                        prevCol: j-1,
+                        description: `Computing paths for cell (${i},${j}): ${dp[i-1][j]} + ${dp[i][j-1]} = ${dp[i][j]}`,
+                        codeLine: 10
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                row: m-1,
+                col: n-1,
+                ways: dp[m-1][n-1],
+                description: `Algorithm complete. Total unique paths: ${dp[m-1][n-1]}`,
+                codeLine: 11
+            });
+        }
+
+        function startVisualization() {
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Total Paths: 0';
+            document.getElementById('pathInfo').textContent = '';
+            highlightCodeLine(1);
+            createGrid();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            const cells = document.querySelectorAll('.grid-cell');
+            cells.forEach(cell => {
+                cell.className = 'grid-cell';
+            });
+
+            // Update current cell
+            if (step.row >= 0 && step.col >= 0) {
+                const currentCell = document.getElementById(`cell-${step.row}-${step.col}`);
+                currentCell.classList.add('current');
+                currentCell.textContent = step.ways;
+                currentCell.setAttribute('data-ways', step.ways);
+            }
+
+            // Update previous cells if computing
+            if (step.type === 'compute') {
+                document.getElementById(`cell-${step.prevRow}-${step.col}`).classList.add('processed');
+                document.getElementById(`cell-${step.row}-${step.prevCol}`).classList.add('processed');
+            }
+
+            // Update path info
+            let pathInfo = '';
+            if (step.row >= 0 && step.col >= 0) {
+                pathInfo = `Current Cell: (${step.row},${step.col})
+                    \nWays to reach: ${step.ways}`;
+            }
+            document.getElementById('pathInfo').textContent = pathInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Total Paths: ${step.ways}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            createGrid();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

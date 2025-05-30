@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Robber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .house-element {
+            width: 80px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            position: relative;
+        }
+        .house-element.current {
+            background-color: #eab308;
+        }
+        .house-element.robbed {
+            background-color: #22c55e;
+        }
+        .house-element.skipped {
+            background-color: #ef4444;
+        }
+        .house-element::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            width: 0;
+            height: 0;
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 20px solid currentColor;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .robber-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .dp-cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #374151;
+            font-family: monospace;
+            transition: all 0.3s ease-in-out;
+        }
+        .dp-cell.current {
+            background-color: #eab308;
+        }
+        .dp-cell.processed {
+            background-color: #22c55e;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">House Robber</h1>
+        <p class="text-gray-300 mb-8">Visualize how to maximize the amount of money you can rob from houses without alerting the police.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">House Values</label>
+                            <input type="text" id="valuesInput" value="2,7,9,3,1" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter house values (comma-separated)">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyCustomValues()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Values
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Houses Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Houses</h3>
+                    <div id="housesContainer" class="flex flex-wrap gap-4"></div>
+                </div>
+
+                <!-- DP Table -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">DP Table</h3>
+                    <div id="dpTable" class="overflow-auto"></div>
+                </div>
+
+                <!-- Robber Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current State</h3>
+                    <div id="robberInfo" class="robber-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Maximum Amount: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function rob(nums):</span>
+<span class="code-line" data-line="2">    n = len(nums)</span>
+<span class="code-line" data-line="3">    if n == 0: return 0</span>
+<span class="code-line" data-line="4">    if n == 1: return nums[0]</span>
+<span class="code-line" data-line="5">    dp = [0] * n</span>
+<span class="code-line" data-line="6">    dp[0] = nums[0]</span>
+<span class="code-line" data-line="7">    dp[1] = max(nums[0], nums[1])</span>
+<span class="code-line" data-line="8">    for i = 2 to n-1:</span>
+<span class="code-line" data-line="9">        dp[i] = max(dp[i-1], dp[i-2] + nums[i])</span>
+<span class="code-line" data-line="10">    return dp[n-1]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the number of houses</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the dp array, can be optimized to O(1)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Initialize dp[0] = nums[0]
+                                <br>2. Set dp[1] = max(nums[0], nums[1])
+                                <br>3. For each house i:
+                                <br>&nbsp;&nbsp;&nbsp;- Choose max between:
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Robbing current house + dp[i-2]
+                                <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* Skipping current house (dp[i-1])
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let values = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyCustomValues() {
+            const valuesInput = document.getElementById('valuesInput').value;
+            try {
+                values = valuesInput.split(',').map(Number);
+                if (values.some(isNaN)) {
+                    throw new Error('All values must be numbers');
+                }
+                createHouseElements();
+                createDPTable();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid numbers');
+            }
+        }
+
+        function createHouseElements() {
+            const container = document.getElementById('housesContainer');
+            container.innerHTML = '';
+            
+            values.forEach((value, index) => {
+                const house = document.createElement('div');
+                house.className = 'house-element';
+                house.id = `house-${index}`;
+                house.innerHTML = `
+                    <div class="text-lg font-bold">$${value}</div>
+                    <div class="text-sm">House ${index}</div>
+                `;
+                container.appendChild(house);
+            });
+        }
+
+        function createDPTable() {
+            const table = document.getElementById('dpTable');
+            table.innerHTML = '';
+            
+            const n = values.length;
+            
+            // Create table header
+            const headerRow = document.createElement('div');
+            headerRow.className = 'flex';
+            
+            for (let i = 0; i < n; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.textContent = `House ${i}`;
+                headerRow.appendChild(cell);
+            }
+            table.appendChild(headerRow);
+            
+            // Create table row
+            const row = document.createElement('div');
+            row.className = 'flex';
+            
+            for (let i = 0; i < n; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'dp-cell';
+                cell.id = `dp-${i}`;
+                cell.textContent = '0';
+                row.appendChild(cell);
+            }
+            table.appendChild(row);
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = values.length;
+            const dp = Array(n).fill(0);
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initializing DP table',
+                codeLine: 5
+            });
+            
+            // Base cases
+            if (n > 0) {
+                dp[0] = values[0];
+                steps.push({
+                    type: 'base',
+                    i: 0,
+                    value: dp[0],
+                    description: `Base case: dp[0] = ${values[0]}`,
+                    codeLine: 6
+                });
+            }
+            
+            if (n > 1) {
+                dp[1] = Math.max(values[0], values[1]);
+                steps.push({
+                    type: 'base',
+                    i: 1,
+                    value: dp[1],
+                    description: `Base case: dp[1] = max(${values[0]}, ${values[1]}) = ${dp[1]}`,
+                    codeLine: 7
+                });
+            }
+            
+            // Fill DP table
+            for (let i = 2; i < n; i++) {
+                const robCurrent = dp[i-2] + values[i];
+                const skipCurrent = dp[i-1];
+                dp[i] = Math.max(robCurrent, skipCurrent);
+                
+                steps.push({
+                    type: 'fill',
+                    i: i,
+                    value: dp[i],
+                    robCurrent: robCurrent,
+                    skipCurrent: skipCurrent,
+                    description: `House ${i}: max(rob ${values[i]} + dp[${i-2}], skip dp[${i-1}]) = ${dp[i]}`,
+                    codeLine: 9
+                });
+            }
+            
+            steps.push({
+                type: 'complete',
+                value: dp[n-1],
+                description: `Maximum amount: ${dp[n-1]}`,
+                codeLine: 10
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Maximum Amount: 0';
+            document.getElementById('robberInfo').textContent = '';
+            highlightCodeLine(1);
+            createHouseElements();
+            createDPTable();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const houses = document.querySelectorAll('.house-element');
+            const cells = document.querySelectorAll('.dp-cell');
+            houses.forEach(house => house.className = 'house-element');
+            cells.forEach(cell => cell.classList.remove('current', 'processed'));
+
+            // Update current house
+            if (step.i !== undefined) {
+                document.getElementById(`house-${step.i}`).classList.add('current');
+            }
+
+            // Update DP table
+            if (step.type === 'base' || step.type === 'fill') {
+                const cell = document.getElementById(`dp-${step.i}`);
+                cell.textContent = step.value;
+                cell.classList.add('current');
+                
+                // Mark previous cells as processed
+                if (step.i > 0) {
+                    document.getElementById(`dp-${step.i-1}`).classList.add('processed');
+                }
+                if (step.i > 1) {
+                    document.getElementById(`dp-${step.i-2}`).classList.add('processed');
+                }
+            }
+
+            // Update robber info
+            let robberInfo = '';
+            if (step.type === 'base') {
+                robberInfo = `Base case: dp[${step.i}] = ${step.value}`;
+            } else if (step.type === 'fill') {
+                robberInfo = `House ${step.i}:
+                    \nOption 1: Rob house (${values[step.i]} + dp[${step.i-2}]) = ${step.robCurrent}
+                    \nOption 2: Skip house (dp[${step.i-1}]) = ${step.skipCurrent}
+                    \nChoose max: ${step.value}`;
+            }
+
+            document.getElementById('robberInfo').textContent = robberInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Maximum Amount: ${step.value}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyCustomValues();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

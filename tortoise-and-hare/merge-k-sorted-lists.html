@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge k Sorted Lists - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .comparing {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .merged {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .min-node {
+            background-color: #fbbf24;
+            border-color: #f59e0b;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input, textarea {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Merge k Sorted Lists</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                You are given an array of k linked-lists lists, each linked-list is sorted in ascending order.<br><br>
+                Merge all the linked-lists into one sorted linked-list and return it.
+            </p>
+        </div>
+
+        <!-- Solution Approach Tabs -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="priorityQueueTab" class="tab active px-4 py-2 rounded" onclick="switchApproach('priorityQueue')">
+                    Priority Queue Approach
+                </div>
+                <div id="divideConquerTab" class="tab px-4 py-2 rounded" onclick="switchApproach('divideConquer')">
+                    Divide & Conquer Approach
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Linked Lists (one per line, comma-separated values)</label>
+                <textarea id="inputLists" rows="4" placeholder="Enter lists (e.g., 1,4,5&#10;1,3,4&#10;2,6)" 
+                    class="border p-2 rounded w-full font-mono">1,4,5
+1,3,4
+2,6</textarea>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="space-y-8">
+                <!-- Input Lists -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Input Lists:</h3>
+                    <div id="inputListsVisualization" class="space-y-8">
+                    </div>
+                </div>
+                <!-- Result List -->
+                <div>
+                    <h3 class="font-semibold mb-4 text-gray-300">Merged List:</h3>
+                    <div id="mergedListVisualization" class="relative h-24">
+                    </div>
+                </div>
+                <!-- Priority Queue (if applicable) -->
+                <div id="priorityQueueVisualization" class="hidden">
+                    <h3 class="font-semibold mb-4 text-gray-300">Priority Queue:</h3>
+                    <div class="bg-gray-800 p-4 rounded-lg font-mono">
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mt-6">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="priorityQueuePseudoCode" class="approach-code">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(N * log k), Space Complexity: O(k)
+// where N is total number of nodes and k is number of lists
+function mergeKLists(lists):
+    // Create min heap priority queue
+    pq = new PriorityQueue()
+    
+    // Add first node from each list
+    for list in lists:
+        if list:
+            pq.add(list)
+    
+    dummy = new ListNode(0)
+    curr = dummy
+    
+    // Keep taking minimum node
+    while !pq.isEmpty():
+        node = pq.poll()  // Get & remove min node
+        curr.next = node
+        curr = curr.next
+        
+        // Add next node from same list
+        if node.next:
+            pq.add(node.next)
+    
+    return dummy.next</pre>
+            </div>
+            <div id="divideConquerPseudoCode" class="approach-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(N * log k), Space Complexity: O(1)
+// where N is total number of nodes and k is number of lists
+function mergeKLists(lists):
+    if !lists.length:
+        return null
+    
+    interval = 1
+    while interval < lists.length:
+        for i = 0; i < lists.length - interval; i += interval * 2:
+            lists[i] = mergeTwoLists(lists[i], lists[i + interval])
+        interval *= 2
+    
+    return lists[0]
+
+function mergeTwoLists(l1, l2):
+    dummy = new ListNode(0)
+    curr = dummy
+    
+    while l1 and l2:
+        if l1.val <= l2.val:
+            curr.next = l1
+            l1 = l1.next
+        else:
+            curr.next = l2
+            l2 = l2.next
+        curr = curr.next
+    
+    curr.next = l1 or l2
+    return dummy.next</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">lists = [[1,4,5],[1,3,4],[2,6]]</p>
+                    <p class="text-green-400">Output: [1,1,2,3,4,4,5,6]</p>
+                    <p class="text-gray-400">Explanation: The linked-lists are merged in sorted order.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">lists = []</p>
+                    <p class="text-green-400">Output: []</p>
+                    <p class="text-gray-400">Explanation: Empty input returns empty list.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">lists = [[]]</p>
+                    <p class="text-green-400">Output: []</p>
+                    <p class="text-gray-400">Explanation: Empty list returns empty list.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        class MinHeap {
+            constructor() {
+                this.heap = [];
+            }
+
+            parent(i) { return Math.floor((i - 1) / 2); }
+            leftChild(i) { return 2 * i + 1; }
+            rightChild(i) { return 2 * i + 2; }
+
+            swap(i, j) {
+                [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+            }
+
+            add(node) {
+                this.heap.push(node);
+                this.heapifyUp(this.heap.length - 1);
+            }
+
+            poll() {
+                if (this.heap.length === 0) return null;
+                if (this.heap.length === 1) return this.heap.pop();
+
+                const min = this.heap[0];
+                this.heap[0] = this.heap.pop();
+                this.heapifyDown(0);
+                return min;
+            }
+
+            heapifyUp(i) {
+                while (i > 0 && this.heap[this.parent(i)].val > this.heap[i].val) {
+                    this.swap(i, this.parent(i));
+                    i = this.parent(i);
+                }
+            }
+
+            heapifyDown(i) {
+                let minIndex = i;
+                const left = this.leftChild(i);
+                const right = this.rightChild(i);
+
+                if (left < this.heap.length && this.heap[left].val < this.heap[minIndex].val) {
+                    minIndex = left;
+                }
+                if (right < this.heap.length && this.heap[right].val < this.heap[minIndex].val) {
+                    minIndex = right;
+                }
+
+                if (minIndex !== i) {
+                    this.swap(i, minIndex);
+                    this.heapifyDown(minIndex);
+                }
+            }
+
+            isEmpty() {
+                return this.heap.length === 0;
+            }
+
+            peek() {
+                return this.heap[0] || null;
+            }
+
+            toArray() {
+                return [...this.heap];
+            }
+        }
+
+        let lists = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'priorityQueue';
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function switchApproach(approach) {
+            currentApproach = approach;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(approach + 'Tab').classList.add('active');
+            document.querySelectorAll('.approach-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(approach + 'PseudoCode').classList.remove('hidden');
+            
+            const pqVis = document.getElementById('priorityQueueVisualization');
+            pqVis.style.display = approach === 'priorityQueue' ? 'block' : 'none';
+            
+            initializeVisualization();
+        }
+
+        function generatePriorityQueueSteps(lists) {
+            const steps = [];
+            if (!lists.length) {
+                steps.push({
+                    inputLists: [],
+                    mergedList: [],
+                    pq: [],
+                    explanation: "Empty input, nothing to merge",
+                    done: true
+                });
+                return steps;
+            }
+
+            const pq = new MinHeap();
+            const dummy = new ListNode(0);
+            let curr = dummy;
+            const inputListNodes = lists.map(list => getListNodes(list));
+
+            // Initial state
+            steps.push({
+                inputLists: inputListNodes,
+                mergedList: [],
+                pq: [],
+                explanation: "Initialize empty priority queue"
+            });
+
+            // Add first nodes to priority queue
+            for (let i = 0; i < lists.length; i++) {
+                if (lists[i]) {
+                    pq.add(lists[i]);
+                    steps.push({
+                        inputLists: inputListNodes,
+                        mergedList: getListNodes(dummy.next),
+                        pq: pq.toArray(),
+                        comparing: lists[i],
+                        explanation: `Add first node from list ${i + 1} to priority queue`
+                    });
+                }
+            }
+
+            // Merge process
+            while (!pq.isEmpty()) {
+                const node = pq.poll();
+                curr.next = new ListNode(node.val);
+                curr = curr.next;
+
+                steps.push({
+                    inputLists: inputListNodes,
+                    mergedList: getListNodes(dummy.next),
+                    pq: pq.toArray(),
+                    minNode: node,
+                    explanation: `Take minimum node (${node.val}) from priority queue`
+                });
+
+                if (node.next) {
+                    pq.add(node.next);
+                    steps.push({
+                        inputLists: inputListNodes,
+                        mergedList: getListNodes(dummy.next),
+                        pq: pq.toArray(),
+                        comparing: node.next,
+                        explanation: `Add next node (${node.next.val}) to priority queue`
+                    });
+                }
+            }
+
+            steps.push({
+                inputLists: inputListNodes,
+                mergedList: getListNodes(dummy.next),
+                pq: [],
+                explanation: "Merge complete",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateDivideConquerSteps(lists) {
+            const steps = [];
+            if (!lists.length) {
+                steps.push({
+                    inputLists: [],
+                    mergedList: [],
+                    explanation: "Empty input, nothing to merge",
+                    done: true
+                });
+                return steps;
+            }
+
+            const inputListNodes = lists.map(list => getListNodes(list));
+            let interval = 1;
+            const workingLists = [...lists];
+
+            steps.push({
+                inputLists: inputListNodes,
+                mergedList: [],
+                explanation: "Start with original lists"
+            });
+
+            while (interval < lists.length) {
+                for (let i = 0; i < lists.length - interval; i += interval * 2) {
+                    steps.push({
+                        inputLists: inputListNodes,
+                        comparing: [workingLists[i], workingLists[i + interval]],
+                        explanation: `Merging lists at positions ${i} and ${i + interval}`
+                    });
+
+                    workingLists[i] = mergeTwoLists(workingLists[i], workingLists[i + interval]);
+
+                    steps.push({
+                        inputLists: inputListNodes,
+                        mergedList: getListNodes(workingLists[0]),
+                        explanation: `Merged lists at positions ${i} and ${i + interval}`
+                    });
+                }
+                interval *= 2;
+            }
+
+            steps.push({
+                inputLists: inputListNodes,
+                mergedList: getListNodes(workingLists[0]),
+                explanation: "Merge complete",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function mergeTwoLists(l1, l2) {
+            const dummy = new ListNode(0);
+            let curr = dummy;
+
+            while (l1 && l2) {
+                if (l1.val <= l2.val) {
+                    curr.next = new ListNode(l1.val);
+                    l1 = l1.next;
+                } else {
+                    curr.next = new ListNode(l2.val);
+                    l2 = l2.next;
+                }
+                curr = curr.next;
+            }
+
+            while (l1) {
+                curr.next = new ListNode(l1.val);
+                curr = curr.next;
+                l1 = l1.next;
+            }
+
+            while (l2) {
+                curr.next = new ListNode(l2.val);
+                curr = curr.next;
+                l2 = l2.next;
+            }
+
+            return dummy.next;
+        }
+
+        function initializeVisualization() {
+            const input = document.getElementById('inputLists').value;
+            lists = input.split('\n')
+                .map(line => line.trim())
+                .filter(line => line)
+                .map(line => createLinkedList(line.split(',').map(x => parseInt(x.trim()))));
+            
+            currentStep = 0;
+            steps = currentApproach === 'priorityQueue' ? 
+                generatePriorityQueueSteps(lists) : 
+                generateDivideConquerSteps(lists);
+            
+            updateVisualization();
+        }
+
+        function createNodeElement(node, x, y, className = '') {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = `node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg ${className}`;
+            nodeDiv.style.left = `${x}px`;
+            nodeDiv.style.top = `${y}px`;
+            nodeDiv.textContent = node.val;
+            return nodeDiv;
+        }
+
+        function createArrow(startX, startY, endX, endY) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            arrow.style.left = `${startX + 24}px`;
+            arrow.style.top = `${startY + 24}px`;
+            arrow.style.width = `${length - 48}px`;
+            arrow.style.transform = `rotate(${angle}deg)`;
+            
+            return arrow;
+        }
+
+        function updateVisualization() {
+            const inputListsDiv = document.getElementById('inputListsVisualization');
+            const mergedListDiv = document.getElementById('mergedListVisualization');
+            const pqDiv = document.getElementById('priorityQueueVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            inputListsDiv.innerHTML = '';
+            mergedListDiv.innerHTML = '';
+            
+            // Draw input lists
+            step.inputLists.forEach((list, listIndex) => {
+                const listContainer = document.createElement('div');
+                listContainer.className = 'relative h-24';
+                
+                let x = 50;
+                const y = 12;
+                
+                list.forEach((node, nodeIndex) => {
+                    const className = 
+                        step.comparing && step.comparing.includes(node) ? 'comparing' :
+                        step.minNode === node ? 'min-node' : '';
+                    
+                    const nodeDiv = createNodeElement(node, x, y, className);
+                    listContainer.appendChild(nodeDiv);
+                    
+                    if (nodeIndex < list.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        listContainer.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+                
+                inputListsDiv.appendChild(listContainer);
+            });
+            
+            // Draw merged list
+            if (step.mergedList && step.mergedList.length) {
+                let x = 50;
+                const y = 12;
+                
+                step.mergedList.forEach((node, index) => {
+                    const className = 'merged';
+                    const nodeDiv = createNodeElement(node, x, y, className);
+                    mergedListDiv.appendChild(nodeDiv);
+                    
+                    if (index < step.mergedList.length - 1) {
+                        const arrow = createArrow(x, y, x + 100, y);
+                        mergedListDiv.appendChild(arrow);
+                    }
+                    
+                    x += 100;
+                });
+            }
+            
+            // Update priority queue visualization if applicable
+            if (currentApproach === 'priorityQueue' && step.pq) {
+                pqDiv.querySelector('div').innerHTML = step.pq.length ? 
+                    `Priority Queue: [${step.pq.map(n => n.val).join(', ')}]` : 
+                    'Priority Queue: []';
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Merge complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

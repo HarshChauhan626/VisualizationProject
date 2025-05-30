@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4Sum Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .num-box {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .num-box.pointer-i {
+            background-color: #4ade80;
+        }
+        .num-box.pointer-j {
+            background-color: #fb923c;
+        }
+        .num-box.pointer-left {
+            background-color: #93c5fd;
+        }
+        .num-box.pointer-right {
+            background-color: #f87171;
+        }
+        .num-box.quad-found {
+            border: 2px solid #2563eb;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">4Sum</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find all unique quadruplets that sum to a target value using the two-pointer technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Array (comma-separated numbers)</label>
+                            <input type="text" id="inputArray" value="1,0,-1,0,-2,2" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Target Sum</label>
+                            <input type="number" id="inputTarget" value="0" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array Visualization</h3>
+                    <div id="arrayVisualization" class="flex flex-wrap justify-center">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Pointers and Values</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">First Element (Green):</p>
+                            <div id="iPointerInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Second Element (Orange):</p>
+                            <div id="jPointerInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Left Pointer (Blue):</p>
+                            <div id="leftPointerInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Right Pointer (Red):</p>
+                            <div id="rightPointerInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Current Sum -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-sm font-medium mb-2">Current Sum:</p>
+                    <p id="currentSumInfo" class="text-lg font-mono"></p>
+                </div>
+
+                <!-- Found Quadruplets -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Found Quadruplets</h3>
+                    <div id="quadsInfo" class="text-lg font-mono">
+                        <p>No quadruplets found yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function fourSum(nums, target):</span>
+<span class="code-line" data-line="2">    sort(nums)  // Sort array to handle duplicates</span>
+<span class="code-line" data-line="3">    result = []</span>
+<span class="code-line" data-line="4">    n = nums.length</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    for i from 0 to n-4:</span>
+<span class="code-line" data-line="7">        if i > 0 and nums[i] == nums[i-1]:</span>
+<span class="code-line" data-line="8">            continue  // Skip duplicates</span>
+<span class="code-line" data-line="9">            </span>
+<span class="code-line" data-line="10">        for j from i+1 to n-3:</span>
+<span class="code-line" data-line="11">            if j > i+1 and nums[j] == nums[j-1]:</span>
+<span class="code-line" data-line="12">                continue  // Skip duplicates</span>
+<span class="code-line" data-line="13">                </span>
+<span class="code-line" data-line="14">            left = j + 1</span>
+<span class="code-line" data-line="15">            right = n - 1</span>
+<span class="code-line" data-line="16">            </span>
+<span class="code-line" data-line="17">            while left < right:</span>
+<span class="code-line" data-line="18">                sum = nums[i] + nums[j] + nums[left] + nums[right]</span>
+<span class="code-line" data-line="19">                </span>
+<span class="code-line" data-line="20">                if sum == target:</span>
+<span class="code-line" data-line="21">                    result.push([nums[i], nums[j], nums[left], nums[right]])</span>
+<span class="code-line" data-line="22">                    left++</span>
+<span class="code-line" data-line="23">                    right--</span>
+<span class="code-line" data-line="24">                    </span>
+<span class="code-line" data-line="25">                    while left < right and nums[left] == nums[left-1]:</span>
+<span class="code-line" data-line="26">                        left++  // Skip duplicates</span>
+<span class="code-line" data-line="27">                    while left < right and nums[right] == nums[right+1]:</span>
+<span class="code-line" data-line="28">                        right--  // Skip duplicates</span>
+<span class="code-line" data-line="29">                        </span>
+<span class="code-line" data-line="30">                else if sum < target:</span>
+<span class="code-line" data-line="31">                    left++</span>
+<span class="code-line" data-line="32">                else:</span>
+<span class="code-line" data-line="33">                    right--</span>
+<span class="code-line" data-line="34">    </span>
+<span class="code-line" data-line="35">    return result</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n³) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) excluding the output array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm finds all quadruplets that sum to the target value by:
+                                <br>1. First sorting the array
+                                <br>2. Using two nested loops to fix the first two elements (i and j)
+                                <br>3. For each i and j combination, using two pointers (left and right) to find pairs that sum to (target - nums[i] - nums[j])
+                                <br>4. Skipping duplicates to avoid duplicate quadruplets
+                                <br>5. Moving pointers based on the current sum
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">nums = [1,0,-1,0,-2,2], target = 0</p>
+                            <p class="text-gray-300">Output: [[-2,-1,1,2],[-2,0,0,2],[-1,0,0,1]]</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">nums = [2,2,2,2,2], target = 8</p>
+                            <p class="text-gray-300">Output: [[2,2,2,2]]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let target = 0;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initializeVisualization() {
+            // Get input values
+            nums = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            target = parseInt(document.getElementById('inputTarget').value);
+            
+            // Sort array
+            nums.sort((a, b) => a - b);
+            
+            // Reset visualization state
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Enable buttons
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Reset current step
+            currentStepIndex = -1;
+            
+            // Update visualization
+            nextStep();
+        }
+
+        function createArrayVisualization() {
+            const arrayContainer = document.getElementById('arrayVisualization');
+            arrayContainer.innerHTML = '';
+            
+            for (let i = 0; i < nums.length; i++) {
+                const box = document.createElement('div');
+                box.className = 'num-box';
+                box.textContent = nums[i];
+                box.id = `num-${i}`;
+                arrayContainer.appendChild(box);
+            }
+        }
+
+        function resetVisualization() {
+            // Clear visualization
+            document.getElementById('arrayVisualization').innerHTML = '';
+            document.getElementById('iPointerInfo').innerHTML = '';
+            document.getElementById('jPointerInfo').innerHTML = '';
+            document.getElementById('leftPointerInfo').innerHTML = '';
+            document.getElementById('rightPointerInfo').innerHTML = '';
+            document.getElementById('currentSumInfo').innerHTML = '';
+            document.getElementById('quadsInfo').innerHTML = '<p>No quadruplets found yet.</p>';
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            
+            // Stop playing if active
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Reset state
+            currentStepIndex = -1;
+            steps = [];
+            
+            // Disable buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = nums.length;
+            const result = [];
+            
+            steps.push({
+                i: -1,
+                j: -1,
+                left: -1,
+                right: -1,
+                result: [],
+                activeLines: [1, 2, 3, 4],
+                explanation: "Array sorted in ascending order"
+            });
+
+            for (let i = 0; i < n - 3; i++) {
+                if (i > 0 && nums[i] === nums[i - 1]) {
+                    steps.push({
+                        i,
+                        j: -1,
+                        left: -1,
+                        right: -1,
+                        result: [...result],
+                        activeLines: [6, 7, 8],
+                        explanation: `Skip duplicate first element: ${nums[i]}`
+                    });
+                    continue;
+                }
+
+                steps.push({
+                    i,
+                    j: -1,
+                    left: -1,
+                    right: -1,
+                    result: [...result],
+                    activeLines: [6],
+                    explanation: `Setting first element to ${nums[i]} at index ${i}`
+                });
+
+                for (let j = i + 1; j < n - 2; j++) {
+                    if (j > i + 1 && nums[j] === nums[j - 1]) {
+                        steps.push({
+                            i,
+                            j,
+                            left: -1,
+                            right: -1,
+                            result: [...result],
+                            activeLines: [10, 11, 12],
+                            explanation: `Skip duplicate second element: ${nums[j]}`
+                        });
+                        continue;
+                    }
+
+                    steps.push({
+                        i,
+                        j,
+                        left: -1,
+                        right: -1,
+                        result: [...result],
+                        activeLines: [10],
+                        explanation: `Setting second element to ${nums[j]} at index ${j}`
+                    });
+
+                    let left = j + 1;
+                    let right = n - 1;
+
+                    steps.push({
+                        i,
+                        j,
+                        left,
+                        right,
+                        result: [...result],
+                        activeLines: [14, 15, 16],
+                        explanation: `Initializing left pointer at ${left} and right pointer at ${right}`
+                    });
+
+                    while (left < right) {
+                        const sum = nums[i] + nums[j] + nums[left] + nums[right];
+                        
+                        steps.push({
+                            i,
+                            j,
+                            left,
+                            right,
+                            sum,
+                            result: [...result],
+                            activeLines: [17, 18, 19],
+                            explanation: `Calculating sum: ${nums[i]} + ${nums[j]} + ${nums[left]} + ${nums[right]} = ${sum}`
+                        });
+
+                        if (sum === target) {
+                            const quad = [nums[i], nums[j], nums[left], nums[right]];
+                            result.push(quad);
+                            
+                            steps.push({
+                                i,
+                                j,
+                                left,
+                                right,
+                                sum,
+                                result: [...result],
+                                quadFound: true,
+                                activeLines: [20, 21],
+                                explanation: `Found quadruplet: [${quad.join(', ')}]`
+                            });
+
+                            left++;
+                            right--;
+                            
+                            steps.push({
+                                i,
+                                j,
+                                left,
+                                right,
+                                sum,
+                                result: [...result],
+                                activeLines: [22, 23],
+                                explanation: `Moving left pointer right and right pointer left`
+                            });
+
+                            while (left < right && nums[left] === nums[left - 1]) {
+                                steps.push({
+                                    i,
+                                    j,
+                                    left,
+                                    right,
+                                    result: [...result],
+                                    activeLines: [25, 26],
+                                    explanation: `Skip duplicate left element: ${nums[left]}`
+                                });
+                                left++;
+                            }
+                            
+                            while (left < right && nums[right] === nums[right + 1]) {
+                                steps.push({
+                                    i,
+                                    j,
+                                    left,
+                                    right,
+                                    result: [...result],
+                                    activeLines: [27, 28],
+                                    explanation: `Skip duplicate right element: ${nums[right]}`
+                                });
+                                right--;
+                            }
+                        } else if (sum < target) {
+                            steps.push({
+                                i,
+                                j,
+                                left,
+                                right,
+                                sum,
+                                result: [...result],
+                                activeLines: [30, 31],
+                                explanation: `Sum ${sum} < target ${target}, moving left pointer right`
+                            });
+                            left++;
+                        } else {
+                            steps.push({
+                                i,
+                                j,
+                                left,
+                                right,
+                                sum,
+                                result: [...result],
+                                activeLines: [32, 33],
+                                explanation: `Sum ${sum} > target ${target}, moving right pointer left`
+                            });
+                            right--;
+                        }
+                    }
+                }
+            }
+
+            steps.push({
+                i: n,
+                j: -1,
+                left: -1,
+                right: -1,
+                result: [...result],
+                activeLines: [35],
+                explanation: `Algorithm completed. Found ${result.length} quadruplets.`
+            });
+        }
+
+        function updateVisualization() {
+            if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+            
+            const step = steps[currentStepIndex];
+            
+            // Update current step display
+            document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+            
+            // Create array visualization if not created yet
+            if (document.getElementById('arrayVisualization').children.length === 0) {
+                createArrayVisualization();
+            }
+            
+            // Reset all boxes to default state
+            for (let i = 0; i < nums.length; i++) {
+                const box = document.getElementById(`num-${i}`);
+                if (box) {
+                    box.className = 'num-box';
+                }
+            }
+            
+            // Update the boxes based on current step
+            if (step.i >= 0 && step.i < nums.length) {
+                const iBox = document.getElementById(`num-${step.i}`);
+                if (iBox) iBox.classList.add('pointer-i');
+            }
+            
+            if (step.j >= 0 && step.j < nums.length) {
+                const jBox = document.getElementById(`num-${step.j}`);
+                if (jBox) jBox.classList.add('pointer-j');
+            }
+            
+            if (step.left >= 0 && step.left < nums.length) {
+                const leftBox = document.getElementById(`num-${step.left}`);
+                if (leftBox) leftBox.classList.add('pointer-left');
+            }
+            
+            if (step.right >= 0 && step.right < nums.length) {
+                const rightBox = document.getElementById(`num-${step.right}`);
+                if (rightBox) rightBox.classList.add('pointer-right');
+            }
+            
+            if (step.quadFound) {
+                const iBox = document.getElementById(`num-${step.i}`);
+                const jBox = document.getElementById(`num-${step.j}`);
+                const leftBox = document.getElementById(`num-${step.left}`);
+                const rightBox = document.getElementById(`num-${step.right}`);
+                
+                if (iBox) iBox.classList.add('quad-found');
+                if (jBox) jBox.classList.add('quad-found');
+                if (leftBox) leftBox.classList.add('quad-found');
+                if (rightBox) rightBox.classList.add('quad-found');
+            }
+            
+            // Update pointer info
+            document.getElementById('iPointerInfo').textContent = 
+                (step.i >= 0 && step.i < nums.length) ? 
+                    `Index ${step.i}: ${nums[step.i]}` : 
+                    "Not set";
+            
+            document.getElementById('jPointerInfo').textContent = 
+                (step.j >= 0 && step.j < nums.length) ? 
+                    `Index ${step.j}: ${nums[step.j]}` : 
+                    "Not set";
+            
+            document.getElementById('leftPointerInfo').textContent = 
+                (step.left >= 0 && step.left < nums.length) ? 
+                    `Index ${step.left}: ${nums[step.left]}` : 
+                    "Not set";
+            
+            document.getElementById('rightPointerInfo').textContent = 
+                (step.right >= 0 && step.right < nums.length) ? 
+                    `Index ${step.right}: ${nums[step.right]}` : 
+                    "Not set";
+            
+            // Update current sum
+            document.getElementById('currentSumInfo').textContent = 
+                step.sum !== undefined ? `${step.sum}` : "";
+            
+            // Update quadruplets found
+            if (step.result && step.result.length > 0) {
+                let quadsHTML = '';
+                step.result.forEach((quad, index) => {
+                    quadsHTML += `<div class="mb-1">[${quad.join(', ')}]</div>`;
+                });
+                document.getElementById('quadsInfo').innerHTML = quadsHTML;
+            }
+            
+            // Highlight active code lines
+            if (step.activeLines) {
+                document.querySelectorAll('.code-line').forEach(line => {
+                    line.classList.remove('active');
+                });
+                
+                step.activeLines.forEach(lineNum => {
+                    document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+                });
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+            document.getElementById('playBtn').className = isPlaying 
+                ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+                : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+            
+            if (isPlaying) {
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(document.getElementById('speedSlider').value));
+            } else {
+                clearInterval(animationInterval);
+            }
+        }
+
+        // Update speed value display when slider changes
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = `${this.value}ms`;
+            
+            // Update interval if playing
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(this.value));
+            }
+        });
+    </script>
+</body>
+</html> 

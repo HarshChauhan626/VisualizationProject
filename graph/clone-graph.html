@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clone Graph</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .graph-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+        .node {
+            fill: #3b82f6;
+            stroke: #1e40af;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+        .node.visited {
+            fill: #10b981;
+        }
+        .node.current {
+            fill: #fbbf24;
+        }
+        .node.cloned {
+            fill: #8b5cf6;
+        }
+        .link {
+            stroke: #64748b;
+            stroke-width: 2px;
+        }
+        .link.visited {
+            stroke: #10b981;
+        }
+        .link.current {
+            stroke: #fbbf24;
+        }
+        .link.cloned {
+            stroke: #8b5cf6;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Clone Graph</h1>
+        <p class="text-gray-300 mb-8">Visualize how to create a deep copy of a connected undirected graph.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Number of Nodes</label>
+                            <input type="number" id="nodeCount" value="5" min="3" max="8"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Connection Density</label>
+                            <input type="range" min="1" max="100" value="50" class="w-full" id="densitySlider">
+                            <span id="densityValue" class="text-sm">50%</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initialize()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Graphs -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Original Graph</h3>
+                    <div id="originalGraph" class="graph-container"></div>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Cloned Graph</h3>
+                    <div id="clonedGraph" class="graph-container"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">def cloneGraph(node):</span>
+<span class="code-line" data-line="2">    if not node:</span>
+<span class="code-line" data-line="3">        return None</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    visited = {}</span>
+<span class="code-line" data-line="6">    queue = [node]</span>
+<span class="code-line" data-line="7">    visited[node] = Node(node.val, [])</span>
+<span class="code-line" data-line="8">    </span>
+<span class="code-line" data-line="9">    while queue:</span>
+<span class="code-line" data-line="10">        current = queue.pop(0)</span>
+<span class="code-line" data-line="11">        for neighbor in current.neighbors:</span>
+<span class="code-line" data-line="12">            if neighbor not in visited:</span>
+<span class="code-line" data-line="13">                visited[neighbor] = Node(neighbor.val, [])</span>
+<span class="code-line" data-line="14">                queue.append(neighbor)</span>
+<span class="code-line" data-line="15">            visited[current].neighbors.append(visited[neighbor])</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given a reference of a node in a connected undirected graph, return a deep copy of the graph. Each node in the graph contains a value and a list of its neighbors.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(V + E) - where V is the number of vertices and E is the number of edges</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(V) - to store the visited nodes and the queue</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works as follows:
+                                <br>1. Start from the given node
+                                <br>2. Create a copy of the current node
+                                <br>3. For each neighbor:
+                                <br>   - If not visited, create a copy and add to queue
+                                <br>   - Add the copied neighbor to the current node's neighbors
+                                <br>4. Continue until all nodes are visited
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graph = null;
+        let clonedGraph = null;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let originalSimulation = null;
+        let clonedSimulation = null;
+
+        class Node {
+            constructor(val, neighbors = []) {
+                this.val = val;
+                this.neighbors = neighbors;
+            }
+        }
+
+        function initialize() {
+            const nodeCount = parseInt(document.getElementById('nodeCount').value);
+            const density = parseInt(document.getElementById('densitySlider').value) / 100;
+
+            if (isNaN(nodeCount) || nodeCount < 3 || nodeCount > 8) {
+                alert('Please enter a valid number of nodes between 3 and 8');
+                return;
+            }
+
+            // Create random graph
+            graph = createRandomGraph(nodeCount, density);
+            clonedGraph = null;
+            currentStepIndex = -1;
+            steps = [];
+
+            // Initialize D3 visualizations
+            initializeD3('originalGraph', graph);
+            initializeD3('clonedGraph', null);
+
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function createRandomGraph(nodeCount, density) {
+            const nodes = Array.from({ length: nodeCount }, (_, i) => new Node(i + 1));
+            
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    if (Math.random() < density) {
+                        nodes[i].neighbors.push(nodes[j]);
+                        nodes[j].neighbors.push(nodes[i]);
+                    }
+                }
+            }
+
+            return nodes[0]; // Return the first node as the starting point
+        }
+
+        function initializeD3(containerId, graph) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (!graph) return;
+
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            const svg = d3.select(`#${containerId}`)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Create nodes and links
+            const nodes = getAllNodes(graph);
+            const links = getAllLinks(graph);
+
+            // Create force simulation
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.val))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+
+            // Create links
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('class', 'link');
+
+            // Create nodes
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .enter()
+                .append('circle')
+                .attr('class', 'node')
+                .attr('r', 20)
+                .call(drag(simulation));
+
+            // Add labels
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(nodes)
+                .enter()
+                .append('text')
+                .text(d => d.val)
+                .attr('text-anchor', 'middle')
+                .attr('dy', '.3em')
+                .style('fill', 'white');
+
+            // Update positions
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y);
+            });
+
+            return simulation;
+        }
+
+        function drag(simulation) {
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+
+            return d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended);
+        }
+
+        function getAllNodes(node) {
+            const nodes = new Set();
+            const queue = [node];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                if (!nodes.has(current)) {
+                    nodes.add(current);
+                    for (const neighbor of current.neighbors) {
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            
+            return Array.from(nodes);
+        }
+
+        function getAllLinks(node) {
+            const links = [];
+            const visited = new Set();
+            const queue = [node];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                if (!visited.has(current)) {
+                    visited.add(current);
+                    for (const neighbor of current.neighbors) {
+                        if (!visited.has(neighbor)) {
+                            links.push({ source: current, target: neighbor });
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            return links;
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+
+            if (!graph) {
+                steps.push({
+                    type: 'complete',
+                    description: 'No graph to clone',
+                    codeLine: 3
+                });
+                return;
+            }
+
+            const visited = new Map();
+            const queue = [graph];
+            visited.set(graph, new Node(graph.val));
+
+            steps.push({
+                type: 'create',
+                description: `Create copy of node ${graph.val}`,
+                node: graph,
+                clonedNode: visited.get(graph),
+                codeLine: 7
+            });
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+
+                steps.push({
+                    type: 'process',
+                    description: `Processing node ${current.val}`,
+                    node: current,
+                    codeLine: 10
+                });
+
+                for (const neighbor of current.neighbors) {
+                    if (!visited.has(neighbor)) {
+                        visited.set(neighbor, new Node(neighbor.val));
+                        queue.push(neighbor);
+
+                        steps.push({
+                            type: 'create',
+                            description: `Create copy of node ${neighbor.val}`,
+                            node: neighbor,
+                            clonedNode: visited.get(neighbor),
+                            codeLine: 13
+                        });
+                    }
+
+                    visited.get(current).neighbors.push(visited.get(neighbor));
+
+                    steps.push({
+                        type: 'connect',
+                        description: `Connect ${current.val} to ${neighbor.val}`,
+                        node: current,
+                        neighbor: neighbor,
+                        codeLine: 15
+                    });
+                }
+            }
+
+            clonedGraph = visited.get(graph);
+
+            steps.push({
+                type: 'complete',
+                description: 'Graph cloning complete',
+                codeLine: 1
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all nodes and links
+            d3.selectAll('.node').classed('visited current cloned', false);
+            d3.selectAll('.link').classed('visited current cloned', false);
+
+            if (step.type === 'create') {
+                d3.select(`#originalGraph circle[data-val="${step.node.val}"]`)
+                    .classed('current', true);
+                d3.select(`#clonedGraph circle[data-val="${step.node.val}"]`)
+                    .classed('cloned', true);
+            } else if (step.type === 'process') {
+                d3.select(`#originalGraph circle[data-val="${step.node.val}"]`)
+                    .classed('visited', true);
+            } else if (step.type === 'connect') {
+                d3.select(`#originalGraph line[data-source="${step.node.val}"][data-target="${step.neighbor.val}"]`)
+                    .classed('visited', true);
+                d3.select(`#clonedGraph line[data-source="${step.node.val}"][data-target="${step.neighbor.val}"]`)
+                    .classed('cloned', true);
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle sliders
+        document.getElementById('densitySlider').addEventListener('input', function() {
+            document.getElementById('densityValue').textContent = this.value + '%';
+        });
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initialize();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

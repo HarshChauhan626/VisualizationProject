@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibonacci Memoized - Recursion + Memoization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .fib-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .fib-number {
+            width: 60px;
+            height: 60px;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e2e8f0;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .fib-number.current {
+            background-color: #3b82f6;
+        }
+        .fib-number.visited {
+            background-color: #10b981;
+        }
+        .memo-table {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .memo-table td {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            text-align: center;
+        }
+        .memo-table th {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            background-color: #1e293b;
+        }
+        .highlight {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .tree-node {
+            fill: #1e293b;
+            stroke: #3b82f6;
+            stroke-width: 2;
+        }
+        .tree-node.current {
+            fill: #3b82f6;
+        }
+        .tree-node.visited {
+            fill: #10b981;
+        }
+        .tree-link {
+            stroke: #3b82f6;
+            stroke-width: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../../index.html" class="text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Fibonacci Memoized</h1>
+        <p class="text-gray-400 mb-8">Visualize the recursion and memoization approach to calculate Fibonacci numbers.</p>
+
+        <!-- Input Section -->
+        <div class="mb-8 p-6 bg-gray-800 rounded-lg">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Fibonacci Number (n)</label>
+                    <input type="number" id="fibInput" min="0" max="10" value="5" 
+                        class="w-32 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Animation Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="100" max="2000" value="500" step="100"
+                        class="w-48">
+                    <span id="speedValue" class="ml-2 text-gray-300">500ms</span>
+                </div>
+                <button onclick="initialize()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Initialize
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Fibonacci Numbers -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Fibonacci Numbers</h2>
+                <div class="fib-container" id="fibContainer"></div>
+            </div>
+
+            <!-- Recursion Tree -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Recursion Tree</h2>
+                <div id="recursionTree"></div>
+            </div>
+
+            <!-- Memoization Table -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Memoization Table</h2>
+                <div class="overflow-x-auto">
+                    <table class="memo-table" id="memoTable"></table>
+                </div>
+            </div>
+
+            <!-- Controls and Info -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Controls</h2>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="startAnimation()" id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Play
+                    </button>
+                    <button onclick="pauseAnimation()" id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 hidden">
+                        Pause
+                    </button>
+                    <button onclick="nextStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Next Step
+                    </button>
+                    <button onclick="prevStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Previous Step
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-300">Current Step: <span id="currentStep" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Total Steps: <span id="totalSteps" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Current n: <span id="currentN" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Memoized Values: <span id="memoCount" class="font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 overflow-x-auto" id="pseudoCode">
+function fibonacci(n, memo = {}) {
+    if (n in memo) return memo[n];
+    if (n <= 1) return n;
+    
+    memo[n] = fibonacci(n-1, memo) + fibonacci(n-2, memo);
+    return memo[n];
+}</pre>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4 text-gray-300">
+                <p><strong>Problem Description:</strong> Calculate the nth Fibonacci number using recursion with memoization.</p>
+                <p><strong>Time Complexity:</strong> O(n) with memoization, O(2^n) without memoization</p>
+                <p><strong>Space Complexity:</strong> O(n) for recursion stack and memoization table</p>
+                <p><strong>How it works:</strong></p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>Base cases: fib(0) = 0, fib(1) = 1</li>
+                    <li>For n > 1, fib(n) = fib(n-1) + fib(n-2)</li>
+                    <li>Use memoization to store previously calculated results</li>
+                    <li>Return memoized value if already calculated</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let steps = [];
+        let currentStepIndex = 0;
+        let animationInterval;
+        let memo = {};
+        let speed = 500;
+        let treeData = {};
+
+        function initialize() {
+            const n = parseInt(document.getElementById('fibInput').value);
+            if (n < 0 || n > 10) {
+                alert('Please enter a number between 0 and 10');
+                return;
+            }
+
+            // Reset state
+            steps = [];
+            currentStepIndex = 0;
+            memo = {};
+            treeData = {};
+            
+            // Generate steps
+            generateSteps(n);
+            
+            // Update UI
+            updateFibVisualization(n);
+            updateMemoTable(n);
+            updateRecursionTree(n);
+            updateControls();
+        }
+
+        function generateSteps(n) {
+            function fibonacci(n, path = []) {
+                if (n in memo) {
+                    steps.push({
+                        type: 'memo',
+                        n: n,
+                        path: [...path],
+                        memo: {...memo}
+                    });
+                    return memo[n];
+                }
+                if (n <= 1) {
+                    steps.push({
+                        type: 'base',
+                        n: n,
+                        path: [...path],
+                        memo: {...memo}
+                    });
+                    return n;
+                }
+
+                steps.push({
+                    type: 'recursion',
+                    n: n,
+                    path: [...path],
+                    memo: {...memo}
+                });
+
+                const result = fibonacci(n-1, [...path, 'left']) + fibonacci(n-2, [...path, 'right']);
+                
+                memo[n] = result;
+                steps.push({
+                    type: 'result',
+                    n: n,
+                    result: result,
+                    path: [...path],
+                    memo: {...memo}
+                });
+
+                return result;
+            }
+
+            fibonacci(n);
+            document.getElementById('totalSteps').textContent = steps.length;
+        }
+
+        function updateFibVisualization(n) {
+            const container = document.getElementById('fibContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i <= n; i++) {
+                const fibNumber = document.createElement('div');
+                fibNumber.className = 'fib-number';
+                fibNumber.textContent = i;
+                fibNumber.id = `fib-${i}`;
+                container.appendChild(fibNumber);
+            }
+        }
+
+        function updateMemoTable(n) {
+            const table = document.getElementById('memoTable');
+            table.innerHTML = `
+                <tr>
+                    <th>n</th>
+                    <th>fib(n)</th>
+                </tr>
+            `;
+            
+            for (let i = 0; i <= n; i++) {
+                const row = table.insertRow();
+                row.insertCell().textContent = i;
+                row.insertCell().textContent = '-';
+                row.id = `memo-row-${i}`;
+            }
+        }
+
+        function updateRecursionTree(n) {
+            const container = document.getElementById('recursionTree');
+            container.innerHTML = '';
+            
+            const svg = d3.select(container)
+                .append('svg')
+                .attr('width', 600)
+                .attr('height', 400);
+            
+            // Tree visualization will be updated during animation
+        }
+
+        function updateControls() {
+            document.getElementById('currentStep').textContent = currentStepIndex;
+            document.getElementById('memoCount').textContent = Object.keys(memo).length;
+            
+            const currentStep = steps[currentStepIndex];
+            if (currentStep) {
+                document.getElementById('currentN').textContent = currentStep.n;
+                
+                // Update Fibonacci visualization
+                document.querySelectorAll('.fib-number').forEach(fib => {
+                    fib.classList.remove('current', 'visited');
+                });
+                const currentFib = document.getElementById(`fib-${currentStep.n}`);
+                if (currentFib) {
+                    currentFib.classList.add('current');
+                }
+                
+                // Update memo table
+                if (currentStep.type === 'result') {
+                    const memoRow = document.getElementById(`memo-row-${currentStep.n}`);
+                    if (memoRow) {
+                        memoRow.cells[1].textContent = currentStep.result;
+                        memoRow.cells[1].classList.add('highlight');
+                        setTimeout(() => {
+                            memoRow.cells[1].classList.remove('highlight');
+                        }, 500);
+                    }
+                }
+                
+                // Update pseudo code highlighting
+                updatePseudoCodeHighlight(currentStep.type);
+            }
+        }
+
+        function updatePseudoCodeHighlight(stepType) {
+            const code = document.getElementById('pseudoCode');
+            code.innerHTML = code.innerHTML.replace(/class="highlight"/g, '');
+            
+            const lines = code.textContent.split('\n');
+            let highlightLine = -1;
+            
+            switch(stepType) {
+                case 'base':
+                    highlightLine = 2; // if (n <= 1) return n;
+                    break;
+                case 'memo':
+                    highlightLine = 1; // if (n in memo) return memo[n];
+                    break;
+                case 'recursion':
+                    highlightLine = 4; // memo[n] = fibonacci(n-1, memo) + fibonacci(n-2, memo);
+                    break;
+                case 'result':
+                    highlightLine = 5; // return memo[n];
+                    break;
+            }
+            
+            if (highlightLine !== -1) {
+                lines[highlightLine] = `<span class="highlight">${lines[highlightLine]}</span>`;
+                code.innerHTML = lines.join('\n');
+            }
+        }
+
+        function startAnimation() {
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    updateControls();
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateControls();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateControls();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = `${speed}ms`;
+            if (animationInterval) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html> 

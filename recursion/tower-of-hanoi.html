@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower of Hanoi - Recursion</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .tower-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 300px;
+            padding: 20px;
+            background-color: #1e293b;
+            border-radius: 4px;
+        }
+        .tower {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: flex-start;
+            padding-bottom: 10px;
+        }
+        .tower::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 10px;
+            height: 200px;
+            background-color: #3b82f6;
+            border-radius: 5px;
+            z-index: 0;
+        }
+        .tower-base {
+            position: absolute;
+            bottom: 0;
+            width: 120px;
+            height: 10px;
+            background-color: #3b82f6;
+            border-radius: 5px;
+        }
+        .disk {
+            height: 30px;
+            margin: 2px 0;
+            background-color: #3b82f6;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            transition: all 0.5s;
+            position: relative;
+            z-index: 1;
+        }
+        .disk.moving {
+            background-color: #f59e0b;
+        }
+        .highlight {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../../index.html" class="text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Tower of Hanoi</h1>
+        <p class="text-gray-400 mb-8">Visualize the recursive solution to the Tower of Hanoi problem.</p>
+
+        <!-- Input Section -->
+        <div class="mb-8 p-6 bg-gray-800 rounded-lg">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Number of Disks</label>
+                    <input type="number" id="disksInput" min="1" max="6" value="3" 
+                        class="w-32 px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Animation Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="500" max="3000" value="1000" step="100"
+                        class="w-48">
+                    <span id="speedValue" class="ml-2 text-gray-300">1000ms</span>
+                </div>
+                <button onclick="initialize()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    Initialize
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Towers Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg col-span-2">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Towers</h2>
+                <div class="tower-container">
+                    <div class="tower" id="towerA">
+                        <div class="tower-base"></div>
+                    </div>
+                    <div class="tower" id="towerB">
+                        <div class="tower-base"></div>
+                    </div>
+                    <div class="tower" id="towerC">
+                        <div class="tower-base"></div>
+                    </div>
+                </div>
+                <div class="flex justify-around mt-2">
+                    <div class="text-center text-gray-300 font-semibold">A (Source)</div>
+                    <div class="text-center text-gray-300 font-semibold">B (Auxiliary)</div>
+                    <div class="text-center text-gray-300 font-semibold">C (Destination)</div>
+                </div>
+            </div>
+
+            <!-- Move History -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Move History</h2>
+                <div class="overflow-y-auto max-h-64" id="moveHistory">
+                    <div class="text-gray-400">Moves will appear here...</div>
+                </div>
+            </div>
+
+            <!-- Controls and Info -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Controls</h2>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="startAnimation()" id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Play
+                    </button>
+                    <button onclick="pauseAnimation()" id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 hidden">
+                        Pause
+                    </button>
+                    <button onclick="nextStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Next Step
+                    </button>
+                    <button onclick="prevStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Previous Step
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-300">Current Step: <span id="currentStep" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Total Steps: <span id="totalSteps" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Current Move: <span id="currentMove" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Total Moves Required: <span id="moveFormula" class="font-bold">2ⁿ - 1</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 overflow-x-auto" id="pseudoCode">
+function towerOfHanoi(n, source, auxiliary, destination) {
+    if (n === 1) {
+        // Move disk 1 from source to destination
+        move disk from source to destination;
+        return;
+    }
+    
+    // Move n-1 disks from source to auxiliary using destination as temporary
+    towerOfHanoi(n-1, source, destination, auxiliary);
+    
+    // Move the nth disk from source to destination
+    move disk from source to destination;
+    
+    // Move n-1 disks from auxiliary to destination using source as temporary
+    towerOfHanoi(n-1, auxiliary, source, destination);
+}</pre>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4 text-gray-300">
+                <p><strong>Problem Description:</strong> Move a stack of n disks from one peg to another, where a larger disk cannot be placed on top of a smaller disk.</p>
+                <p><strong>Time Complexity:</strong> O(2ⁿ) - Each disk movement requires 2ⁿ-1 steps for n disks</p>
+                <p><strong>Space Complexity:</strong> O(n) for recursion stack</p>
+                <p><strong>How it works:</strong></p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>Base case: If only one disk, move directly from source to destination</li>
+                    <li>Recursive step 1: Move n-1 disks from source to auxiliary (using destination as temporary)</li>
+                    <li>Recursive step 2: Move the nth disk from source to destination</li>
+                    <li>Recursive step 3: Move n-1 disks from auxiliary to destination (using source as temporary)</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let steps = [];
+        let towers = {
+            'A': [],
+            'B': [],
+            'C': []
+        };
+        let currentStepIndex = 0;
+        let animationInterval;
+        let speed = 1000;
+        let diskColors = [
+            '#3b82f6', // blue
+            '#10b981', // green
+            '#f59e0b', // amber
+            '#ef4444', // red
+            '#8b5cf6', // purple
+            '#ec4899'  // pink
+        ];
+
+        function initialize() {
+            const n = parseInt(document.getElementById('disksInput').value);
+            if (n < 1 || n > 6) {
+                alert('Please enter a number between 1 and 6');
+                return;
+            }
+
+            // Reset state
+            steps = [];
+            currentStepIndex = 0;
+            towers = {
+                'A': [],
+                'B': [],
+                'C': []
+            };
+            
+            // Initialize tower A with n disks
+            for (let i = n; i >= 1; i--) {
+                towers['A'].push(i);
+            }
+            
+            // Update move formula
+            document.getElementById('moveFormula').textContent = `${Math.pow(2, n) - 1} (2^${n} - 1)`;
+            
+            // Generate steps
+            generateSteps(n, 'A', 'B', 'C');
+            
+            // Add initial state as first step
+            steps.unshift({
+                type: 'initial',
+                towers: JSON.parse(JSON.stringify(towers))
+            });
+            
+            // Update UI
+            updateTowerVisualization();
+            updateMoveHistory();
+            updateControls();
+            
+            document.getElementById('totalSteps').textContent = steps.length;
+        }
+
+        function generateSteps(n, source, auxiliary, destination) {
+            if (n === 1) {
+                // Move disk 1 from source to destination
+                const disk = towers[source].pop();
+                towers[destination].push(disk);
+                steps.push({
+                    type: 'move',
+                    disk: disk,
+                    from: source,
+                    to: destination,
+                    towers: JSON.parse(JSON.stringify(towers)),
+                    highlightLine: 2
+                });
+                return;
+            }
+            
+            // Move n-1 disks from source to auxiliary using destination as temporary
+            generateSteps(n-1, source, destination, auxiliary);
+            
+            // Move the nth disk from source to destination
+            const disk = towers[source].pop();
+            towers[destination].push(disk);
+            steps.push({
+                type: 'move',
+                disk: disk,
+                from: source,
+                to: destination,
+                towers: JSON.parse(JSON.stringify(towers)),
+                highlightLine: 6
+            });
+            
+            // Move n-1 disks from auxiliary to destination using source as temporary
+            generateSteps(n-1, auxiliary, source, destination);
+        }
+
+        function updateTowerVisualization() {
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            const towerState = currentStep.towers;
+            
+            // Clear towers
+            document.getElementById('towerA').innerHTML = '<div class="tower-base"></div>';
+            document.getElementById('towerB').innerHTML = '<div class="tower-base"></div>';
+            document.getElementById('towerC').innerHTML = '<div class="tower-base"></div>';
+            
+            // Populate towers with disks
+            for (const [towerName, disks] of Object.entries(towerState)) {
+                const tower = document.getElementById(`tower${towerName}`);
+                
+                disks.forEach((diskSize, index) => {
+                    const disk = document.createElement('div');
+                    disk.className = 'disk';
+                    disk.id = `disk-${diskSize}`;
+                    
+                    // Set width based on disk size
+                    const width = 40 + (diskSize * 15);
+                    disk.style.width = `${width}px`;
+                    disk.style.backgroundColor = diskColors[diskSize - 1];
+                    disk.textContent = diskSize;
+                    
+                    // Highlight moving disk
+                    if (currentStep.type === 'move' && 
+                        currentStep.disk === diskSize && 
+                        ((towerName === currentStep.to && index === disks.length - 1))) {
+                        disk.classList.add('moving');
+                    }
+                    
+                    tower.appendChild(disk);
+                });
+            }
+        }
+
+        function updateMoveHistory() {
+            const history = document.getElementById('moveHistory');
+            history.innerHTML = '';
+            
+            for (let i = 0; i <= currentStepIndex; i++) {
+                const step = steps[i];
+                if (step.type === 'move') {
+                    const move = document.createElement('div');
+                    move.className = 'py-1 border-b border-gray-700';
+                    if (i === currentStepIndex) {
+                        move.classList.add('bg-blue-900', 'font-bold');
+                    }
+                    move.textContent = `Move disk ${step.disk} from ${step.from} to ${step.to}`;
+                    history.appendChild(move);
+                }
+            }
+            
+            // Scroll to bottom
+            history.scrollTop = history.scrollHeight;
+        }
+
+        function updateControls() {
+            document.getElementById('currentStep').textContent = currentStepIndex;
+            
+            const currentStep = steps[currentStepIndex];
+            if (currentStep && currentStep.type === 'move') {
+                document.getElementById('currentMove').textContent = `Disk ${currentStep.disk} from ${currentStep.from} to ${currentStep.to}`;
+            } else {
+                document.getElementById('currentMove').textContent = 'Initial state';
+            }
+            
+            // Update pseudo code highlighting
+            updatePseudoCodeHighlight(currentStep);
+        }
+
+        function updatePseudoCodeHighlight(step) {
+            const code = document.getElementById('pseudoCode');
+            code.innerHTML = code.textContent.replace(/<span class="highlight">(.*?)<\/span>/g, '$1');
+            
+            if (step && step.highlightLine) {
+                const lines = code.textContent.split('\n');
+                lines[step.highlightLine] = `<span class="highlight">${lines[step.highlightLine]}</span>`;
+                code.innerHTML = lines.join('\n');
+            }
+        }
+
+        function startAnimation() {
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    updateTowerVisualization();
+                    updateMoveHistory();
+                    updateControls();
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateTowerVisualization();
+                updateMoveHistory();
+                updateControls();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateTowerVisualization();
+                updateMoveHistory();
+                updateControls();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = `${speed}ms`;
+            if (animationInterval) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html> 

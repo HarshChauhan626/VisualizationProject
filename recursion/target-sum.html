@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target Sum - Recursion + Memoization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .array-element {
+            width: 60px;
+            height: 60px;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e2e8f0;
+            font-weight: bold;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .array-element.current {
+            background-color: #3b82f6;
+        }
+        .array-element.positive {
+            border-color: #10b981;
+        }
+        .array-element.negative {
+            border-color: #ef4444;
+        }
+        .array-element.included {
+            background-color: #10b981;
+        }
+        .array-element::after {
+            position: absolute;
+            top: -25px;
+            font-size: 14px;
+        }
+        .array-element.positive::after {
+            content: '+';
+            color: #10b981;
+        }
+        .array-element.negative::after {
+            content: '-';
+            color: #ef4444;
+        }
+        .tree-node {
+            fill: #1e293b;
+            stroke: #3b82f6;
+            stroke-width: 2;
+        }
+        .tree-node.current {
+            fill: #3b82f6;
+        }
+        .tree-node.success {
+            fill: #10b981;
+        }
+        .tree-node.failure {
+            fill: #ef4444;
+        }
+        .tree-link {
+            stroke: #3b82f6;
+            stroke-width: 1;
+        }
+        .tree-link.positive {
+            stroke: #10b981;
+            stroke-dasharray: none;
+        }
+        .tree-link.negative {
+            stroke: #ef4444;
+            stroke-dasharray: 5,5;
+        }
+        .memo-table {
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .memo-table td, .memo-table th {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            text-align: center;
+        }
+        .memo-table th {
+            background-color: #1e293b;
+        }
+        .highlight {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .expression-container {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #1e293b;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../../index.html" class="text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Target Sum</h1>
+        <p class="text-gray-400 mb-8">Visualize the recursion and memoization approach to solve the Target Sum problem.</p>
+
+        <!-- Input Section -->
+        <div class="mb-8 p-6 bg-gray-800 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Array (comma-separated numbers)</label>
+                    <input type="text" id="arrayInput" value="1,1,1,1,1" 
+                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Target Sum</label>
+                    <input type="number" id="targetInput" value="3" 
+                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Animation Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="100" max="2000" value="500" step="100"
+                        class="w-full">
+                    <span id="speedValue" class="ml-2 text-gray-300">500ms</span>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="initialize()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full">
+                        Initialize
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Expression -->
+        <div class="p-6 bg-gray-800 rounded-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Current Expression</h2>
+            <div class="expression-container" id="expressionContainer">
+                <span class="text-gray-400">Expression will appear here...</span>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Array Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Array Elements</h2>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <!-- Decision Tree Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Decision Tree</h2>
+                <div id="treeContainer" class="overflow-auto"></div>
+            </div>
+
+            <!-- Memoization Table -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Memoization Table</h2>
+                <div class="overflow-x-auto">
+                    <table class="memo-table" id="memoTable"></table>
+                </div>
+            </div>
+
+            <!-- Controls and Info -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Controls</h2>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="startAnimation()" id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Play
+                    </button>
+                    <button onclick="pauseAnimation()" id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 hidden">
+                        Pause
+                    </button>
+                    <button onclick="nextStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Next Step
+                    </button>
+                    <button onclick="prevStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Previous Step
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-300">Current Step: <span id="currentStep" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Total Steps: <span id="totalSteps" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Current Index: <span id="currentIndex" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Current Sum: <span id="currentSum" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Ways Found: <span id="waysFound" class="font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 overflow-x-auto" id="pseudoCode">
+function findTargetSumWays(nums, target, index = 0, sum = 0, memo = {}) {
+    if (index === nums.length) {
+        return sum === target ? 1 : 0;
+    }
+    
+    const key = `${index},${sum}`;
+    if (key in memo) {
+        return memo[key];
+    }
+    
+    // Add the current number
+    const addResult = findTargetSumWays(nums, target, index + 1, sum + nums[index], memo);
+    
+    // Subtract the current number
+    const subtractResult = findTargetSumWays(nums, target, index + 1, sum - nums[index], memo);
+    
+    // Total ways = ways with addition + ways with subtraction
+    memo[key] = addResult + subtractResult;
+    return memo[key];
+}</pre>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4 text-gray-300">
+                <p><strong>Problem Description:</strong> You are given an integer array nums and an integer target. You want to assign each integer a + or - sign and find the total number of ways to reach the target sum.</p>
+                <p><strong>Time Complexity:</strong> O(n * sum) with memoization, O(2^n) without memoization</p>
+                <p><strong>Space Complexity:</strong> O(n * sum) for memoization table</p>
+                <p><strong>How it works:</strong></p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>For each number in the array, we have two choices: add it or subtract it from the running sum</li>
+                    <li>We use recursive calls to explore both options for each element</li>
+                    <li>Base case: When we've processed all numbers, check if the sum equals the target</li>
+                    <li>Use memoization to store results for (index, sum) combinations to avoid redundant calculations</li>
+                    <li>Return the number of ways to reach the target sum</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let steps = [];
+        let currentStepIndex = 0;
+        let animationInterval;
+        let memo = {};
+        let speed = 500;
+        let nums = [];
+        let target = 0;
+        let totalWays = 0;
+
+        function initialize() {
+            try {
+                nums = document.getElementById('arrayInput').value.split(',').map(x => parseInt(x.trim()));
+                target = parseInt(document.getElementById('targetInput').value);
+                
+                if (nums.length > 7) {
+                    alert('Please enter at most 7 numbers for better visualization');
+                    return;
+                }
+                
+                if (nums.some(isNaN)) {
+                    alert('Please enter valid numbers');
+                    return;
+                }
+                
+                // Reset state
+                steps = [];
+                currentStepIndex = 0;
+                memo = {};
+                
+                // Generate steps
+                generateSteps(nums, target);
+                
+                // Update UI
+                updateArrayVisualization();
+                updateMemoTable();
+                updateTreeVisualization();
+                updateExpressionDisplay();
+                updateControls();
+                
+                document.getElementById('totalSteps').textContent = steps.length;
+                document.getElementById('waysFound').textContent = totalWays;
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred. Please check your input.');
+            }
+        }
+
+        function generateSteps(nums, target) {
+            function findTargetSumWays(nums, target, index = 0, sum = 0, expression = []) {
+                // Base case: if we've gone through all numbers
+                if (index === nums.length) {
+                    const found = sum === target;
+                    steps.push({
+                        type: 'base',
+                        index,
+                        sum,
+                        expression: [...expression],
+                        found
+                    });
+                    return found ? 1 : 0;
+                }
+                
+                const key = `${index},${sum}`;
+                
+                // Check memo
+                if (key in memo) {
+                    steps.push({
+                        type: 'memo',
+                        index,
+                        sum,
+                        expression: [...expression],
+                        result: memo[key]
+                    });
+                    return memo[key];
+                }
+                
+                steps.push({
+                    type: 'process',
+                    index,
+                    sum,
+                    expression: [...expression]
+                });
+                
+                // Add
+                const addExpression = [...expression, { value: nums[index], sign: '+' }];
+                const addWays = findTargetSumWays(nums, target, index + 1, sum + nums[index], addExpression);
+                
+                // Subtract
+                const subtractExpression = [...expression, { value: nums[index], sign: '-' }];
+                const subtractWays = findTargetSumWays(nums, target, index + 1, sum - nums[index], subtractExpression);
+                
+                // Store in memo
+                memo[key] = addWays + subtractWays;
+                
+                steps.push({
+                    type: 'result',
+                    index,
+                    sum,
+                    expression: [...expression],
+                    result: memo[key]
+                });
+                
+                return memo[key];
+            }
+            
+            totalWays = findTargetSumWays(nums, target);
+        }
+
+        function updateArrayVisualization() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            nums.forEach((num, i) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                element.textContent = num;
+                element.id = `element-${i}`;
+                
+                if (currentStep.expression && i < currentStep.expression.length) {
+                    const signInfo = currentStep.expression[i];
+                    if (signInfo.sign === '+') {
+                        element.classList.add('positive');
+                        element.classList.add('included');
+                    } else {
+                        element.classList.add('negative');
+                        element.classList.add('included');
+                    }
+                }
+                
+                if (currentStep.index === i) {
+                    element.classList.add('current');
+                }
+                
+                container.appendChild(element);
+            });
+        }
+
+        function updateExpressionDisplay() {
+            const container = document.getElementById('expressionContainer');
+            const currentStep = steps[currentStepIndex];
+            
+            if (!currentStep || !currentStep.expression || currentStep.expression.length === 0) {
+                container.innerHTML = '<span class="text-gray-400">Expression will appear here...</span>';
+                return;
+            }
+            
+            let expressionText = '';
+            let runningSum = 0;
+            
+            currentStep.expression.forEach((item, i) => {
+                if (i === 0) {
+                    expressionText += item.sign === '+' ? item.value : `-${item.value}`;
+                    runningSum = item.sign === '+' ? item.value : -item.value;
+                } else {
+                    expressionText += ` ${item.sign} ${item.value}`;
+                    runningSum = item.sign === '+' ? runningSum + item.value : runningSum - item.value;
+                }
+            });
+            
+            expressionText += ` = ${runningSum}`;
+            
+            if (currentStep.type === 'base') {
+                if (currentStep.found) {
+                    expressionText += ' ✓ (Target reached!)';
+                    container.innerHTML = `<span class="text-green-400">${expressionText}</span>`;
+                } else {
+                    expressionText += ' ✗ (Target not reached)';
+                    container.innerHTML = `<span class="text-red-400">${expressionText}</span>`;
+                }
+            } else {
+                container.innerHTML = `<span class="text-white">${expressionText}</span>`;
+            }
+        }
+
+        function updateMemoTable() {
+            const table = document.getElementById('memoTable');
+            table.innerHTML = '';
+            
+            const keys = Object.keys(memo);
+            if (keys.length === 0) {
+                table.innerHTML = '<tr><td class="text-gray-400">Memoization values will appear here...</td></tr>';
+                return;
+            }
+            
+            // Create header row
+            const headerRow = table.insertRow();
+            headerRow.insertCell().textContent = 'Index';
+            headerRow.insertCell().textContent = 'Sum';
+            headerRow.insertCell().textContent = 'Ways';
+            
+            // Add data rows
+            keys.forEach(key => {
+                const [index, sum] = key.split(',').map(Number);
+                const row = table.insertRow();
+                row.id = `memo-row-${index}-${sum}`;
+                row.insertCell().textContent = index;
+                row.insertCell().textContent = sum;
+                row.insertCell().textContent = memo[key];
+            });
+            
+            // Highlight current step in memo table
+            const currentStep = steps[currentStepIndex];
+            if (currentStep && (currentStep.type === 'memo' || currentStep.type === 'result')) {
+                const key = `${currentStep.index},${currentStep.sum}`;
+                const row = document.getElementById(`memo-row-${currentStep.index}-${currentStep.sum}`);
+                if (row) {
+                    row.classList.add('highlight');
+                }
+            }
+        }
+
+        function updateTreeVisualization() {
+            // Simple tree visualization for the first few levels
+            // In a real application, you would use D3.js for a more interactive tree
+            const container = document.getElementById('treeContainer');
+            container.innerHTML = '<div class="text-gray-400 text-center">Decision tree visualization will be implemented in a future version.</div>';
+        }
+
+        function updateControls() {
+            document.getElementById('currentStep').textContent = currentStepIndex;
+            
+            const currentStep = steps[currentStepIndex];
+            if (currentStep) {
+                document.getElementById('currentIndex').textContent = currentStep.index !== undefined ? currentStep.index : '-';
+                document.getElementById('currentSum').textContent = currentStep.sum !== undefined ? currentStep.sum : '-';
+                
+                // Update pseudo code highlighting
+                updatePseudoCodeHighlight(currentStep);
+            }
+        }
+
+        function updatePseudoCodeHighlight(step) {
+            const code = document.getElementById('pseudoCode');
+            code.innerHTML = code.innerHTML.replace(/class="highlight"/g, '');
+            
+            const lines = code.textContent.split('\n');
+            let highlightLine = -1;
+            
+            switch(step.type) {
+                case 'base':
+                    highlightLine = 2; // return sum === target ? 1 : 0;
+                    break;
+                case 'memo':
+                    highlightLine = 6; // return memo[key];
+                    break;
+                case 'process':
+                    highlightLine = 9; // const addResult = ...
+                    break;
+                case 'result':
+                    highlightLine = 14; // memo[key] = addResult + subtractResult;
+                    break;
+            }
+            
+            if (highlightLine !== -1) {
+                lines[highlightLine] = `<span class="highlight">${lines[highlightLine]}</span>`;
+                code.innerHTML = lines.join('\n');
+            }
+        }
+
+        function startAnimation() {
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    updateArrayVisualization();
+                    updateExpressionDisplay();
+                    updateMemoTable();
+                    updateControls();
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateArrayVisualization();
+                updateExpressionDisplay();
+                updateMemoTable();
+                updateControls();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateArrayVisualization();
+                updateExpressionDisplay();
+                updateMemoTable();
+                updateControls();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = `${speed}ms`;
+            if (animationInterval) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load with a small delay to ensure DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initialize, 100);
+        });
+    </script>
+</body>
+</html> 

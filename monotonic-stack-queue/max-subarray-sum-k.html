@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Subarray Sum of Size K</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 18px;
+            position: relative;
+        }
+        .array-element.current {
+            background-color: #eab308;
+        }
+        .array-element.window {
+            background-color: #8b5cf6;
+        }
+        .array-element.max {
+            background-color: #22c55e;
+        }
+        .array-element::after {
+            content: attr(data-index);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .window-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Maximum Subarray Sum of Size K</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the maximum sum among all possible subarrays of size K using a sliding window approach.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input Array</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="arrayInput" value="2,1,5,1,3,2" 
+                                    class="flex-1 px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400"
+                                    placeholder="Enter comma-separated numbers">
+                                <button onclick="applyCustomArray()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">Example: 2,1,5,1,3,2</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Window Size (K)</label>
+                            <input type="number" id="windowSize" value="3" min="1" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                onchange="validateWindowSize()">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="generateNewArray()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            New Array
+                        </button>
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Array Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Array</h3>
+                    <div id="arrayContainer" class="flex flex-wrap justify-center gap-2"></div>
+                </div>
+
+                <!-- Window Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current Window</h3>
+                    <div id="windowInfo" class="window-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Maximum Sum: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function maxSubarraySumK(arr, k):</span>
+<span class="code-line" data-line="2">    if arr.length < k: return 0</span>
+<span class="code-line" data-line="3">    // Calculate first window sum</span>
+<span class="code-line" data-line="4">    windowSum = 0</span>
+<span class="code-line" data-line="5">    for i = 0 to k-1:</span>
+<span class="code-line" data-line="6">        windowSum += arr[i]</span>
+<span class="code-line" data-line="7">    maxSum = windowSum</span>
+<span class="code-line" data-line="8">    // Slide window and update max</span>
+<span class="code-line" data-line="9">    for i = k to n-1:</span>
+<span class="code-line" data-line="10">        windowSum += arr[i] - arr[i-k]</span>
+<span class="code-line" data-line="11">        maxSum = max(maxSum, windowSum)</span>
+<span class="code-line" data-line="12">    return maxSum</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) as we only store the window sum and max sum</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Computing sum of first k elements
+                                <br>2. Sliding window one position at a time:
+                                <br>&nbsp;&nbsp;&nbsp;- Add next element
+                                <br>&nbsp;&nbsp;&nbsp;- Remove first element of previous window
+                                <br>&nbsp;&nbsp;&nbsp;- Update maximum sum if current sum is larger
+                                <br>3. Return the maximum sum found
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let windowSize = 3;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function generateNewArray() {
+            const size = Math.floor(Math.random() * 4) + 8; // 8-11 elements
+            array = Array(size).fill().map(() => Math.floor(Math.random() * 20)); // 0 to 19
+            document.getElementById('arrayInput').value = array.join(',');
+            createArrayElements();
+            resetVisualization();
+        }
+
+        function validateWindowSize() {
+            const input = document.getElementById('windowSize');
+            let k = parseInt(input.value);
+            if (k < 1) k = 1;
+            if (k > array.length) k = array.length;
+            input.value = k;
+            windowSize = k;
+            resetVisualization();
+        }
+
+        function applyCustomArray() {
+            const input = document.getElementById('arrayInput').value;
+            const numbers = input.split(',').map(n => parseInt(n.trim()));
+            
+            if (numbers.length < 2) {
+                alert('Please enter at least 2 numbers');
+                return;
+            }
+            
+            if (numbers.some(n => isNaN(n))) {
+                alert('Please enter valid numbers');
+                return;
+            }
+            
+            array = numbers;
+            validateWindowSize();
+            createArrayElements();
+            resetVisualization();
+        }
+
+        function createArrayElements() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            array.forEach((num, idx) => {
+                const element = document.createElement('div');
+                element.className = 'array-element';
+                element.id = `element-${idx}`;
+                element.textContent = num;
+                element.setAttribute('data-index', idx);
+                container.appendChild(element);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = array.length;
+            let windowSum = 0;
+            let maxSum = 0;
+
+            // Initial state
+            steps.push({
+                type: 'init',
+                windowStart: -1,
+                windowEnd: -1,
+                windowSum: 0,
+                maxSum: maxSum,
+                description: 'Starting the algorithm',
+                codeLine: 1
+            });
+
+            // Check array length
+            if (n < windowSize) {
+                steps.push({
+                    type: 'invalid',
+                    windowStart: -1,
+                    windowEnd: -1,
+                    windowSum: 0,
+                    maxSum: 0,
+                    description: 'Array length is less than window size',
+                    codeLine: 2
+                });
+                return;
+            }
+
+            // Calculate first window sum
+            for (let i = 0; i < windowSize; i++) {
+                windowSum += array[i];
+                steps.push({
+                    type: 'init_window',
+                    windowStart: 0,
+                    windowEnd: i,
+                    windowSum: windowSum,
+                    maxSum: maxSum,
+                    description: `Adding ${array[i]} to initial window sum`,
+                    codeLine: 6
+                });
+            }
+
+            maxSum = windowSum;
+            steps.push({
+                type: 'max_update',
+                windowStart: 0,
+                windowEnd: windowSize - 1,
+                windowSum: windowSum,
+                maxSum: maxSum,
+                description: `Setting initial maximum sum to ${maxSum}`,
+                codeLine: 7
+            });
+
+            // Slide window
+            for (let i = windowSize; i < n; i++) {
+                const removing = array[i - windowSize];
+                const adding = array[i];
+                windowSum = windowSum - removing + adding;
+                
+                steps.push({
+                    type: 'slide',
+                    windowStart: i - windowSize + 1,
+                    windowEnd: i,
+                    windowSum: windowSum,
+                    maxSum: maxSum,
+                    removing: i - windowSize,
+                    adding: i,
+                    description: `Sliding window: removing ${removing}, adding ${adding}, new sum: ${windowSum}`,
+                    codeLine: 10
+                });
+
+                if (windowSum > maxSum) {
+                    maxSum = windowSum;
+                    steps.push({
+                        type: 'max_update',
+                        windowStart: i - windowSize + 1,
+                        windowEnd: i,
+                        windowSum: windowSum,
+                        maxSum: maxSum,
+                        description: `New maximum sum found: ${maxSum}`,
+                        codeLine: 11
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'complete',
+                windowStart: -1,
+                windowEnd: -1,
+                windowSum: windowSum,
+                maxSum: maxSum,
+                description: `Algorithm complete. Maximum sum: ${maxSum}`,
+                codeLine: 12
+            });
+        }
+
+        function startVisualization() {
+            if (array.length === 0) {
+                alert('Please generate or enter an array first');
+                return;
+            }
+
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Maximum Sum: 0';
+            document.getElementById('windowInfo').textContent = '';
+            highlightCodeLine(1);
+            createArrayElements();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            const elements = document.querySelectorAll('.array-element');
+            elements.forEach(element => {
+                element.className = 'array-element';
+            });
+
+            // Update window visualization
+            if (step.windowStart >= 0 && step.windowEnd >= 0) {
+                for (let i = step.windowStart; i <= step.windowEnd; i++) {
+                    document.getElementById(`element-${i}`).classList.add('window');
+                }
+            }
+
+            // Highlight elements being added/removed
+            if (step.type === 'slide') {
+                document.getElementById(`element-${step.removing}`).classList.add('current');
+                document.getElementById(`element-${step.adding}`).classList.add('current');
+            }
+
+            // Update window info
+            let windowInfo = '';
+            if (step.windowStart >= 0 && step.windowEnd >= 0) {
+                const windowElements = array.slice(step.windowStart, step.windowEnd + 1);
+                windowInfo = `Window [${step.windowStart}..${step.windowEnd}]: [${windowElements.join(', ')}]
+                    \nCurrent Sum: ${step.windowSum}`;
+            }
+            document.getElementById('windowInfo').textContent = windowInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            document.getElementById('result').textContent = `Maximum Sum: ${step.maxSum}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            generateNewArray();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

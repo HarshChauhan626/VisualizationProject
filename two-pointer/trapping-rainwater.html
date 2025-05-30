@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Trapping Rain Water Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-blue-50 min-h-screen flex flex-col items-center p-6">
+
+    <h1 class="text-4xl font-bold text-blue-700 mb-4 flex items-center">
+        <span class="mr-2">💧</span> Trapping Rain Water Visualizer
+    </h1>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg mb-6 w-full max-w-4xl text-gray-800">
+        <h2 class="text-2xl font-bold mb-2">🧩 Problem Statement</h2>
+        <p class="mb-4">
+            Given n non-negative integers representing an elevation map where the width of each bar is 1, compute how
+            much water it can trap after raining.
+        </p>
+        <h3 class="text-xl font-semibold mb-2">Example:</h3>
+        <pre class="bg-gray-100 p-4 rounded-lg text-sm">
+Input:  height = [0,1,0,2,1,0,1,3,2,1,2,1]
+Output: 6
+
+Explanation:
+- Water trapped at index 2 = 1 unit
+- Water trapped at index 4 = 1 unit
+- Water trapped at index 5 = 2 units
+- Water trapped at index 6 = 1 unit
+- Water trapped at index 9 = 1 unit
+Total = 6 units
+        </pre>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg mb-6 w-full max-w-2xl">
+        <label class="block mb-2 text-lg font-semibold">Input Heights (comma-separated):</label>
+        <input id="inputArray" class="w-full p-2 rounded-md border mb-4" value="0,1,0,2,1,0,1,3,2,1,2,1" />
+
+        <div class="flex justify-center gap-4 mb-4">
+            <button onclick="selectApproach('bruteForce')"
+                class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-full">Brute
+                Force</button>
+            <button onclick="selectApproach('dp')"
+                class="bg-purple-400 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-full">Dynamic
+                Programming</button>
+            <button onclick="selectApproach('twoPointer')"
+                class="bg-blue-400 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full">Two Pointer</button>
+        </div>
+    </div>
+
+    <div id="visualizer"
+        class="flex items-end justify-center bg-white rounded-2xl p-6 mb-6 h-[250px] w-full max-w-4xl overflow-x-auto">
+    </div>
+
+    <div class="flex justify-center gap-4 mb-6">
+        <button onclick="prevStep()" class="bg-blue-300 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded-full">⏮
+            Prev</button>
+        <button onclick="togglePlay()" id="playButton"
+            class="bg-green-400 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-full">▶️ Play</button>
+        <button onclick="nextStep()" class="bg-blue-300 hover:bg-blue-400 text-white font-bold py-2 px-4 rounded-full">⏭
+            Next</button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
+
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold mb-2">📜 Pseudocode</h2>
+            <pre id="code" class="whitespace-pre-wrap text-sm"></pre>
+            <div id="complexity" class="mt-4 text-gray-700 font-medium"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold mb-2">🧠 Step-by-Step Explanation</h2>
+            <div id="stepExplanation" class="text-sm text-gray-700"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let heights = [];
+        let currentStep = 0;
+        let steps = [];
+        let playing = false;
+        let playInterval = null;
+        let currentAlgorithm = '';
+
+        function createBars(heights, highlight = {}) {
+            const container = document.getElementById('visualizer');
+            container.innerHTML = '';
+            const maxHeight = Math.max(...heights);
+            const scaleFactor = 200 / (maxHeight || 1);
+
+            heights.forEach((h, idx) => {
+                const bar = document.createElement('div');
+                bar.style.height = `${h * scaleFactor}px`;
+                bar.style.width = '20px';
+                bar.style.margin = '0 3px';
+                bar.className = 'rounded-t-md';
+
+                if (highlight.hasOwnProperty('left') && idx === highlight.left) {
+                    bar.style.backgroundColor = '#f97316'; // Orange for left
+                } else if (highlight.hasOwnProperty('right') && idx === highlight.right) {
+                    bar.style.backgroundColor = '#60a5fa'; // Blue for right
+                } else if (highlight.hasOwnProperty('final') && highlight.final.includes(idx)) {
+                    bar.style.backgroundColor = '#10b981'; // Green for final trapped water
+                } else if (highlight.hasOwnProperty('index') && idx === highlight.index) {
+                    bar.style.backgroundColor = '#a855f7'; // Purple for current index (Brute Force/DP)
+                }
+                 else {
+                    bar.style.backgroundColor = '#d1d5db';
+                }
+                container.appendChild(bar);
+            });
+        }
+
+        function selectApproach(approach) {
+            const input = document.getElementById('inputArray').value.trim();
+            heights = input.split(',').map(Number);
+            currentAlgorithm = approach;
+            steps = [];
+            currentStep = 0;
+            playing = false;
+            clearInterval(playInterval);
+            document.getElementById('playButton').textContent = '▶️ Play';
+
+            if (approach === 'bruteForce') bruteForce();
+            else if (approach === 'dp') dynamicProgramming();
+            else if (approach === 'twoPointer') twoPointer();
+
+            createBars(heights);
+            showPseudoCode(approach);
+            showStepExplanation('');
+        }
+
+        function bruteForce() {
+            let n = heights.length;
+            for (let i = 0; i < n; i++) {
+                let leftMax = 0, rightMax = 0;
+                for (let j = 0; j <= i; j++) leftMax = Math.max(leftMax, heights[j]);
+                for (let j = i; j < n; j++) rightMax = Math.max(rightMax, heights[j]);
+                const trapped = Math.min(leftMax, rightMax) - heights[i];
+                steps.push({
+                    highlight: { index: i },
+                    note: `At index ${i}: leftMax=${leftMax}, rightMax=${rightMax}, trapped=${trapped > 0 ? trapped : 0}`
+                });
+            }
+        }
+
+        function dynamicProgramming() {
+            let n = heights.length;
+            const leftMax = new Array(n).fill(0);
+            const rightMax = new Array(n).fill(0);
+            leftMax[0] = heights[0];
+            for (let i = 1; i < n; i++) leftMax[i] = Math.max(leftMax[i - 1], heights[i]);
+            rightMax[n - 1] = heights[n - 1];
+            for (let i = n - 2; i >= 0; i--) rightMax[i] = Math.max(rightMax[i + 1], heights[i]);
+
+            for (let i = 0; i < n; i++) {
+                const trapped = Math.min(leftMax[i], rightMax[i]) - heights[i];
+                steps.push({
+                    highlight: { index: i },
+                    note: `At index ${i}: leftMax=${leftMax[i]}, rightMax=${rightMax[i]}, trapped=${trapped > 0 ? trapped : 0}`
+                });
+            }
+        }
+
+        function twoPointer() {
+            let left = 0, right = heights.length - 1, leftMax = 0, rightMax = 0;
+            let trappedWaterIndices = new Array(heights.length).fill(null);
+
+            while (left <= right) {
+                steps.push({ highlight: { left: left, right: right } });
+
+                if (heights[left] < heights[right]) {
+                    if (heights[left] >= leftMax) {
+                        leftMax = heights[left];
+                        steps.push({ highlight: { left: left, right: right }, note: `Left pointer at ${left}, leftMax updated to ${leftMax}` });
+                    } else {
+                        const trapped = leftMax - heights[left];
+                        if (trapped > 0) trappedWaterIndices[left] = trapped;
+                        steps.push({ highlight: { left: left, right: right }, note: `Water trapped at left (${left}): ${trapped}` });
+                    }
+                    left++;
+                } else {
+                    if (heights[right] >= rightMax) {
+                        rightMax = heights[right];
+                        steps.push({ highlight: { left: left, right: right }, note: `Right pointer at ${right}, rightMax updated to ${rightMax}` });
+                    } else {
+                        const trapped = rightMax - heights[right];
+                        if (trapped > 0) trappedWaterIndices[right] = trapped;
+                        steps.push({ highlight: { left: left, right: right }, note: `Water trapped at right (${right}): ${trapped}` });
+                    }
+                    right--;
+                }
+            }
+
+            steps.push({ highlight: { final: trappedWaterIndices.reduce((acc, val, idx) => (val !== null ? [...acc, idx] : acc), []) }, note: "Final trapped water." });
+        }
+
+
+        function showPseudoCode(approach) {
+            const code = document.getElementById('code');
+            const complexity = document.getElementById('complexity');
+            if (approach === 'bruteForce') {
+                code.textContent = `For each element:
+  Find maximum on the left
+  Find maximum on the right
+  Water trapped = min(leftMax, rightMax) - height[i]`;
+                complexity.innerHTML = `<b>Time Complexity:</b> O(n²) <br><b>Space Complexity:</b> O(1)`;
+            } else if (approach === 'dp') {
+                code.textContent = `Precompute leftMax[] and rightMax[]
+For each element:
+  Water trapped = min(leftMax[i], rightMax[i]) - height[i]`;
+                complexity.innerHTML = `<b>Time Complexity:</b> O(n) <br><b>Space Complexity:</b> O(n)`;
+            } else if (approach === 'twoPointer') {
+                code.textContent = `Initialize left = 0, right = n-1, leftMax = 0, rightMax = 0
+While left <= right:
+  Highlight left (orange) and right (blue) pointers
+  If height[left] < height[right]:
+    If height[left] >= leftMax, update leftMax
+    Else, add leftMax - height[left] to total water
+    Increment left
+  Else:
+    If height[right] >= rightMax, update rightMax
+    Else, add rightMax - height[right] to total water
+    Decrement right
+Highlight final trapped water in green`;
+                complexity.innerHTML = `<b>Time Complexity:</b> O(n) <br><b>Space Complexity:</b> O(1)`;
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < steps.length) {
+                createBars(heights, steps[currentStep].highlight);
+                showStepExplanation(steps[currentStep].note || '');
+                currentStep++;
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep -= 2;
+                nextStep();
+            } else if (currentStep === 1) {
+                currentStep = 0;
+                createBars(heights);
+                showStepExplanation('');
+            }
+        }
+
+        function togglePlay() {
+            if (!playing) {
+                playing = true;
+                document.getElementById('playButton').textContent = '⏸️ Pause';
+                playInterval = setInterval(() => {
+                    if (currentStep >= steps.length) {
+                        clearInterval(playInterval);
+                        playing = false;
+                        document.getElementById('playButton').textContent = '▶️ Play';
+                    } else {
+                        nextStep();
+                    }
+                }, 1000);
+            } else {
+                playing = false;
+                document.getElementById('playButton').textContent = '▶️ Play';
+                clearInterval(playInterval);
+            }
+        }
+
+        function showStepExplanation(text) {
+            document.getElementById('stepExplanation').textContent = text;
+        }
+
+    </script>
+
+</body>
+
+</html>

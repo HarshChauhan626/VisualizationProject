@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radix Sort Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-bar {
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            margin: 0 1px;
+            border-radius: 2px 2px 0 0;
+            position: relative;
+        }
+        .array-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #e2e8f0;
+        }
+        .array-bar::before {
+            content: attr(data-current-digit);
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #fbbf24;
+            font-weight: bold;
+        }
+        .counting {
+            background-color: #ef4444;
+        }
+        .placing {
+            background-color: #eab308;
+        }
+        .sorted {
+            background-color: #22c55e;
+        }
+        .bucket-bar {
+            transition: all 0.3s ease-in-out;
+            background-color: #9333ea;
+            margin: 0 1px;
+            border-radius: 2px 2px 0 0;
+            position: relative;
+        }
+        .bucket-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        input[type="range"] {
+            background-color: #1e293b;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .bucket-container {
+            border: 1px dashed #4b5563;
+            padding: 8px;
+            margin: 4px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .bucket-label {
+            color: #9333ea;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Problems</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Radix Sort Visualization</h1>
+        <p class="text-gray-300 mb-8">Watch how radix sort processes each digit position from least significant to most significant digit.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Controls Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Array Size</label>
+                            <input type="range" min="4" max="50" value="16" class="w-full" id="arraySizeSlider">
+                            <span id="arraySizeValue" class="text-sm">16</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                            <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                            <span id="speedValue" class="text-sm">50ms</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Custom Input Array</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="customArray" placeholder="Enter comma-separated numbers (0-999)" 
+                                    class="flex-1 px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                                <button onclick="applyCustomArray()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="generateNewArray()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            New Array
+                        </button>
+                        <button onclick="startSorting()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" id="sortButton">
+                            Start Sorting
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Array Display -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-sm font-medium mb-2">Current Array</h3>
+                    <p id="currentArray" class="text-gray-300 break-all"></p>
+                </div>
+
+                <!-- Visualization Area -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div id="arrayContainer" class="h-[200px] flex items-end justify-center">
+                        <!-- Array bars will be generated here -->
+                    </div>
+                    <div id="bucketsContainer" class="mt-8 grid grid-cols-5 gap-2">
+                        <!-- Buckets (0-9) will be generated here -->
+                    </div>
+                    <div class="flex justify-center space-x-4 mt-6">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Pause
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">procedure radixSort(arr):</span>
+<span class="code-line" data-line="2">    max = findMax(arr)</span>
+<span class="code-line" data-line="3">    // Do counting sort for each digit</span>
+<span class="code-line" data-line="4">    for exp = 1; max/exp > 0; exp *= 10:</span>
+<span class="code-line" data-line="5">        countingSortByDigit(arr, exp)</span>
+<span class="code-line" data-line="6">
+procedure countingSortByDigit(arr, exp):</span>
+<span class="code-line" data-line="7">    n = arr.length</span>
+<span class="code-line" data-line="8">    output = new array[n]</span>
+<span class="code-line" data-line="9">    count = new array[10] // 0-9 digits</span>
+<span class="code-line" data-line="10">    // Store count of occurrences</span>
+<span class="code-line" data-line="11">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="12">        digit = (arr[i]/exp) % 10</span>
+<span class="code-line" data-line="13">        count[digit]++</span>
+<span class="code-line" data-line="14">    // Calculate cumulative count</span>
+<span class="code-line" data-line="15">    for i = 1 to 9:</span>
+<span class="code-line" data-line="16">        count[i] += count[i-1]</span>
+<span class="code-line" data-line="17">    // Build output array</span>
+<span class="code-line" data-line="18">    for i = n-1 to 0:</span>
+<span class="code-line" data-line="19">        digit = (arr[i]/exp) % 10</span>
+<span class="code-line" data-line="20">        output[count[digit]-1] = arr[i]</span>
+<span class="code-line" data-line="21">        count[digit]--</span>
+<span class="code-line" data-line="22">    // Copy output array to arr</span>
+<span class="code-line" data-line="23">    for i = 0 to n-1:</span>
+<span class="code-line" data-line="24">        arr[i] = output[i]</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">
+                                - Best Case: O(nk)<br>
+                                - Average Case: O(nk)<br>
+                                - Worst Case: O(nk)<br>
+                                where k is the number of digits in the largest number
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n + k) - Additional space for output array and count array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                Radix Sort is a non-comparative sorting algorithm that sorts integers by processing each 
+                                digit position, starting from the least significant digit (rightmost) to the most 
+                                significant digit (leftmost). For each digit position, it uses counting sort as a 
+                                subroutine to sort the numbers based on that digit. The process continues until all 
+                                digits have been processed, resulting in a fully sorted array.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let array = [];
+        let arrayBars = [];
+        let isSorting = false;
+        let isPlaying = false;
+        let currentStepIndex = -1;
+        let sortingSteps = [];
+        let animationInterval = null;
+        const DEFAULT_ANIMATION_SPEED = 500;
+
+        function init() {
+            generateNewArray();
+            setupEventListeners();
+            initializeBuckets();
+        }
+
+        function setupEventListeners() {
+            const arraySizeSlider = document.getElementById('arraySizeSlider');
+            const speedSlider = document.getElementById('speedSlider');
+
+            arraySizeSlider.addEventListener('input', function() {
+                document.getElementById('arraySizeValue').textContent = this.value;
+                if (!isSorting) generateNewArray();
+            });
+
+            speedSlider.addEventListener('input', function() {
+                document.getElementById('speedValue').textContent = this.value + 'ms';
+                if (isPlaying && animationInterval) {
+                    startAnimation();
+                }
+            });
+        }
+
+        function initializeBuckets() {
+            const container = document.getElementById('bucketsContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 10; i++) {
+                const bucket = document.createElement('div');
+                bucket.className = 'bucket-container';
+                bucket.innerHTML = `
+                    <div class="bucket-label">Digit ${i}</div>
+                    <div id="bucket-${i}" class="flex items-end justify-center flex-wrap">
+                    </div>
+                `;
+                container.appendChild(bucket);
+            }
+        }
+
+        function generateNewArray() {
+            const size = parseInt(document.getElementById('arraySizeSlider').value);
+            array = Array(size).fill().map(() => Math.floor(Math.random() * 1000));
+            displayArray();
+            resetSorting();
+            updateCurrentArrayDisplay();
+        }
+
+        function displayArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            const barWidth = Math.max(2, Math.min(20, Math.floor(container.offsetWidth / array.length) - 2));
+            
+            array.forEach((value, idx) => {
+                const bar = document.createElement('div');
+                bar.className = 'array-bar';
+                bar.style.height = `${value * 0.2}px`;
+                bar.style.width = `${barWidth}px`;
+                bar.setAttribute('data-value', value);
+                container.appendChild(bar);
+            });
+            
+            arrayBars = document.getElementsByClassName('array-bar');
+            clearBuckets();
+        }
+
+        function clearBuckets() {
+            for (let i = 0; i < 10; i++) {
+                document.getElementById(`bucket-${i}`).innerHTML = '';
+            }
+        }
+
+        function updateCurrentArrayDisplay() {
+            const display = document.getElementById('currentArray');
+            display.textContent = `[${array.join(', ')}]`;
+        }
+
+        function applyCustomArray() {
+            const input = document.getElementById('customArray').value;
+            const customArray = input.split(',')
+                .map(num => parseInt(num.trim()))
+                .filter(num => !isNaN(num) && num >= 0 && num <= 999);
+            
+            if (customArray.length < 2) {
+                alert('Please enter at least 2 valid numbers between 0 and 999');
+                return;
+            }
+            
+            array = customArray;
+            displayArray();
+            resetSorting();
+            updateCurrentArrayDisplay();
+        }
+
+        function getDigit(num, exp) {
+            return Math.floor(num / exp) % 10;
+        }
+
+        function generateSortingSteps() {
+            sortingSteps = [];
+            const n = array.length;
+            const max = Math.max(...array);
+            
+            // Initial state
+            sortingSteps.push({
+                array: [...array],
+                buckets: Array(10).fill().map(() => []),
+                comparing: [],
+                placing: [],
+                sorted: [],
+                currentDigit: null,
+                exp: 1,
+                description: 'Starting Radix Sort',
+                codeLine: 1
+            });
+
+            // Process each digit
+            for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
+                const count = new Array(10).fill(0);
+                const output = new Array(n).fill(0);
+                const buckets = Array(10).fill().map(() => []);
+
+                // Count occurrences of each digit
+                for (let i = 0; i < n; i++) {
+                    const digit = getDigit(array[i], exp);
+                    count[digit]++;
+                    buckets[digit].push(array[i]);
+                    
+                    sortingSteps.push({
+                        array: [...array],
+                        buckets: JSON.parse(JSON.stringify(buckets)),
+                        comparing: [i],
+                        placing: [],
+                        sorted: [],
+                        currentDigit: digit,
+                        exp: exp,
+                        description: `Counting digit ${digit} from number ${array[i]}`,
+                        codeLine: 13
+                    });
+                }
+
+                // Calculate cumulative count
+                for (let i = 1; i < 10; i++) {
+                    count[i] += count[i - 1];
+                    sortingSteps.push({
+                        array: [...array],
+                        buckets: JSON.parse(JSON.stringify(buckets)),
+                        comparing: [],
+                        placing: [i],
+                        sorted: [],
+                        currentDigit: null,
+                        exp: exp,
+                        description: `Calculating cumulative count for digit ${i}`,
+                        codeLine: 16
+                    });
+                }
+
+                // Build output array
+                for (let i = n - 1; i >= 0; i--) {
+                    const digit = getDigit(array[i], exp);
+                    output[count[digit] - 1] = array[i];
+                    count[digit]--;
+                    
+                    const newBuckets = Array(10).fill().map(() => []);
+                    for (let j = 0; j < n; j++) {
+                        if (j < count[digit]) {
+                            newBuckets[digit].push(output[j]);
+                        }
+                    }
+                    
+                    sortingSteps.push({
+                        array: [...array],
+                        buckets: JSON.parse(JSON.stringify(newBuckets)),
+                        comparing: [i],
+                        placing: [count[digit]],
+                        sorted: [],
+                        currentDigit: digit,
+                        exp: exp,
+                        description: `Placing ${array[i]} in position ${count[digit]}`,
+                        codeLine: 20
+                    });
+                }
+
+                // Copy output array to original array
+                for (let i = 0; i < n; i++) {
+                    array[i] = output[i];
+                    sortingSteps.push({
+                        array: [...array],
+                        buckets: Array(10).fill().map(() => []),
+                        comparing: [],
+                        placing: [],
+                        sorted: exp === Math.pow(10, Math.floor(Math.log10(max))) ? Array.from({length: i + 1}, (_, idx) => idx) : [],
+                        currentDigit: null,
+                        exp: exp,
+                        description: `Copying sorted element ${output[i]} back to original array`,
+                        codeLine: 24
+                    });
+                }
+            }
+
+            // Final state
+            sortingSteps.push({
+                array: [...array],
+                buckets: Array(10).fill().map(() => []),
+                comparing: [],
+                placing: [],
+                sorted: Array.from({length: n}, (_, idx) => idx),
+                currentDigit: null,
+                exp: null,
+                description: 'Array is sorted',
+                codeLine: 1
+            });
+        }
+
+        function displayBuckets(buckets) {
+            clearBuckets();
+            const barWidth = 10;
+            
+            buckets.forEach((bucket, digit) => {
+                const bucketContainer = document.getElementById(`bucket-${digit}`);
+                bucket.forEach(value => {
+                    const bar = document.createElement('div');
+                    bar.className = 'bucket-bar';
+                    bar.style.height = `${value * 0.2}px`;
+                    bar.style.width = `${barWidth}px`;
+                    bar.setAttribute('data-value', value);
+                    bucketContainer.appendChild(bar);
+                });
+            });
+        }
+
+        function startSorting() {
+            if (isSorting) return;
+            isSorting = true;
+            isPlaying = true;
+            generateSortingSteps();
+            toggleControls(true);
+            currentStepIndex = -1;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < sortingSteps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= sortingSteps.length - 1) {
+                isSorting = false;
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(sortingSteps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < sortingSteps.length - 1) {
+                currentStepIndex++;
+                applyStep(sortingSteps[currentStepIndex]);
+                updateControlButtons();
+            } else if (currentStepIndex === sortingSteps.length - 1) {
+                stopAnimation();
+            }
+        }
+
+        function applyStep(step) {
+            // Update array bars
+            for (let i = 0; i < arrayBars.length; i++) {
+                arrayBars[i].style.height = `${step.array[i] * 0.2}px`;
+                arrayBars[i].className = 'array-bar';
+                arrayBars[i].setAttribute('data-value', step.array[i]);
+                
+                if (step.exp) {
+                    arrayBars[i].setAttribute('data-current-digit', getDigit(step.array[i], step.exp));
+                } else {
+                    arrayBars[i].removeAttribute('data-current-digit');
+                }
+                
+                if (step.sorted.includes(i)) {
+                    arrayBars[i].classList.add('sorted');
+                }
+                if (step.comparing.includes(i)) {
+                    arrayBars[i].classList.add('counting');
+                }
+                if (step.placing.includes(i)) {
+                    arrayBars[i].classList.add('placing');
+                }
+            }
+
+            // Update buckets display
+            displayBuckets(step.buckets);
+
+            // Update current array display
+            array = [...step.array];
+            updateCurrentArrayDisplay();
+
+            // Update description and code highlighting
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= sortingSteps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= sortingSteps.length - 1;
+        }
+
+        function toggleControls(disabled) {
+            document.getElementById('arraySizeSlider').disabled = disabled;
+            document.getElementById('sortButton').disabled = disabled;
+            document.getElementById('prevButton').disabled = !disabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !disabled || currentStepIndex >= sortingSteps.length - 1;
+            document.getElementById('playPauseButton').disabled = !disabled;
+            const generateButton = document.querySelector('button');
+            generateButton.disabled = disabled;
+        }
+
+        function resetSorting() {
+            isSorting = false;
+            isPlaying = false;
+            currentStepIndex = -1;
+            sortingSteps = [];
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            updateControlButtons();
+            highlightCodeLine(1);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            clearBuckets();
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isSorting) displayArray();
+        });
+
+        // Initialize on page load
+        window.onload = init;
+    </script>
+</body>
+</html> 

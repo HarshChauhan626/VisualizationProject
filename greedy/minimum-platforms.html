@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Platforms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .train {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 4px 0;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 14px;
+            position: relative;
+        }
+        .train.arrival {
+            background-color: #22c55e;
+        }
+        .train.departure {
+            background-color: #ef4444;
+        }
+        .train.current {
+            box-shadow: 0 0 0 3px #f59e0b;
+        }
+        .train-label {
+            position: absolute;
+            left: -40px;
+            width: 30px;
+            text-align: right;
+        }
+        .platform {
+            margin: 10px 0;
+            padding: 5px;
+            border-radius: 4px;
+            background-color: #4b5563;
+        }
+        .platform-label {
+            font-family: monospace;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .timeline {
+            height: 2px;
+            background-color: #94a3b8;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+        }
+        .tick {
+            position: absolute;
+            width: 1px;
+            height: 10px;
+            background-color: #94a3b8;
+            top: 0;
+        }
+        .tick-label {
+            position: absolute;
+            font-size: 10px;
+            color: #94a3b8;
+            top: 12px;
+            transform: translateX(-50%);
+        }
+        .time-marker {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background-color: #f59e0b;
+            z-index: 5;
+        }
+        .train-container {
+            position: relative;
+            margin-left: 50px;
+            margin-right: 20px;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Minimum Platforms</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum number of platforms required at a railway station.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Arrival Times (24-hour format)</label>
+                            <input type="text" id="arrivalInput" value="900,940,950,1100,1500,1800" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter arrival times as comma-separated values">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Departure Times (24-hour format)</label>
+                            <input type="text" id="departureInput" value="910,1200,1120,1130,1900,2000" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter departure times as comma-separated values">
+                            <div class="text-xs text-gray-400 mt-1">Format: time in 24-hour format (e.g., 900 for 9:00 AM, 1430 for 2:30 PM)</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Timeline Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Train Schedule</h3>
+                    <div id="trainTimeline" class="mb-2 relative h-10">
+                        <div class="timeline"></div>
+                    </div>
+                    <div id="trainSchedule" class="train-container"></div>
+                </div>
+
+                <!-- Platform Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Platforms</h3>
+                    <div id="platforms" class="platforms-container"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Minimum Platforms: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function findMinPlatforms(arr, dep, n):</span>
+<span class="code-line" data-line="2">    # Sort arrival and departure arrays</span>
+<span class="code-line" data-line="3">    arr.sort()</span>
+<span class="code-line" data-line="4">    dep.sort()</span>
+<span class="code-line" data-line="5">    </span>
+<span class="code-line" data-line="6">    platforms_needed = 1</span>
+<span class="code-line" data-line="7">    max_platforms = 1</span>
+<span class="code-line" data-line="8">    i = 1  # pointer for arrival</span>
+<span class="code-line" data-line="9">    j = 0  # pointer for departure</span>
+<span class="code-line" data-line="10">    </span>
+<span class="code-line" data-line="11">    while i < n and j < n:</span>
+<span class="code-line" data-line="12">        # If next event is arrival</span>
+<span class="code-line" data-line="13">        if arr[i] <= dep[j]:</span>
+<span class="code-line" data-line="14">            platforms_needed += 1</span>
+<span class="code-line" data-line="15">            i += 1</span>
+<span class="code-line" data-line="16">        # If next event is departure</span>
+<span class="code-line" data-line="17">        else:</span>
+<span class="code-line" data-line="18">            platforms_needed -= 1</span>
+<span class="code-line" data-line="19">            j += 1</span>
+<span class="code-line" data-line="20">        </span>
+<span class="code-line" data-line="21">        max_platforms = max(max_platforms, platforms_needed)</span>
+<span class="code-line" data-line="22">    </span>
+<span class="code-line" data-line="23">    return max_platforms</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n log n) where n is the number of trains, due to sorting</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) extra space (not counting input)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Sorting arrival and departure times separately
+                                <br>2. Using two pointers to process events chronologically
+                                <br>3. If next event is an arrival, we need one more platform
+                                <br>4. If next event is a departure, we free up one platform
+                                <br>5. Track the maximum platforms needed at any point
+                                <br><br>This approach works because we're essentially counting the maximum number of trains that overlap at any point in time.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let arrivals = [];
+        let departures = [];
+        let trainDetails = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let minTime = 0;
+        let maxTime = 2400;
+
+        function formatTime(time) {
+            const hours = Math.floor(time / 100);
+            const minutes = time % 100;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+
+        function applyInputs() {
+            const arrivalInput = document.getElementById('arrivalInput').value;
+            const departureInput = document.getElementById('departureInput').value;
+            try {
+                arrivals = arrivalInput.split(',').map(Number);
+                departures = departureInput.split(',').map(Number);
+                
+                if (arrivals.length !== departures.length) {
+                    throw new Error('Arrival and departure times must have the same length');
+                }
+                
+                if (arrivals.some(isNaN) || departures.some(isNaN)) {
+                    throw new Error('All times must be numbers');
+                }
+                
+                // Create train details
+                trainDetails = [];
+                for (let i = 0; i < arrivals.length; i++) {
+                    trainDetails.push({
+                        id: i,
+                        arrival: arrivals[i],
+                        departure: departures[i]
+                    });
+                }
+                
+                // Find min and max times for visualization
+                minTime = Math.min(...arrivals, ...departures);
+                maxTime = Math.max(...arrivals, ...departures);
+                
+                createTrainVisualization();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid times: ' + error.message);
+            }
+        }
+
+        function createTrainVisualization() {
+            const scheduleDiv = document.getElementById('trainSchedule');
+            scheduleDiv.innerHTML = '';
+            
+            const timelineDiv = document.getElementById('trainTimeline');
+            timelineDiv.innerHTML = '<div class="timeline"></div>';
+            
+            // Create timeline ticks
+            const range = maxTime - minTime;
+            const step = Math.max(100, Math.ceil(range / 10));
+            
+            for (let i = Math.floor(minTime / 100) * 100; i <= maxTime; i += step) {
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = `${((i - minTime) / range) * 100}%`;
+                
+                const tickLabel = document.createElement('div');
+                tickLabel.className = 'tick-label';
+                tickLabel.textContent = formatTime(i);
+                tickLabel.style.left = `${((i - minTime) / range) * 100}%`;
+                
+                timelineDiv.appendChild(tick);
+                timelineDiv.appendChild(tickLabel);
+            }
+            
+            // Create train elements
+            trainDetails.forEach((train, index) => {
+                const trainDiv = document.createElement('div');
+                trainDiv.className = 'train';
+                trainDiv.id = `train-${index}`;
+                
+                const startPercent = ((train.arrival - minTime) / range) * 100;
+                const endPercent = ((train.departure - minTime) / range) * 100;
+                
+                trainDiv.style.marginLeft = `${startPercent}%`;
+                trainDiv.style.width = `${endPercent - startPercent}%`;
+                trainDiv.textContent = `${formatTime(train.arrival)} - ${formatTime(train.departure)}`;
+                
+                const label = document.createElement('div');
+                label.className = 'train-label';
+                label.textContent = `T${index}`;
+                
+                trainDiv.appendChild(label);
+                scheduleDiv.appendChild(trainDiv);
+            });
+        }
+
+        function updatePlatformsVisualization(currentPlatforms, eventTime) {
+            const platformsDiv = document.getElementById('platforms');
+            platformsDiv.innerHTML = '';
+            
+            // Create time marker
+            const scheduleDiv = document.getElementById('trainSchedule');
+            document.querySelectorAll('.time-marker').forEach(m => m.remove());
+            
+            const range = maxTime - minTime;
+            const markerPercent = ((eventTime - minTime) / range) * 100;
+            
+            const marker = document.createElement('div');
+            marker.className = 'time-marker';
+            marker.style.left = `${markerPercent}%`;
+            marker.style.height = `${trainDetails.length * 48}px`;
+            scheduleDiv.appendChild(marker);
+            
+            // Create platform visualizations
+            for (let i = 0; i < currentPlatforms.length; i++) {
+                const platformDiv = document.createElement('div');
+                platformDiv.className = 'platform';
+                
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'platform-label';
+                labelDiv.textContent = `Platform ${i + 1}`;
+                
+                platformDiv.appendChild(labelDiv);
+                
+                currentPlatforms[i].forEach(trainId => {
+                    const trainDiv = document.createElement('div');
+                    trainDiv.className = 'train';
+                    
+                    const train = trainDetails[trainId];
+                    trainDiv.textContent = `Train ${trainId}: ${formatTime(train.arrival)} - ${formatTime(train.departure)}`;
+                    
+                    platformDiv.appendChild(trainDiv);
+                });
+                
+                platformsDiv.appendChild(platformDiv);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            steps.push({
+                type: 'init',
+                description: 'Initialize the algorithm with the given train arrival and departure times',
+                codeLine: 1
+            });
+            
+            // Sort arrivals and departures
+            const sortedArrivals = [...arrivals].sort((a, b) => a - b);
+            const sortedDepartures = [...departures].sort((a, b) => a - b);
+            
+            // Create event lists for visualization
+            const events = [];
+            sortedArrivals.forEach((time, index) => {
+                events.push({
+                    time,
+                    type: 'arrival',
+                    originalIndex: arrivals.indexOf(time)
+                });
+            });
+            
+            sortedDepartures.forEach((time, index) => {
+                events.push({
+                    time,
+                    type: 'departure',
+                    originalIndex: departures.indexOf(time)
+                });
+            });
+            
+            events.sort((a, b) => {
+                if (a.time === b.time) {
+                    // If times are equal, departure comes first
+                    return a.type === 'departure' ? -1 : 1;
+                }
+                return a.time - b.time;
+            });
+            
+            steps.push({
+                type: 'sort',
+                sortedArrivals,
+                sortedDepartures,
+                description: 'Sort arrival and departure times separately',
+                codeLine: 4
+            });
+            
+            let platformsNeeded = 1;
+            let maxPlatforms = 1;
+            let i = 1; // pointer for arrivals
+            let j = 0; // pointer for departures
+            
+            steps.push({
+                type: 'initialize_pointers',
+                i, j, 
+                platformsNeeded,
+                maxPlatforms,
+                description: 'Initialize tracking variables: platforms needed = 1, max platforms = 1',
+                codeLine: 9
+            });
+            
+            // For visualization, we'll track which trains are on which platforms
+            const platformAssignments = [[]];
+            platformAssignments[0].push(0); // First train goes to first platform
+            
+            const n = arrivals.length;
+            while (i < n && j < n) {
+                if (sortedArrivals[i] <= sortedDepartures[j]) {
+                    // Next event is arrival
+                    platformsNeeded++;
+                    
+                    // For visualization, assign this train to a platform
+                    const trainIndex = arrivals.indexOf(sortedArrivals[i]);
+                    
+                    // Create new platform if needed
+                    if (platformsNeeded > platformAssignments.length) {
+                        platformAssignments.push([]);
+                    }
+                    
+                    // Assign to last platform
+                    platformAssignments[platformsNeeded - 1].push(trainIndex);
+                    
+                    steps.push({
+                        type: 'arrival',
+                        i, j,
+                        trainIndex,
+                        platformsNeeded,
+                        eventTime: sortedArrivals[i],
+                        platformAssignments: JSON.parse(JSON.stringify(platformAssignments)),
+                        description: `Train ${trainIndex} arrives at ${formatTime(sortedArrivals[i])}, need ${platformsNeeded} platforms now`,
+                        codeLine: 14
+                    });
+                    
+                    i++;
+                } else {
+                    // Next event is departure
+                    platformsNeeded--;
+                    
+                    const trainIndex = departures.indexOf(sortedDepartures[j]);
+                    
+                    // For visualization, remove train from its platform
+                    for (let p = 0; p < platformAssignments.length; p++) {
+                        const index = platformAssignments[p].indexOf(trainIndex);
+                        if (index !== -1) {
+                            platformAssignments[p].splice(index, 1);
+                            break;
+                        }
+                    }
+                    
+                    // Remove empty platforms
+                    while (platformAssignments.length > 0 && platformAssignments[platformAssignments.length - 1].length === 0) {
+                        platformAssignments.pop();
+                    }
+                    
+                    steps.push({
+                        type: 'departure',
+                        i, j,
+                        trainIndex,
+                        platformsNeeded,
+                        eventTime: sortedDepartures[j],
+                        platformAssignments: JSON.parse(JSON.stringify(platformAssignments)),
+                        description: `Train ${trainIndex} departs at ${formatTime(sortedDepartures[j])}, need ${platformsNeeded} platforms now`,
+                        codeLine: 18
+                    });
+                    
+                    j++;
+                }
+                
+                maxPlatforms = Math.max(maxPlatforms, platformsNeeded);
+                
+                steps.push({
+                    type: 'update_max',
+                    i, j,
+                    platformsNeeded,
+                    maxPlatforms,
+                    description: `Update maximum platforms needed: ${maxPlatforms}`,
+                    codeLine: 21
+                });
+            }
+            
+            steps.push({
+                type: 'result',
+                maxPlatforms,
+                description: `Final result: ${maxPlatforms} platforms needed`,
+                codeLine: 23
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset train styles
+            const trainElements = document.querySelectorAll('.train');
+            trainElements.forEach(t => {
+                t.className = 'train';
+            });
+            
+            if (step.type === 'arrival' || step.type === 'departure') {
+                // Update platform visualization
+                updatePlatformsVisualization(step.platformAssignments, step.eventTime);
+                
+                // Highlight current train
+                const trainElement = document.getElementById(`train-${step.trainIndex}`);
+                if (trainElement) {
+                    trainElement.classList.add('current');
+                    trainElement.classList.add(step.type);
+                }
+            } else if (step.type === 'sort') {
+                // Just update the step display
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.maxPlatforms !== undefined) {
+                document.getElementById('result').textContent = `Minimum Platforms: ${step.maxPlatforms}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

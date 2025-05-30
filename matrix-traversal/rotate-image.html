@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotate Image</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .matrix {
+            display: grid;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .cell.current {
+            background-color: #eab308;
+            transform: scale(1.1);
+        }
+        .cell.swapped {
+            background-color: #22c55e;
+        }
+        .cell.original {
+            background-color: #3b82f6;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .matrix-container {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        .matrix-label {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Rotate Image</h1>
+        <p class="text-gray-300 mb-8">Visualize how to rotate a matrix 90 degrees clockwise by first transposing the matrix and then reversing each row.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Matrix Size (n x n)</label>
+                            <input type="number" id="sizeInput" value="3" min="2" max="6"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter matrix size">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Input
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Matrix Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Matrix Rotation</h3>
+                    <div class="matrix-container">
+                        <div>
+                            <div class="matrix-label">Original Matrix</div>
+                            <div id="originalMatrix" class="matrix"></div>
+                        </div>
+                        <div>
+                            <div class="matrix-label">Rotated Matrix</div>
+                            <div id="rotatedMatrix" class="matrix"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function rotate(matrix):</span>
+<span class="code-line" data-line="2">    n = len(matrix)</span>
+<span class="code-line" data-line="3">    </span>
+<span class="code-line" data-line="4">    # Transpose the matrix</span>
+<span class="code-line" data-line="5">    for i from 0 to n-1:</span>
+<span class="code-line" data-line="6">        for j from i to n-1:</span>
+<span class="code-line" data-line="7">            swap(matrix[i][j], matrix[j][i])</span>
+<span class="code-line" data-line="8">    </span>
+<span class="code-line" data-line="9">    # Reverse each row</span>
+<span class="code-line" data-line="10">    for i from 0 to n-1:</span>
+<span class="code-line" data-line="11">        for j from 0 to n/2:</span>
+<span class="code-line" data-line="12">            swap(matrix[i][j], matrix[i][n-1-j])</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given an n x n 2D matrix representing an image, rotate the image by 90 degrees clockwise. The rotation must be done in-place.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n²) where n is the size of the matrix</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) as we are rotating the matrix in-place</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works in two steps:
+                                <br>1. Transpose the matrix (swap elements across the main diagonal)
+                                <br>2. Reverse each row of the transposed matrix
+                                <br>
+                                <br>For example, rotating a 3x3 matrix:
+                                <br>Original:     Transpose:    Rotated:
+                                <br>1 2 3        1 4 7        7 4 1
+                                <br>4 5 6  →     2 5 8  →     8 5 2
+                                <br>7 8 9        3 6 9        9 6 3
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let matrix = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createMatrix(size) {
+            const originalMatrix = document.getElementById('originalMatrix');
+            const rotatedMatrix = document.getElementById('rotatedMatrix');
+            
+            originalMatrix.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            rotatedMatrix.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            
+            originalMatrix.innerHTML = '';
+            rotatedMatrix.innerHTML = '';
+            
+            matrix = [];
+            for (let i = 0; i < size; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < size; j++) {
+                    const value = i * size + j + 1;
+                    matrix[i][j] = value;
+                    
+                    // Create cell for original matrix
+                    const originalCell = document.createElement('div');
+                    originalCell.className = 'cell original';
+                    originalCell.id = `original-cell-${i}-${j}`;
+                    originalCell.textContent = value;
+                    originalMatrix.appendChild(originalCell);
+                    
+                    // Create cell for rotated matrix
+                    const rotatedCell = document.createElement('div');
+                    rotatedCell.className = 'cell original';
+                    rotatedCell.id = `rotated-cell-${i}-${j}`;
+                    rotatedCell.textContent = value;
+                    rotatedMatrix.appendChild(rotatedCell);
+                }
+            }
+        }
+
+        function applyInputs() {
+            const size = parseInt(document.getElementById('sizeInput').value);
+            
+            if (isNaN(size) || size < 2 || size > 6) {
+                alert('Please enter a valid matrix size between 2 and 6');
+                return;
+            }
+            
+            createMatrix(size);
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = matrix.length;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial matrix state',
+                matrix: JSON.parse(JSON.stringify(matrix)),
+                codeLine: 2
+            });
+            
+            // Transpose the matrix
+            for (let i = 0; i < n; i++) {
+                for (let j = i; j < n; j++) {
+                    if (i !== j) {
+                        steps.push({
+                            type: 'transpose',
+                            description: `Swapping elements at (${i},${j}) and (${j},${i})`,
+                            i: i,
+                            j: j,
+                            matrix: JSON.parse(JSON.stringify(matrix)),
+                            codeLine: 7
+                        });
+                        
+                        // Swap elements
+                        const temp = matrix[i][j];
+                        matrix[i][j] = matrix[j][i];
+                        matrix[j][i] = temp;
+                    }
+                }
+            }
+            
+            // Reverse each row
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < Math.floor(n/2); j++) {
+                    steps.push({
+                        type: 'reverse',
+                        description: `Reversing row ${i}: swapping elements at positions ${j} and ${n-1-j}`,
+                        row: i,
+                        left: j,
+                        right: n-1-j,
+                        matrix: JSON.parse(JSON.stringify(matrix)),
+                        codeLine: 12
+                    });
+                    
+                    // Swap elements
+                    const temp = matrix[i][j];
+                    matrix[i][j] = matrix[i][n-1-j];
+                    matrix[i][n-1-j] = temp;
+                }
+            }
+            
+            // Final state
+            steps.push({
+                type: 'final',
+                description: 'Matrix rotated 90 degrees clockwise',
+                matrix: JSON.parse(JSON.stringify(matrix)),
+                codeLine: 12
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all cells
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = cell.className.replace(' current', '').replace(' swapped', '');
+            });
+            
+            // Update matrix visualization
+            const n = matrix.length;
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const originalCell = document.getElementById(`original-cell-${i}-${j}`);
+                    const rotatedCell = document.getElementById(`rotated-cell-${i}-${j}`);
+                    
+                    if (step.type === 'transpose' && ((i === step.i && j === step.j) || (i === step.j && j === step.i))) {
+                        originalCell.className = 'cell current';
+                        rotatedCell.className = 'cell current';
+                    } else if (step.type === 'reverse' && i === step.row && (j === step.left || j === step.right)) {
+                        originalCell.className = 'cell current';
+                        rotatedCell.className = 'cell current';
+                    }
+                    
+                    rotatedCell.textContent = step.matrix[i][j];
+                }
+            }
+            
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

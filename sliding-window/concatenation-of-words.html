@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concatenation of Words Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            color: #e2e8f0;
+        }
+        .window-element {
+            background-color: #059669;
+            color: white;
+        }
+        .match-element {
+            background-color: #fb923c;
+            color: white;
+        }
+        .freq-map {
+            background-color: #2563eb;
+            color: white;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Concatenation of Words</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find all starting indices of substrings that are a concatenation of each word in words exactly once, without any intervening characters.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">String (s)</label>
+                            <input type="text" id="sInput" placeholder="Enter string" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="barfoothefoobarman">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Words (comma-separated)</label>
+                            <input type="text" id="wordsInput" placeholder="Enter words" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="foo,bar">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" 
+                            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button id="prevBtn" onclick="prev()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Previous
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" 
+                            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" disabled>
+                            Play
+                        </button>
+                        <button id="nextBtn" onclick="next()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Visualization Area -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Visualization</h3>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">String (s):</h4>
+                        <div id="sVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Words:</h4>
+                        <div id="wordsVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Word Frequency Map:</h4>
+                        <div id="wordFreqVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Found Starting Indices:</h4>
+                        <div id="resultVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div id="explanation" class="text-gray-300 mb-4">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre class="text-sm">
+// Time Complexity: O(n * m * k), where n is length of s, m is number of words, k is word length
+function findSubstring(s, words):
+    if words.length === 0 or s.length === 0:
+        return []
+        
+    wordLength = words[0].length
+    totalLength = wordLength * words.length
+    
+    // Create word frequency map
+    wordFreq = new Map()
+    for word in words:
+        wordFreq[word] = (wordFreq[word] || 0) + 1
+    
+    result = []
+    
+    // Try each starting position
+    for i from 0 to s.length - totalLength:
+        // Create window frequency map
+        windowFreq = new Map()
+        let valid = true
+        
+        // Check each word in window
+        for j from 0 to words.length-1:
+            word = s.substring(i + j*wordLength, i + (j+1)*wordLength)
+            
+            if !wordFreq.has(word):
+                valid = false
+                break
+                
+            windowFreq[word] = (windowFreq[word] || 0) + 1
+            
+            if windowFreq[word] > wordFreq[word]:
+                valid = false
+                break
+        
+        if valid:
+            result.push(i)
+    
+    return result</pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n * m * k) where n is length of s, m is number of words, k is word length</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(m) where m is the number of words</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses a sliding window approach:
+                                <br>1. Create frequency map for words
+                                <br>2. Try each possible starting position
+                                <br>3. Check if window contains all words
+                                <br>4. Add valid starting indices to result
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">s = "barfoothefoobarman", words = ["foo","bar"]</p>
+                            <p class="text-gray-300">Output: [0,9]</p>
+                            <p class="text-gray-300">Explanation: The substring starting at index 0 is "barfoo".<br>
+                                The substring starting at index 9 is "foobar".</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">s = "wordgoodgoodgoodbestword", words = ["word","good","best","word"]</p>
+                            <p class="text-gray-300">Output: []</p>
+                            <p class="text-gray-300">Explanation: There is no valid substring.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let s = "";
+        let words = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            s = document.getElementById('sInput').value;
+            words = document.getElementById('wordsInput').value.split(',').map(w => w.trim());
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            if (s.length === 0 || words.length === 0) {
+                steps.push({
+                    explanation: "Empty input, returning empty result",
+                    indices: []
+                });
+                return;
+            }
+
+            // Initialize variables
+            const wordLen = words[0].length;
+            const totalWords = words.length;
+            const totalLen = wordLen * totalWords;
+            const result = [];
+            
+            // Create word frequency map
+            const wordFreq = new Map();
+            for (let word of words) {
+                wordFreq.set(word, (wordFreq.get(word) || 0) + 1);
+            }
+            
+            steps.push({
+                explanation: "Created frequency map for words",
+                wordFreq: new Map(wordFreq)
+            });
+
+            // Check each possible starting position
+            for (let start = 0; start <= s.length - totalLen; start++) {
+                const seen = new Map();
+                let valid = true;
+                
+                steps.push({
+                    start,
+                    windowFreq: new Map(seen),
+                    wordFreq: new Map(wordFreq),
+                    indices: [...result],
+                    explanation: `Checking substring starting at index ${start}`
+                });
+
+                // Check each word position
+                for (let i = 0; i < totalWords; i++) {
+                    const pos = start + i * wordLen;
+                    const word = s.substring(pos, pos + wordLen);
+                    
+                    steps.push({
+                        start,
+                        pos,
+                        word,
+                        windowFreq: new Map(seen),
+                        wordFreq: new Map(wordFreq),
+                        indices: [...result],
+                        explanation: `Checking word "${word}" at position ${pos}`
+                    });
+
+                    if (!wordFreq.has(word)) {
+                        valid = false;
+                        steps.push({
+                            start,
+                            pos,
+                            word,
+                            windowFreq: new Map(seen),
+                            wordFreq: new Map(wordFreq),
+                            indices: [...result],
+                            explanation: `Word "${word}" not in target words, moving to next starting position`
+                        });
+                        break;
+                    }
+
+                    seen.set(word, (seen.get(word) || 0) + 1);
+                    
+                    if (seen.get(word) > wordFreq.get(word)) {
+                        valid = false;
+                        steps.push({
+                            start,
+                            pos,
+                            word,
+                            windowFreq: new Map(seen),
+                            wordFreq: new Map(wordFreq),
+                            indices: [...result],
+                            explanation: `Too many occurrences of word "${word}", moving to next starting position`
+                        });
+                        break;
+                    }
+                }
+
+                if (valid) {
+                    result.push(start);
+                    steps.push({
+                        start,
+                        windowFreq: new Map(seen),
+                        wordFreq: new Map(wordFreq),
+                        indices: [...result],
+                        explanation: `Found valid concatenation at index ${start}`
+                    });
+                }
+            }
+
+            steps.push({
+                indices: result,
+                explanation: `Final result: found ${result.length} valid starting indices`
+            });
+        }
+
+        function updateVisualization() {
+            const stringDiv = document.getElementById('sVisualization');
+            const wordsDiv = document.getElementById('wordsVisualization');
+            const targetFreqDiv = document.getElementById('wordFreqVisualization');
+            const windowDiv = document.getElementById('resultVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            stringDiv.innerHTML = '';
+            wordsDiv.innerHTML = '';
+            targetFreqDiv.innerHTML = '';
+            
+            // Create string visualization
+            for (let i = 0; i < s.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.start !== undefined && step.pos !== undefined) {
+                    const wordLen = words[0].length;
+                    if (i >= step.start && i < step.start + wordLen * words.length) {
+                        element.classList.add('window-element');
+                    }
+                    if (i >= step.pos && i < step.pos + wordLen) {
+                        element.classList.add('match-element');
+                    }
+                }
+                
+                if (step.indices && step.indices.includes(i)) {
+                    element.classList.add('found-index');
+                }
+                
+                element.textContent = s[i];
+                stringDiv.appendChild(element);
+            }
+            
+            // Create words visualization
+            for (let word of words) {
+                const element = document.createElement('div');
+                element.className = 'array-element freq-map px-4 h-12 flex items-center justify-center border rounded text-lg';
+                element.textContent = word;
+                wordsDiv.appendChild(element);
+            }
+            
+            // Update frequency maps
+            if (step.wordFreq) {
+                for (let [word, count] of step.wordFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element freq-map px-4 h-12 flex items-center justify-center border rounded text-lg';
+                    element.textContent = `${word}: ${count}`;
+                    targetFreqDiv.appendChild(element);
+                }
+            }
+            
+            // Update found indices
+            if (step.indices !== undefined) {
+                windowDiv.textContent = `[${step.indices.join(', ')}]`;
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        function resetVisualization() {
+            currentStep = 0;
+            steps = [];
+            updateVisualization();
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

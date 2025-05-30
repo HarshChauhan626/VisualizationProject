@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Window Substring</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            color: #e2e8f0;
+        }
+        .window-element {
+            background-color: #059669;
+            color: white;
+        }
+        .current-minimum {
+            background-color: #fb923c;
+            color: white;
+        }
+        .freq-map {
+            background-color: #2563eb;
+            color: white;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Minimum Window Substring</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum window in string s that contains all characters in string t using the sliding window technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">String (s)</label>
+                            <input type="text" id="sInput" placeholder="Enter string s" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="ADOBECODEBANC">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Target (t)</label>
+                            <input type="text" id="tInput" placeholder="Enter target string t" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="ABC">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" 
+                            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button id="prevBtn" onclick="prev()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Previous
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" 
+                            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" disabled>
+                            Play
+                        </button>
+                        <button id="nextBtn" onclick="next()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Visualization Area -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Visualization</h3>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">String (s):</h4>
+                        <div id="sVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Target (t):</h4>
+                        <div id="tVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Character Frequency Maps:</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Target Frequency:</h5>
+                                <div id="targetFreqVisualization" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Window Frequency:</h5>
+                                <div id="windowFreqVisualization" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Current Window:</h4>
+                        <div id="windowVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Minimum Window:</h4>
+                        <div id="minimumWindowVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div id="explanation" class="text-gray-300 mb-4">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre class="text-sm">
+// Time Complexity: O(n), where n is length of s
+function minWindow(s, t):
+    if t.length === 0 or s.length === 0:
+        return ""
+        
+    // Create frequency maps
+    targetFreq = new Map()
+    for char in t:
+        targetFreq[char] = (targetFreq[char] || 0) + 1
+    
+    // Initialize variables
+    left = 0
+    right = 0
+    minLength = Infinity
+    minStart = 0
+    required = targetFreq.size
+    formed = 0
+    windowFreq = new Map()
+    
+    // Slide window
+    while right < s.length:
+        // Add character to window
+        char = s[right]
+        windowFreq[char] = (windowFreq[char] || 0) + 1
+        
+        // Check if character completes a requirement
+        if targetFreq.has(char) && windowFreq[char] === targetFreq[char]:
+            formed++
+        
+        // Try to minimize window
+        while left <= right && formed === required:
+            // Update minimum window
+            if right - left + 1 < minLength:
+                minLength = right - left + 1
+                minStart = left
+            
+            // Remove leftmost character
+            char = s[left]
+            windowFreq[char]--
+            
+            // Check if removing character breaks a requirement
+            if targetFreq.has(char) && windowFreq[char] < targetFreq[char]:
+                formed--
+            
+            left++
+        
+        right++
+    
+    return minLength === Infinity ? "" : s.substring(minStart, minStart + minLength)</pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of string s</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(k) where k is the number of unique characters in t</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses a sliding window approach:
+                                <br>1. Create frequency maps for target and window
+                                <br>2. Expand window until all characters are found
+                                <br>3. Contract window to find minimum length
+                                <br>4. Keep track of minimum window found
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">s = "ADOBECODEBANC", t = "ABC"</p>
+                            <p class="text-gray-300">Output: "BANC"</p>
+                            <p class="text-gray-300">Explanation: The minimum window substring "BANC" includes 'A', 'B', and 'C' from string t.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">s = "a", t = "a"</p>
+                            <p class="text-gray-300">Output: "a"</p>
+                            <p class="text-gray-300">Explanation: The entire string s is the minimum window.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let s = "";
+        let t = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            s = document.getElementById('sInput').value;
+            t = document.getElementById('tInput').value;
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Create target frequency map
+            const targetFreq = new Map();
+            for (let char of t) {
+                targetFreq.set(char, (targetFreq.get(char) || 0) + 1);
+            }
+            
+            steps.push({
+                explanation: "Created frequency map for target string",
+                targetFreq: new Map(targetFreq)
+            });
+
+            // Initialize variables
+            let required = targetFreq.size;
+            let formed = 0;
+            const windowFreq = new Map();
+            let left = 0;
+            let minLen = Infinity;
+            let minWindow = "";
+            
+            // Process each character
+            for (let right = 0; right < s.length; right++) {
+                const char = s[right];
+                windowFreq.set(char, (windowFreq.get(char) || 0) + 1);
+                
+                steps.push({
+                    left,
+                    right,
+                    windowFreq: new Map(windowFreq),
+                    targetFreq: new Map(targetFreq),
+                    formed,
+                    minWindow,
+                    explanation: `Added character '${char}' to window`
+                });
+
+                // Check if we've found all occurrences of current char
+                if (targetFreq.has(char) && windowFreq.get(char) === targetFreq.get(char)) {
+                    formed++;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        windowFreq: new Map(windowFreq),
+                        targetFreq: new Map(targetFreq),
+                        formed,
+                        minWindow,
+                        explanation: `Found all required occurrences of '${char}'`
+                    });
+                }
+
+                // Try to minimize window
+                while (formed === required) {
+                    // Update minimum window if current is smaller
+                    if (right - left + 1 < minLen) {
+                        minLen = right - left + 1;
+                        minWindow = s.substring(left, right + 1);
+                        
+                        steps.push({
+                            left,
+                            right,
+                            windowFreq: new Map(windowFreq),
+                            targetFreq: new Map(targetFreq),
+                            formed,
+                            minWindow,
+                            explanation: `Found new minimum window: "${minWindow}"`
+                        });
+                    }
+
+                    // Remove leftmost character
+                    const leftChar = s[left];
+                    windowFreq.set(leftChar, windowFreq.get(leftChar) - 1);
+                    
+                    // Update formed count if we break a match
+                    if (targetFreq.has(leftChar) && windowFreq.get(leftChar) < targetFreq.get(leftChar)) {
+                        formed--;
+                        
+                        steps.push({
+                            left,
+                            right,
+                            windowFreq: new Map(windowFreq),
+                            targetFreq: new Map(targetFreq),
+                            formed,
+                            minWindow,
+                            explanation: `Removed '${leftChar}', breaking the match`
+                        });
+                    }
+
+                    left++;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        windowFreq: new Map(windowFreq),
+                        targetFreq: new Map(targetFreq),
+                        formed,
+                        minWindow,
+                        explanation: "Moved left pointer to shrink window"
+                    });
+                }
+            }
+
+            steps.push({
+                minWindow,
+                explanation: minWindow ? `Final minimum window: "${minWindow}"` : "No valid window found"
+            });
+        }
+
+        function updateVisualization() {
+            const stringDiv = document.getElementById('sVisualization');
+            const targetDiv = document.getElementById('tVisualization');
+            const targetFreqDiv = document.getElementById('targetFreqVisualization');
+            const windowFreqDiv = document.getElementById('windowFreqVisualization');
+            const windowDiv = document.getElementById('windowVisualization');
+            const minWindowDiv = document.getElementById('minimumWindowVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            stringDiv.innerHTML = '';
+            targetDiv.innerHTML = '';
+            targetFreqDiv.innerHTML = '';
+            windowFreqDiv.innerHTML = '';
+            
+            // Create string visualization
+            for (let i = 0; i < s.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.left !== undefined && step.right !== undefined) {
+                    if (i >= step.left && i <= step.right) {
+                        element.classList.add('window-element');
+                    }
+                }
+                
+                if (t.includes(s[i])) {
+                    element.classList.add('current-minimum');
+                }
+                
+                element.textContent = s[i];
+                stringDiv.appendChild(element);
+            }
+            
+            // Create target string visualization
+            for (let i = 0; i < t.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element freq-map w-12 h-12 flex items-center justify-center border rounded text-lg';
+                element.textContent = t[i];
+                targetDiv.appendChild(element);
+            }
+            
+            // Update frequency maps
+            if (step.targetFreq) {
+                for (let [char, count] of step.targetFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element freq-map w-20 h-12 flex items-center justify-center border rounded text-lg';
+                    element.textContent = `${char}: ${count}`;
+                    targetFreqDiv.appendChild(element);
+                }
+            }
+            
+            if (step.windowFreq) {
+                for (let [char, count] of step.windowFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element freq-map w-20 h-12 flex items-center justify-center border rounded text-lg';
+                    element.textContent = `${char}: ${count}`;
+                    windowFreqDiv.appendChild(element);
+                }
+            }
+            
+            // Update current window
+            if (step.left !== undefined && step.right !== undefined) {
+                windowDiv.textContent = s.substring(step.left, step.right + 1);
+            }
+            
+            // Update minimum window
+            if (step.minWindow !== undefined) {
+                minWindowDiv.textContent = step.minWindow || "No valid window found";
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Time to Buy and Sell Stock with Cooldown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .price-bar {
+            width: 30px;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            padding: 4px;
+        }
+        .price-bar.current {
+            background-color: #eab308;
+        }
+        .price-bar.processed {
+            background-color: #22c55e;
+        }
+        .price-bar.buy {
+            background-color: #8b5cf6;
+        }
+        .price-bar.sell {
+            background-color: #ef4444;
+        }
+        .price-bar.cooldown {
+            background-color: #94a3b8;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        .state-info {
+            font-family: monospace;
+            font-size: 16px;
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+            background-color: #1f2937;
+            color: #e2e8f0;
+        }
+        .chart-container {
+            height: 300px;
+            position: relative;
+            margin-top: 20px;
+        }
+        .price-line {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background-color: #3b82f6;
+            transition: height 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Best Time to Buy and Sell Stock with Cooldown</h1>
+        <p class="text-gray-300 mb-8">Visualize how to maximize profit from stock trading with a cooldown period using dynamic programming.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Prices (comma-separated)</label>
+                        <input type="text" id="pricesInput" value="1,2,3,0,2" 
+                            class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                            placeholder="Enter prices separated by commas">
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyCustomPrices()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Prices
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Price Chart -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Price Chart</h3>
+                    <div id="chartContainer" class="chart-container flex items-end gap-1"></div>
+                </div>
+
+                <!-- State Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Current State</h3>
+                    <div id="stateInfo" class="state-info"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Maximum Profit: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function maxProfit(prices):</span>
+<span class="code-line" data-line="2">    n = len(prices)</span>
+<span class="code-line" data-line="3">    if n <= 1: return 0</span>
+<span class="code-line" data-line="4">    // Initialize dp arrays</span>
+<span class="code-line" data-line="5">    buy = [0] * n</span>
+<span class="code-line" data-line="6">    sell = [0] * n</span>
+<span class="code-line" data-line="7">    cooldown = [0] * n</span>
+<span class="code-line" data-line="8">    // Base cases</span>
+<span class="code-line" data-line="9">    buy[0] = -prices[0]</span>
+<span class="code-line" data-line="10">    // Fill dp arrays</span>
+<span class="code-line" data-line="11">    for i = 1 to n-1:</span>
+<span class="code-line" data-line="12">        buy[i] = max(buy[i-1], cooldown[i-1] - prices[i])</span>
+<span class="code-line" data-line="13">        sell[i] = max(sell[i-1], buy[i-1] + prices[i])</span>
+<span class="code-line" data-line="14">        cooldown[i] = max(cooldown[i-1], sell[i-1])</span>
+<span class="code-line" data-line="15">    return max(sell[n-1], cooldown[n-1])</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the number of days</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the dp arrays, can be optimized to O(1)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Track three states: buy, sell, and cooldown
+                                <br>2. For each day:
+                                <br>&nbsp;&nbsp;&nbsp;- Buy: max of previous buy or cooldown - current price
+                                <br>&nbsp;&nbsp;&nbsp;- Sell: max of previous sell or buy + current price
+                                <br>&nbsp;&nbsp;&nbsp;- Cooldown: max of previous cooldown or sell
+                                <br>3. Return maximum of final sell or cooldown
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let prices = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function applyCustomPrices() {
+            const input = document.getElementById('pricesInput').value;
+            try {
+                prices = input.split(',').map(price => parseInt(price.trim()));
+                if (prices.some(isNaN)) throw new Error('Invalid input');
+                if (prices.length === 0) throw new Error('Prices cannot be empty');
+                createPriceChart();
+                generateSteps();  // Only generate steps, don't start visualization
+                toggleControls(true);  // Enable controls
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid prices separated by commas');
+            }
+        }
+
+        function createPriceChart() {
+            const container = document.getElementById('chartContainer');
+            container.innerHTML = '';
+            
+            const maxPrice = Math.max(...prices);
+            const minPrice = Math.min(...prices);
+            const range = maxPrice - minPrice;
+            
+            prices.forEach((price, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'price-bar';
+                bar.id = `price-${index}`;
+                bar.textContent = price;
+                const height = ((price - minPrice) / range) * 100;
+                bar.style.height = `${height}%`;
+                container.appendChild(bar);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            const n = prices.length;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                index: -1,
+                description: 'Starting the algorithm',
+                codeLine: 1
+            });
+
+            // Check array length
+            if (n <= 1) {
+                steps.push({
+                    type: 'short_array',
+                    description: 'Array too short, maximum profit: 0',
+                    codeLine: 3
+                });
+                return;
+            }
+
+            // Initialize dp arrays
+            const buy = Array(n).fill(0);
+            const sell = Array(n).fill(0);
+            const cooldown = Array(n).fill(0);
+            
+            // Base case
+            buy[0] = -prices[0];
+            steps.push({
+                type: 'base',
+                index: 0,
+                buy: buy[0],
+                description: `Base case: buy[0] = -${prices[0]}`,
+                codeLine: 9
+            });
+
+            // Fill dp arrays
+            for (let i = 1; i < n; i++) {
+                // Buy state
+                buy[i] = Math.max(buy[i-1], cooldown[i-1] - prices[i]);
+                steps.push({
+                    type: 'buy',
+                    index: i,
+                    buy: buy[i],
+                    prevBuy: buy[i-1],
+                    prevCooldown: cooldown[i-1],
+                    price: prices[i],
+                    description: `Buy state: max(${buy[i-1]}, ${cooldown[i-1]} - ${prices[i]}) = ${buy[i]}`,
+                    codeLine: 12
+                });
+
+                // Sell state
+                sell[i] = Math.max(sell[i-1], buy[i-1] + prices[i]);
+                steps.push({
+                    type: 'sell',
+                    index: i,
+                    sell: sell[i],
+                    prevSell: sell[i-1],
+                    prevBuy: buy[i-1],
+                    price: prices[i],
+                    description: `Sell state: max(${sell[i-1]}, ${buy[i-1]} + ${prices[i]}) = ${sell[i]}`,
+                    codeLine: 13
+                });
+
+                // Cooldown state
+                cooldown[i] = Math.max(cooldown[i-1], sell[i-1]);
+                steps.push({
+                    type: 'cooldown',
+                    index: i,
+                    cooldown: cooldown[i],
+                    prevCooldown: cooldown[i-1],
+                    prevSell: sell[i-1],
+                    description: `Cooldown state: max(${cooldown[i-1]}, ${sell[i-1]}) = ${cooldown[i]}`,
+                    codeLine: 14
+                });
+            }
+
+            const maxProfit = Math.max(sell[n-1], cooldown[n-1]);
+            steps.push({
+                type: 'complete',
+                profit: maxProfit,
+                description: `Algorithm complete. Maximum profit: ${maxProfit}`,
+                codeLine: 15
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Maximum Profit: 0';
+            document.getElementById('stateInfo').textContent = '';
+            highlightCodeLine(1);
+            createPriceChart();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all bars
+            const bars = document.querySelectorAll('.price-bar');
+            bars.forEach(bar => {
+                bar.className = 'price-bar';
+            });
+
+            // Update current bar
+            if (step.index >= 0) {
+                const currentBar = document.getElementById(`price-${step.index}`);
+                currentBar.classList.add('current');
+            }
+
+            // Update state info
+            let stateInfo = '';
+            if (step.type === 'base') {
+                stateInfo = `Buy[0] = ${step.buy}`;
+            } else if (step.type === 'buy') {
+                stateInfo = `Buy[${step.index}] = max(${step.prevBuy}, ${step.prevCooldown} - ${step.price}) = ${step.buy}`;
+            } else if (step.type === 'sell') {
+                stateInfo = `Sell[${step.index}] = max(${step.prevSell}, ${step.prevBuy} + ${step.price}) = ${step.sell}`;
+            } else if (step.type === 'cooldown') {
+                stateInfo = `Cooldown[${step.index}] = max(${step.prevCooldown}, ${step.prevSell}) = ${step.cooldown}`;
+            }
+
+            document.getElementById('stateInfo').textContent = stateInfo;
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Maximum Profit: ${step.profit}`;
+            }
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyCustomPrices();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

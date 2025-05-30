@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Difference Array for Range Update</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array {
+            display: flex;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .element {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            min-height: 40px;
+            background-color: #3b82f6;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+        }
+        .element.current {
+            background-color: #eab308;
+            transform: scale(1.1);
+        }
+        .element.selected {
+            background-color: #10b981;
+        }
+        .element.update {
+            background-color: #8b5cf6;
+        }
+        .element.diff {
+            background-color: #f43f5e;
+        }
+        .prefix-sum {
+            display: flex;
+            gap: 2px;
+            background-color: #2d3748;
+            padding: 2px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Difference Array for Range Update</h1>
+        <p class="text-gray-300 mb-8">Visualize how to efficiently perform range updates using a difference array.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Array Size</label>
+                            <input type="number" id="sizeInput" value="10" min="5" max="20"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter array size">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="initializeArray()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Initialize Array
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Update Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Range Update</h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Start Index</label>
+                                <input type="number" id="startInput" value="0" min="0"
+                                    class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                    placeholder="Start index">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">End Index</label>
+                                <input type="number" id="endInput" value="4" min="0"
+                                    class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                    placeholder="End index">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Value to Add</label>
+                            <input type="number" id="valueInput" value="5" min="-100" max="100"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Value to add">
+                        </div>
+                        <button onclick="executeUpdate()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Update
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Original Array -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Original Array</h3>
+                    <div id="arrayContainer" class="array"></div>
+                </div>
+
+                <!-- Difference Array -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Difference Array</h3>
+                    <div id="diffArrayContainer" class="array"></div>
+                </div>
+
+                <!-- Updated Array -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Updated Array</h3>
+                    <div id="updatedArrayContainer" class="array"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">class DifferenceArray:</span>
+<span class="code-line" data-line="2">    def __init__(self, nums):</span>
+<span class="code-line" data-line="3">        self.diff = [0] * len(nums)</span>
+<span class="code-line" data-line="4">        self.diff[0] = nums[0]</span>
+<span class="code-line" data-line="5">        for i in range(1, len(nums)):</span>
+<span class="code-line" data-line="6">            self.diff[i] = nums[i] - nums[i-1]</span>
+<span class="code-line" data-line="7">    </span>
+<span class="code-line" data-line="8">    def rangeUpdate(self, start, end, val):</span>
+<span class="code-line" data-line="9">        self.diff[start] += val</span>
+<span class="code-line" data-line="10">        if end + 1 < len(self.diff):</span>
+<span class="code-line" data-line="11">            self.diff[end + 1] -= val</span>
+<span class="code-line" data-line="12">    </span>
+<span class="code-line" data-line="13">    def getArray(self):</span>
+<span class="code-line" data-line="14">        result = [0] * len(self.diff)</span>
+<span class="code-line" data-line="15">        result[0] = self.diff[0]</span>
+<span class="code-line" data-line="16">        for i in range(1, len(self.diff)):</span>
+<span class="code-line" data-line="17">            result[i] = result[i-1] + self.diff[i]</span>
+<span class="code-line" data-line="18">        return result</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                Given an array of numbers, efficiently perform multiple range updates (adding a value to all elements in a range) using a difference array.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(1) per range update, O(n) to get the final array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for storing the difference array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses a difference array to efficiently perform range updates:
+                                <br>1. Create a difference array where diff[i] = nums[i] - nums[i-1]
+                                <br>2. To add val to range [start, end]:
+                                <br>   - Add val to diff[start]
+                                <br>   - Subtract val from diff[end + 1] (if exists)
+                                <br>3. To get the final array, compute prefix sums of the difference array
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let diff = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let currentUpdate = null;
+
+        function initializeArray() {
+            const size = parseInt(document.getElementById('sizeInput').value);
+            
+            if (isNaN(size) || size < 5 || size > 20) {
+                alert('Please enter a valid array size between 5 and 20');
+                return;
+            }
+            
+            const arrayContainer = document.getElementById('arrayContainer');
+            const diffArrayContainer = document.getElementById('diffArrayContainer');
+            const updatedArrayContainer = document.getElementById('updatedArrayContainer');
+            
+            arrayContainer.innerHTML = '';
+            diffArrayContainer.innerHTML = '';
+            updatedArrayContainer.innerHTML = '';
+            
+            nums = [];
+            diff = [];
+            
+            // Generate random array
+            for (let i = 0; i < size; i++) {
+                nums[i] = Math.floor(Math.random() * 10) + 1; // Range: 1 to 10
+                
+                const element = document.createElement('div');
+                element.className = 'element';
+                element.id = `element-${i}`;
+                element.textContent = nums[i];
+                arrayContainer.appendChild(element);
+            }
+            
+            // Initialize difference array
+            diff[0] = nums[0];
+            const diffElement = document.createElement('div');
+            diffElement.className = 'element diff';
+            diffElement.id = `diff-0`;
+            diffElement.textContent = diff[0];
+            diffArrayContainer.appendChild(diffElement);
+            
+            for (let i = 1; i < size; i++) {
+                diff[i] = nums[i] - nums[i-1];
+                
+                const element = document.createElement('div');
+                element.className = 'element diff';
+                element.id = `diff-${i}`;
+                element.textContent = diff[i];
+                diffArrayContainer.appendChild(element);
+            }
+            
+            // Initialize updated array (same as original for now)
+            for (let i = 0; i < size; i++) {
+                const element = document.createElement('div');
+                element.className = 'element';
+                element.id = `updated-${i}`;
+                element.textContent = nums[i];
+                updatedArrayContainer.appendChild(element);
+            }
+            
+            // Reset update inputs
+            document.getElementById('startInput').max = size - 1;
+            document.getElementById('endInput').max = size - 1;
+            
+            toggleControls(false);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function executeUpdate() {
+            const start = parseInt(document.getElementById('startInput').value);
+            const end = parseInt(document.getElementById('endInput').value);
+            const val = parseInt(document.getElementById('valueInput').value);
+            const size = nums.length;
+            
+            if (isNaN(start) || start < 0 || start >= size) {
+                alert('Please enter a valid start index');
+                return;
+            }
+            
+            if (isNaN(end) || end < start || end >= size) {
+                alert('Please enter a valid end index');
+                return;
+            }
+            
+            if (isNaN(val)) {
+                alert('Please enter a valid value');
+                return;
+            }
+            
+            currentUpdate = { start, end, val };
+            generateSteps();
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Play';
+        }
+
+        function generateSteps() {
+            steps = [];
+            const { start, end, val } = currentUpdate;
+            
+            // Initial state
+            steps.push({
+                type: 'init',
+                description: 'Initial state',
+                codeLine: 1
+            });
+            
+            // Update difference array
+            steps.push({
+                type: 'update_diff',
+                description: `Adding ${val} to diff[${start}]`,
+                index: start,
+                value: diff[start] + val,
+                codeLine: 9
+            });
+            
+            if (end + 1 < diff.length) {
+                steps.push({
+                    type: 'update_diff',
+                    description: `Subtracting ${val} from diff[${end + 1}]`,
+                    index: end + 1,
+                    value: diff[end + 1] - val,
+                    codeLine: 11
+                });
+            }
+            
+            // Update the final array
+            steps.push({
+                type: 'update_array',
+                description: 'Computing final array using prefix sums',
+                codeLine: 13
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all elements
+            document.querySelectorAll('.element').forEach(el => {
+                el.className = el.className.replace(' current', '').replace(' selected', '').replace(' update', '');
+            });
+            
+            if (step.type === 'update_diff') {
+                // Update difference array element
+                const element = document.getElementById(`diff-${step.index}`);
+                element.textContent = step.value;
+                element.className += ' update';
+                
+                // Update the difference array value
+                diff[step.index] = step.value;
+            } else if (step.type === 'update_array') {
+                // Compute and update the final array
+                let sum = diff[0];
+                const element = document.getElementById(`updated-0`);
+                element.textContent = sum;
+                element.className += ' update';
+                
+                for (let i = 1; i < diff.length; i++) {
+                    sum += diff[i];
+                    const element = document.getElementById(`updated-${i}`);
+                    element.textContent = sum;
+                    element.className += ' update';
+                }
+            }
+            
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            initializeArray();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

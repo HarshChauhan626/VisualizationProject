@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zigzag Conversion Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-box {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            position: relative;
+        }
+        .char-box.active {
+            background-color: #22c55e;
+        }
+        .char-box.current {
+            background-color: #eab308;
+        }
+        .char-box.empty {
+            background-color: #475569;
+        }
+        .char-box::after {
+            content: attr(data-index);
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .zigzag-row {
+            display: flex;
+            justify-content: center;
+            min-height: 44px;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Zigzag Conversion</h1>
+        <p class="text-gray-300 mb-8">Visualize how a string is written in a zigzag pattern on a given number of rows and then read line by line.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Input String</label>
+                            <input type="text" id="stringInput" value="PAYPALISHIRING" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Number of Rows</label>
+                            <input type="number" id="rowsInput" value="3" min="1" max="10"
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="startVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Zigzag Grid -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Zigzag Pattern</h3>
+                    <div id="zigzagContainer" class="space-y-2"></div>
+                </div>
+
+                <!-- Result -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Result</h3>
+                    <p id="result" class="text-xl font-mono break-all"></p>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function convert(s: string, numRows: number):</span>
+<span class="code-line" data-line="2">    if numRows == 1:</span>
+<span class="code-line" data-line="3">        return s</span>
+<span class="code-line" data-line="4">    rows = Array(numRows).fill('')</span>
+<span class="code-line" data-line="5">    currentRow = 0</span>
+<span class="code-line" data-line="6">    step = 1  // 1 for going down, -1 for going up</span>
+<span class="code-line" data-line="7">    for char in s:</span>
+<span class="code-line" data-line="8">        rows[currentRow] += char</span>
+<span class="code-line" data-line="9">        if currentRow == 0:</span>
+<span class="code-line" data-line="10">            step = 1  // Going down</span>
+<span class="code-line" data-line="11">        elif currentRow == numRows - 1:</span>
+<span class="code-line" data-line="12">            step = -1  // Going up</span>
+<span class="code-line" data-line="13">        currentRow += step</span>
+<span class="code-line" data-line="14">    return ''.join(rows)</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the input string</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) to store the characters in rows</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Creating an array of strings for each row
+                                <br>2. Moving a pointer up and down through the rows
+                                <br>3. Adding each character to its corresponding row
+                                <br>4. Changing direction at the top and bottom rows
+                                <br>5. Finally joining all rows to get the result
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inputString = '';
+        let numRows = 3;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+        let zigzagGrid = [];
+
+        function createZigzagGrid() {
+            const container = document.getElementById('zigzagContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < numRows; i++) {
+                const row = document.createElement('div');
+                row.className = 'zigzag-row';
+                zigzagGrid[i] = [];
+                
+                for (let j = 0; j < inputString.length; j++) {
+                    const box = document.createElement('div');
+                    box.className = 'char-box empty';
+                    box.id = `char-${i}-${j}`;
+                    box.setAttribute('data-index', j);
+                    row.appendChild(box);
+                    zigzagGrid[i][j] = '';
+                }
+                
+                container.appendChild(row);
+            }
+        }
+
+        function generateSteps() {
+            steps = [];
+            const rows = Array(numRows).fill('');
+            let currentRow = 0;
+            let step = 1;
+
+            steps.push({
+                type: 'init',
+                description: 'Starting zigzag conversion',
+                codeLine: 1
+            });
+
+            if (numRows === 1) {
+                steps.push({
+                    type: 'single_row',
+                    result: inputString,
+                    description: 'Single row case, returning original string',
+                    codeLine: 3
+                });
+                return;
+            }
+
+            steps.push({
+                type: 'init_rows',
+                description: 'Initializing rows array',
+                codeLine: 4
+            });
+
+            for (let i = 0; i < inputString.length; i++) {
+                const char = inputString[i];
+                rows[currentRow] += char;
+                
+                steps.push({
+                    type: 'add_char',
+                    char: char,
+                    row: currentRow,
+                    col: i,
+                    rows: [...rows],
+                    description: `Adding character '${char}' to row ${currentRow}`,
+                    codeLine: 8
+                });
+
+                if (currentRow === 0) {
+                    steps.push({
+                        type: 'direction',
+                        direction: 'down',
+                        row: currentRow,
+                        description: 'At top row, changing direction to down',
+                        codeLine: 10
+                    });
+                    step = 1;
+                } else if (currentRow === numRows - 1) {
+                    steps.push({
+                        type: 'direction',
+                        direction: 'up',
+                        row: currentRow,
+                        description: 'At bottom row, changing direction to up',
+                        codeLine: 12
+                    });
+                    step = -1;
+                }
+
+                currentRow += step;
+            }
+
+            const result = rows.join('');
+            steps.push({
+                type: 'complete',
+                result: result,
+                description: `Conversion complete: "${result}"`,
+                codeLine: 14
+            });
+        }
+
+        function startVisualization() {
+            inputString = document.getElementById('stringInput').value;
+            numRows = parseInt(document.getElementById('rowsInput').value);
+            
+            if (!inputString) {
+                alert('Please enter a string');
+                return;
+            }
+            if (numRows < 1 || numRows > 10) {
+                alert('Number of rows must be between 1 and 10');
+                return;
+            }
+
+            createZigzagGrid();
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = '';
+            highlightCodeLine(1);
+            createZigzagGrid();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all character boxes
+            const charBoxes = document.querySelectorAll('.char-box');
+            charBoxes.forEach(box => {
+                box.className = 'char-box empty';
+                box.textContent = '';
+            });
+
+            switch (step.type) {
+                case 'single_row':
+                    for (let i = 0; i < inputString.length; i++) {
+                        const box = document.getElementById(`char-0-${i}`);
+                        if (box) {
+                            box.className = 'char-box active';
+                            box.textContent = inputString[i];
+                        }
+                    }
+                    document.getElementById('result').textContent = step.result;
+                    break;
+                case 'add_char':
+                    // Show all previously placed characters
+                    for (let i = 0; i < numRows; i++) {
+                        for (let j = 0; j < inputString.length; j++) {
+                            if (step.rows[i][j]) {
+                                const box = document.getElementById(`char-${i}-${j}`);
+                                if (box) {
+                                    box.className = 'char-box active';
+                                    box.textContent = step.rows[i][j];
+                                }
+                            }
+                        }
+                    }
+                    // Highlight current character
+                    const currentBox = document.getElementById(`char-${step.row}-${step.col}`);
+                    if (currentBox) {
+                        currentBox.className = 'char-box current';
+                        currentBox.textContent = step.char;
+                    }
+                    break;
+                case 'direction':
+                    // Show all characters and highlight current row
+                    for (let i = 0; i < numRows; i++) {
+                        for (let j = 0; j < inputString.length; j++) {
+                            const box = document.getElementById(`char-${i}-${j}`);
+                            if (box && box.textContent) {
+                                box.className = i === step.row ? 'char-box current' : 'char-box active';
+                            }
+                        }
+                    }
+                    break;
+                case 'complete':
+                    // Show all characters
+                    const chars = step.result.split('');
+                    let charIndex = 0;
+                    for (let i = 0; i < numRows; i++) {
+                        for (let j = 0; j < inputString.length; j++) {
+                            const box = document.getElementById(`char-${i}-${j}`);
+                            if (box && box.textContent) {
+                                box.className = 'char-box active';
+                            }
+                        }
+                    }
+                    document.getElementById('result').textContent = step.result;
+                    break;
+            }
+
+            // Update description and highlight code
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            createZigzagGrid();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subarrays with K Different Integers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            color: #e2e8f0;
+        }
+        .window-element {
+            background-color: #059669;
+            color: white;
+        }
+        .window-k-element {
+            background-color: #fb923c;
+            color: white;
+        }
+        .window-k-minus-one-element {
+            background-color: #60a5fa;
+            color: white;
+        }
+        .freq-map {
+            background-color: #2563eb;
+            color: white;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Subarrays with K Different Integers</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find subarrays with exactly K different integers using the sliding window technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Array (comma-separated numbers)</label>
+                            <input type="text" id="inputArray" placeholder="Enter array" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="1,2,1,2,3">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">k (number of different integers)</label>
+                            <input type="number" id="inputK" placeholder="Enter k" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="2">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" 
+                            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button id="prevBtn" onclick="prev()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Previous
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" 
+                            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" disabled>
+                            Play
+                        </button>
+                        <button id="nextBtn" onclick="next()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Visualization Area -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Visualization</h3>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Input Array:</h4>
+                        <div id="arrayVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Window with At Most K Integers:</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Frequency Map:</h5>
+                                <div id="freqMapKVisualization" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Distinct Count:</h5>
+                                <div id="distinctCountKVisualization" class="text-lg font-mono">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Window with At Most (K-1) Integers:</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Frequency Map:</h5>
+                                <div id="freqMapK1Visualization" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Distinct Count:</h5>
+                                <div id="distinctCountK1Visualization" class="text-lg font-mono">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Result:</h4>
+                        <div id="resultVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div id="explanation" class="text-gray-300 mb-4">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function subarraysWithKDistinct(nums, k):</span>
+<span class="code-line" data-line="2">    // Helper function to count subarrays with at most K distinct integers</span>
+<span class="code-line" data-line="3">    function atMost(k):</span>
+<span class="code-line" data-line="4">        if k < 0:</span>
+<span class="code-line" data-line="5">            return 0</span>
+<span class="code-line" data-line="6">            </span>
+<span class="code-line" data-line="7">        left = 0</span>
+<span class="code-line" data-line="8">        count = 0</span>
+<span class="code-line" data-line="9">        freq = new Map()</span>
+<span class="code-line" data-line="10">        </span>
+<span class="code-line" data-line="11">        for right from 0 to nums.length-1:</span>
+<span class="code-line" data-line="12">            // Add right element to frequency map</span>
+<span class="code-line" data-line="13">            freq[nums[right]] = (freq[nums[right]] || 0) + 1</span>
+<span class="code-line" data-line="14">            </span>
+<span class="code-line" data-line="15">            // Shrink window while we have more than k distinct integers</span>
+<span class="code-line" data-line="16">            while freq.size > k:</span>
+<span class="code-line" data-line="17">                freq[nums[left]]--</span>
+<span class="code-line" data-line="18">                if freq[nums[left]] === 0:</span>
+<span class="code-line" data-line="19">                    delete freq[nums[left]]</span>
+<span class="code-line" data-line="20">                left++</span>
+<span class="code-line" data-line="21">            </span>
+<span class="code-line" data-line="22">            // Add count of valid subarrays ending at right</span>
+<span class="code-line" data-line="23">            count += right - left + 1</span>
+<span class="code-line" data-line="24">        </span>
+<span class="code-line" data-line="25">        return count</span>
+<span class="code-line" data-line="26">    </span>
+<span class="code-line" data-line="27">    </span>
+<span class="code-line" data-line="28">    // Return difference of at most k and at most k-1</span>
+<span class="code-line" data-line="29">    return atMost(k) - atMost(k-1)</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the array</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(k) for the frequency map</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses a sliding window approach with two passes:
+                                <br>1. First pass counts subarrays with at most K distinct integers
+                                <br>2. Second pass counts subarrays with at most K-1 distinct integers
+                                <br>3. The difference gives us subarrays with exactly K distinct integers
+                                <br>4. Uses a frequency map to track distinct integers in the window
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">nums = [1,2,1,2,3], k = 2</p>
+                            <p class="text-gray-300">Output: 7</p>
+                            <p class="text-gray-300">Explanation: Subarrays formed with exactly 2 different integers: [1,2], [2,1], [1,2], [2,3], [1,2,1], [2,1,2], [1,2,1,2]</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">nums = [1,2,1,3,4], k = 3</p>
+                            <p class="text-gray-300">Output: 3</p>
+                            <p class="text-gray-300">Explanation: Subarrays formed with exactly 3 different integers: [1,2,1,3], [2,1,3], [1,3,4]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let k = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            const input = document.getElementById('inputArray').value;
+            nums = input.split(',').map(x => parseInt(x.trim()));
+            k = parseInt(document.getElementById('inputK').value);
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            function atMost(k, isMainK) {
+                if (k < 0) {
+                    steps.push({
+                        explanation: `Computing subarrays with at most ${k} different integers: 0 (k < 0)`,
+                        result: 0
+                    });
+                    return 0;
+                }
+
+                let left = 0;
+                let count = 0;
+                const freq = new Map();
+                
+                steps.push({
+                    explanation: `Computing subarrays with at most ${k} different integers`,
+                    left: 0,
+                    right: -1,
+                    freq: new Map(),
+                    count: 0,
+                    k,
+                    isMainK
+                });
+
+                for (let right = 0; right < nums.length; right++) {
+                    // Add right element
+                    freq.set(nums[right], (freq.get(nums[right]) || 0) + 1);
+                    
+                    steps.push({
+                        left,
+                        right,
+                        freq: new Map(freq),
+                        count,
+                        k,
+                        isMainK,
+                        explanation: `Added element ${nums[right]} to frequency map`
+                    });
+
+                    // Shrink window if needed
+                    while (freq.size > k) {
+                        freq.set(nums[left], freq.get(nums[left]) - 1);
+                        if (freq.get(nums[left]) === 0) {
+                            freq.delete(nums[left]);
+                        }
+                        
+                        steps.push({
+                            left,
+                            right,
+                            freq: new Map(freq),
+                            count,
+                            k,
+                            isMainK,
+                            explanation: `Removed element ${nums[left]} as we have more than ${k} distinct integers`
+                        });
+                        
+                        left++;
+                    }
+
+                    // Add count of valid subarrays
+                    count += right - left + 1;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        freq: new Map(freq),
+                        count,
+                        k,
+                        isMainK,
+                        explanation: `Added ${right - left + 1} subarrays ending at position ${right}`
+                    });
+                }
+
+                steps.push({
+                    count,
+                    k,
+                    isMainK,
+                    explanation: `Total subarrays with at most ${k} different integers: ${count}`
+                });
+                
+                return count;
+            }
+
+            // Compute result using atMost(k) - atMost(k-1)
+            const countK = atMost(k, true);
+            const countK1 = atMost(k-1, false);
+            const result = countK - countK1;
+            
+            steps.push({
+                finalResult: result,
+                explanation: `Final result: ${result} subarrays with exactly ${k} different integers`
+            });
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const freqMapKDiv = document.getElementById('freqMapKVisualization');
+            const distinctCountKDiv = document.getElementById('distinctCountKVisualization');
+            const freqMapK1Div = document.getElementById('freqMapK1Visualization');
+            const distinctCountK1Div = document.getElementById('distinctCountK1Visualization');
+            const resultDiv = document.getElementById('resultVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            arrayDiv.innerHTML = '';
+            freqMapKDiv.innerHTML = '';
+            freqMapK1Div.innerHTML = '';
+            
+            // Create array visualization
+            for (let i = 0; i < nums.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.left !== undefined && step.right !== undefined) {
+                    if (step.isMainK && i >= step.left && i <= step.right) {
+                        element.classList.add('window-k-element');
+                    } else if (!step.isMainK && i >= step.left && i <= step.right) {
+                        element.classList.add('window-k-minus-one-element');
+                    }
+                }
+                
+                element.textContent = nums[i];
+                arrayDiv.appendChild(element);
+            }
+            
+            // Update frequency maps and distinct counts
+            if (step.freq) {
+                if (step.isMainK) {
+                    for (let [num, count] of step.freq) {
+                        const element = document.createElement('div');
+                        element.className = 'array-element freq-map w-20 h-12 flex items-center justify-center border rounded text-lg';
+                        element.textContent = `${num}: ${count}`;
+                        freqMapKDiv.appendChild(element);
+                    }
+                    distinctCountKDiv.textContent = step.freq.size;
+                } else {
+                    for (let [num, count] of step.freq) {
+                        const element = document.createElement('div');
+                        element.className = 'array-element freq-map w-20 h-12 flex items-center justify-center border rounded text-lg';
+                        element.textContent = `${num}: ${count}`;
+                        freqMapK1Div.appendChild(element);
+                    }
+                    distinctCountK1Div.textContent = step.freq.size;
+                }
+            }
+            
+            // Update result
+            if (step.finalResult !== undefined) {
+                resultDiv.textContent = step.finalResult;
+            } else if (step.count !== undefined) {
+                resultDiv.textContent = step.count;
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

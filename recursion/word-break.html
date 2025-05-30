@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Break - Recursion + Memoization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .char-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .char {
+            width: 40px;
+            height: 40px;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e2e8f0;
+            font-weight: bold;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        .char.active {
+            background-color: #3b82f6;
+        }
+        .char.matched {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+        .char.current {
+            border-color: #f59e0b;
+            border-width: 3px;
+        }
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .word {
+            padding: 6px 12px;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            border-radius: 20px;
+            color: #e2e8f0;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .word.matched {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+        .word.current {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+        }
+        .result-container {
+            padding: 15px;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .memo-table {
+            border-collapse: collapse;
+            margin: 20px auto;
+            width: 100%;
+        }
+        .memo-table td, .memo-table th {
+            border: 1px solid #3b82f6;
+            padding: 8px;
+            text-align: center;
+        }
+        .memo-table th {
+            background-color: #1e293b;
+        }
+        .highlight {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .tree-node {
+            fill: #1e293b;
+            stroke: #3b82f6;
+            stroke-width: 2;
+        }
+        .tree-node.current {
+            fill: #3b82f6;
+        }
+        .tree-node.success {
+            fill: #10b981;
+        }
+        .tree-node.failure {
+            fill: #ef4444;
+        }
+        .tree-link {
+            stroke: #3b82f6;
+            stroke-width: 1;
+        }
+        #segmentedResult {
+            font-family: monospace;
+            font-size: 18px;
+            background-color: #1e293b;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../../index.html" class="text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-4xl font-bold mb-2 text-blue-400">Word Break</h1>
+        <p class="text-gray-400 mb-8">Visualize the recursion and memoization approach to break a string into valid words from a dictionary.</p>
+
+        <!-- Input Section -->
+        <div class="mb-8 p-6 bg-gray-800 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">String to Break</label>
+                    <input type="text" id="stringInput" value="leetcode" 
+                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Dictionary (comma-separated words)</label>
+                    <input type="text" id="dictInput" value="leet,code,leetco,de" 
+                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Animation Speed (ms)</label>
+                    <input type="range" id="speedSlider" min="100" max="2000" value="500" step="100"
+                        class="w-full">
+                    <span id="speedValue" class="ml-2 text-gray-300">500ms</span>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="initialize()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 w-full">
+                        Initialize
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- String Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">String</h2>
+                <div class="char-container" id="charContainer"></div>
+            </div>
+
+            <!-- Dictionary Visualization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Dictionary</h2>
+                <div class="word-list" id="wordList"></div>
+            </div>
+
+            <!-- Current State -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Current State</h2>
+                <div class="space-y-2">
+                    <p class="text-gray-300">String: <span id="currentString" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Checking: <span id="currentCheck" class="font-bold">-</span></p>
+                    <p class="text-gray-300">Current Match: <span id="currentMatch" class="font-bold">-</span></p>
+                </div>
+                <div class="mt-4">
+                    <p class="text-gray-300 font-bold">Segmented Result:</p>
+                    <div id="segmentedResult" class="text-green-400">-</div>
+                </div>
+            </div>
+
+            <!-- Memoization -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Memoization</h2>
+                <div class="overflow-x-auto">
+                    <table class="memo-table" id="memoTable"></table>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="p-6 bg-gray-800 rounded-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Controls</h2>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="startAnimation()" id="playBtn" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Play
+                    </button>
+                    <button onclick="pauseAnimation()" id="pauseBtn" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 hidden">
+                        Pause
+                    </button>
+                    <button onclick="nextStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Next Step
+                    </button>
+                    <button onclick="prevStep()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Previous Step
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-gray-300">Current Step: <span id="currentStep" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Total Steps: <span id="totalSteps" class="font-bold">0</span></p>
+                    <p class="text-gray-300">Result: <span id="resultSpan" class="font-bold">-</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="bg-gray-900 p-4 rounded-lg text-gray-300 overflow-x-auto" id="pseudoCode">
+function wordBreak(s, wordDict) {
+    const wordSet = new Set(wordDict);
+    const memo = new Map();
+    
+    function canBreak(start) {
+        // Base case: if we've reached the end of the string
+        if (start === s.length) {
+            return true;
+        }
+        
+        // Check if we've already computed this state
+        if (memo.has(start)) {
+            return memo.get(start);
+        }
+        
+        // Try all possible word endings
+        for (let end = start + 1; end <= s.length; end++) {
+            const word = s.substring(start, end);
+            
+            // If this substring is in the dictionary and the rest can be broken
+            if (wordSet.has(word) && canBreak(end)) {
+                memo.set(start, true);
+                return true;
+            }
+        }
+        
+        // If no valid word break found
+        memo.set(start, false);
+        return false;
+    }
+    
+    return canBreak(0);
+}</pre>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="mt-8 p-6 bg-gray-800 rounded-lg">
+            <h2 class="text-2xl font-bold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4 text-gray-300">
+                <p><strong>Problem Description:</strong> Given a string s and a dictionary of strings wordDict, determine if s can be segmented into a space-separated sequence of one or more dictionary words.</p>
+                <p><strong>Time Complexity:</strong> O(n³) where n is the length of the string (O(n²) recursive calls, each doing O(n) substring work)</p>
+                <p><strong>Space Complexity:</strong> O(n) for memoization and recursion stack</p>
+                <p><strong>How it works:</strong></p>
+                <ol class="list-decimal pl-4 space-y-2">
+                    <li>Create a set from the dictionary for faster lookups</li>
+                    <li>Use memoization to avoid redundant calculations</li>
+                    <li>For each position, try all possible word endings</li>
+                    <li>Check if the current substring is a valid word and if the rest can be segmented</li>
+                    <li>Use recursion to check the remaining part of the string</li>
+                    <li>Return true if the entire string can be broken into dictionary words</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let steps = [];
+        let currentStepIndex = 0;
+        let animationInterval;
+        let memo = new Map();
+        let speed = 500;
+        let inputString = '';
+        let wordDict = [];
+        let wordSet = new Set();
+        let segmentation = [];
+        let canBreakResult = false;
+
+        function initialize() {
+            try {
+                inputString = document.getElementById('stringInput').value.trim();
+                const dictInput = document.getElementById('dictInput').value;
+                wordDict = dictInput.split(',').map(word => word.trim()).filter(word => word);
+                wordSet = new Set(wordDict);
+                
+                if (inputString.length === 0) {
+                    alert('Please enter a string to break');
+                    return;
+                }
+                
+                if (wordDict.length === 0) {
+                    alert('Please enter at least one word in the dictionary');
+                    return;
+                }
+                
+                // Reset state
+                steps = [];
+                currentStepIndex = 0;
+                memo = new Map();
+                segmentation = [];
+                
+                // Generate steps
+                generateSteps();
+                
+                // Update UI
+                updateCharVisualization();
+                updateWordList();
+                updateMemoTable();
+                updateCurrentState();
+                
+                document.getElementById('totalSteps').textContent = steps.length;
+                document.getElementById('resultSpan').textContent = canBreakResult ? "True (Can break)" : "False (Cannot break)";
+                document.getElementById('resultSpan').className = canBreakResult ? "font-bold text-green-500" : "font-bold text-red-500";
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred. Please check your input.');
+            }
+        }
+
+        function generateSteps() {
+            // To store segmentation
+            const finalSegmentation = [];
+            
+            function canBreak(start, path = []) {
+                // Base case: if we've reached the end of the string
+                if (start === inputString.length) {
+                    steps.push({
+                        type: 'base_success',
+                        start,
+                        segmentation: [...path],
+                        description: 'Reached end of string successfully'
+                    });
+                    return true;
+                }
+                
+                // Check if we've already computed this state
+                if (memo.has(start)) {
+                    steps.push({
+                        type: 'memo',
+                        start,
+                        segmentation: [...path],
+                        result: memo.get(start),
+                        description: `Using memoized result for position ${start}`
+                    });
+                    return memo.get(start);
+                }
+                
+                steps.push({
+                    type: 'start_check',
+                    start,
+                    segmentation: [...path],
+                    description: `Checking all possible words from position ${start}`
+                });
+                
+                // Try all possible word endings
+                for (let end = start + 1; end <= inputString.length; end++) {
+                    const word = inputString.substring(start, end);
+                    
+                    steps.push({
+                        type: 'check_word',
+                        start,
+                        end,
+                        word,
+                        segmentation: [...path],
+                        description: `Checking if "${word}" is in dictionary`
+                    });
+                    
+                    // If this substring is in the dictionary
+                    if (wordSet.has(word)) {
+                        steps.push({
+                            type: 'word_found',
+                            start,
+                            end,
+                            word,
+                            segmentation: [...path],
+                            description: `"${word}" found in dictionary`
+                        });
+                        
+                        // Try to break the rest
+                        const newPath = [...path, { start, end, word }];
+                        
+                        steps.push({
+                            type: 'recursive_call',
+                            start: end,
+                            word,
+                            segmentation: [...newPath],
+                            description: `Trying to break the rest of the string from position ${end}`
+                        });
+                        
+                        const result = canBreak(end, newPath);
+                        
+                        if (result) {
+                            // If successful, update segmentation
+                            if (end === inputString.length) {
+                                finalSegmentation.push(...newPath);
+                            }
+                            
+                            memo.set(start, true);
+                            steps.push({
+                                type: 'success',
+                                start,
+                                end,
+                                word,
+                                segmentation: [...newPath],
+                                description: `Success! String can be broken from position ${start}`
+                            });
+                            return true;
+                        }
+                    } else {
+                        steps.push({
+                            type: 'word_not_found',
+                            start,
+                            end,
+                            word,
+                            segmentation: [...path],
+                            description: `"${word}" not found in dictionary`
+                        });
+                    }
+                }
+                
+                // If no valid word break found
+                memo.set(start, false);
+                steps.push({
+                    type: 'failure',
+                    start,
+                    segmentation: [...path],
+                    description: `No valid word break found from position ${start}`
+                });
+                return false;
+            }
+            
+            canBreakResult = canBreak(0);
+            
+            // Store final segmentation
+            segmentation = finalSegmentation;
+        }
+
+        function updateCharVisualization() {
+            const container = document.getElementById('charContainer');
+            container.innerHTML = '';
+            
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            for (let i = 0; i < inputString.length; i++) {
+                const charDiv = document.createElement('div');
+                charDiv.className = 'char';
+                charDiv.textContent = inputString[i];
+                charDiv.id = `char-${i}`;
+                
+                // Highlight current position
+                if (currentStep.start === i) {
+                    charDiv.classList.add('active');
+                }
+                
+                // Highlight current word being checked
+                if (currentStep.type === 'check_word' || 
+                    currentStep.type === 'word_found' || 
+                    currentStep.type === 'word_not_found') {
+                    if (i >= currentStep.start && i < currentStep.end) {
+                        charDiv.classList.add('current');
+                    }
+                }
+                
+                // Highlight matched words
+                for (const segment of currentStep.segmentation) {
+                    if (i >= segment.start && i < segment.end) {
+                        charDiv.classList.add('matched');
+                    }
+                }
+                
+                container.appendChild(charDiv);
+            }
+        }
+
+        function updateWordList() {
+            const container = document.getElementById('wordList');
+            container.innerHTML = '';
+            
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            for (const word of wordDict) {
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'word';
+                wordDiv.textContent = word;
+                
+                // Highlight current word being checked
+                if ((currentStep.type === 'check_word' || 
+                     currentStep.type === 'word_found' || 
+                     currentStep.type === 'word_not_found') && 
+                    currentStep.word === word) {
+                    wordDiv.classList.add('current');
+                }
+                
+                // Highlight matched words
+                if (currentStep.type === 'word_found' && currentStep.word === word) {
+                    wordDiv.classList.add('matched');
+                }
+                
+                container.appendChild(wordDiv);
+            }
+        }
+
+        function updateMemoTable() {
+            const table = document.getElementById('memoTable');
+            table.innerHTML = '';
+            
+            if (memo.size === 0) {
+                table.innerHTML = '<tr><td class="text-gray-400">Memoization values will appear here...</td></tr>';
+                return;
+            }
+            
+            // Create header row
+            const headerRow = table.insertRow();
+            headerRow.insertCell().textContent = 'Start Position';
+            headerRow.insertCell().textContent = 'Can Break';
+            
+            // Add data rows
+            for (const [key, value] of memo.entries()) {
+                const row = table.insertRow();
+                row.id = `memo-row-${key}`;
+                row.insertCell().textContent = key;
+                const resultCell = row.insertCell();
+                resultCell.textContent = value ? 'Yes' : 'No';
+                resultCell.style.color = value ? '#10b981' : '#ef4444';
+            }
+            
+            // Highlight current memo entry
+            const currentStep = steps[currentStepIndex];
+            if (currentStep && currentStep.type === 'memo') {
+                const row = document.getElementById(`memo-row-${currentStep.start}`);
+                if (row) {
+                    row.classList.add('highlight');
+                }
+            }
+        }
+
+        function updateCurrentState() {
+            const currentStep = steps[currentStepIndex];
+            if (!currentStep) return;
+            
+            document.getElementById('currentString').textContent = inputString;
+            
+            let checkText = '-';
+            if (currentStep.start !== undefined) {
+                checkText = `From position ${currentStep.start}`;
+                if (currentStep.type === 'check_word') {
+                    checkText = `"${currentStep.word}" (${currentStep.start}:${currentStep.end})`;
+                }
+            }
+            document.getElementById('currentCheck').textContent = checkText;
+            
+            let matchText = '-';
+            if (currentStep.segmentation && currentStep.segmentation.length > 0) {
+                matchText = currentStep.segmentation.map(seg => seg.word).join(' ');
+            }
+            document.getElementById('currentMatch').textContent = matchText;
+            
+            // Update segmented result
+            let segmentedResult = '';
+            if (currentStep.segmentation && currentStep.segmentation.length > 0) {
+                let lastEnd = 0;
+                const orderedSegments = [...currentStep.segmentation].sort((a, b) => a.start - b.start);
+                
+                for (let i = 0; i < inputString.length; i++) {
+                    let isInSegment = false;
+                    let isSegmentStart = false;
+                    
+                    for (const segment of orderedSegments) {
+                        if (i === segment.start) {
+                            isSegmentStart = true;
+                        }
+                        if (i >= segment.start && i < segment.end) {
+                            isInSegment = true;
+                        }
+                    }
+                    
+                    if (isSegmentStart && i > 0) {
+                        segmentedResult += ' ';
+                    }
+                    
+                    if (isInSegment) {
+                        segmentedResult += `<span class="text-green-400">${inputString[i]}</span>`;
+                    } else {
+                        segmentedResult += `<span class="text-gray-400">${inputString[i]}</span>`;
+                    }
+                }
+            } else {
+                segmentedResult = `<span class="text-gray-400">${inputString}</span>`;
+            }
+            
+            document.getElementById('segmentedResult').innerHTML = segmentedResult;
+            document.getElementById('currentStep').textContent = currentStepIndex;
+            
+            // Update pseudo code highlighting
+            updatePseudoCodeHighlight(currentStep);
+        }
+
+        function updatePseudoCodeHighlight(step) {
+            const code = document.getElementById('pseudoCode');
+            code.innerHTML = code.textContent.replace(/class="highlight"/g, '');
+            
+            const lines = code.textContent.split('\n');
+            let highlightLine = -1;
+            
+            switch(step.type) {
+                case 'base_success':
+                    highlightLine = 5; // if (start === s.length) { return true; }
+                    break;
+                case 'memo':
+                    highlightLine = 10; // return memo.get(start);
+                    break;
+                case 'start_check':
+                    highlightLine = 13; // for (let end = start + 1; end <= s.length; end++) {
+                    break;
+                case 'check_word':
+                    highlightLine = 14; // const word = s.substring(start, end);
+                    break;
+                case 'word_found':
+                case 'word_not_found':
+                    highlightLine = 17; // if (wordSet.has(word) && canBreak(end)) {
+                    break;
+                case 'recursive_call':
+                    highlightLine = 17; // if (wordSet.has(word) && canBreak(end)) {
+                    break;
+                case 'success':
+                    highlightLine = 19; // return true;
+                    break;
+                case 'failure':
+                    highlightLine = 24; // return false;
+                    break;
+            }
+            
+            if (highlightLine !== -1) {
+                lines[highlightLine] = `<span class="highlight">${lines[highlightLine]}</span>`;
+                code.innerHTML = lines.join('\n');
+            }
+        }
+
+        function startAnimation() {
+            document.getElementById('playBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+            
+            animationInterval = setInterval(() => {
+                if (currentStepIndex < steps.length - 1) {
+                    currentStepIndex++;
+                    updateCharVisualization();
+                    updateWordList();
+                    updateMemoTable();
+                    updateCurrentState();
+                } else {
+                    pauseAnimation();
+                }
+            }, speed);
+        }
+
+        function pauseAnimation() {
+            document.getElementById('playBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+            clearInterval(animationInterval);
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateCharVisualization();
+                updateWordList();
+                updateMemoTable();
+                updateCurrentState();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateCharVisualization();
+                updateWordList();
+                updateMemoTable();
+                updateCurrentState();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+            document.getElementById('speedValue').textContent = `${speed}ms`;
+            if (animationInterval) {
+                pauseAnimation();
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find All Anagrams in a String Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            color: #e2e8f0;
+        }
+        .window-element {
+            background-color: #059669;
+            color: white;
+        }
+        .match-element {
+            background-color: #fb923c;
+            color: white;
+        }
+        .freq-map {
+            background-color: #2563eb;
+            color: white;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Find All Anagrams in a String</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find all anagrams of a pattern string in a main string using the sliding window technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Pattern String (p)</label>
+                            <input type="text" id="pInput" placeholder="Enter pattern string" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="abc">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Main String (s)</label>
+                            <input type="text" id="sInput" placeholder="Enter main string" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400" value="cbaebabacd">
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" 
+                            class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button id="prevBtn" onclick="prev()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Previous
+                        </button>
+                        <button id="playBtn" onclick="togglePlay()" 
+                            class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" disabled>
+                            Play
+                        </button>
+                        <button id="nextBtn" onclick="next()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Visualization Area -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Visualization</h3>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Pattern String (p):</h4>
+                        <div id="pVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                        <h4 class="font-semibold mb-2">Main String (s):</h4>
+                        <div id="sVisualization" class="flex flex-wrap gap-2 mb-4">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Character Frequency Maps:</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Pattern Frequency:</h5>
+                                <div id="patternFreqVisualization" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="text-sm font-medium mb-2">Window Frequency:</h5>
+                                <div id="windowFreqVisualization" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">Found Anagram Start Indices:</h4>
+                        <div id="resultVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div id="explanation" class="text-gray-300 mb-4">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre class="text-sm">
+// Time Complexity: O(n), where n is length of s
+function findAnagrams(s, p):
+    result = []
+    if p.length > s.length:
+        return result
+        
+    // Create frequency maps
+    patternFreq = new Map()
+    windowFreq = new Map()
+    
+    // Initialize pattern frequency
+    for char in p:
+        patternFreq[char] = (patternFreq[char] || 0) + 1
+    
+    // Initialize first window
+    for i from 0 to p.length-1:
+        windowFreq[s[i]] = (windowFreq[s[i]] || 0) + 1
+    
+    // Check if first window is an anagram
+    if mapsEqual(patternFreq, windowFreq):
+        result.push(0)
+    
+    // Slide window
+    for i from p.length to s.length-1:
+        // Remove leftmost character
+        leftChar = s[i - p.length]
+        windowFreq[leftChar]--
+        if windowFreq[leftChar] === 0:
+            delete windowFreq[leftChar]
+            
+        // Add new character
+        rightChar = s[i]
+        windowFreq[rightChar] = (windowFreq[rightChar] || 0) + 1
+        
+        // Check if current window is an anagram
+        if mapsEqual(patternFreq, windowFreq):
+            result.push(i - p.length + 1)
+    
+    return result</pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of string s</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(k) where k is the number of unique characters in pattern p</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm uses a sliding window approach:
+                                <br>1. Create frequency maps for pattern and window
+                                <br>2. Initialize window with first p.length characters
+                                <br>3. Slide window one character at a time
+                                <br>4. Compare frequency maps to find anagrams
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">s = "cbaebabacd", p = "abc"</p>
+                            <p class="text-gray-300">Output: [0,6]</p>
+                            <p class="text-gray-300">Explanation: The substring with start index = 0 is "cba", which is an anagram of "abc".<br>
+                                The substring with start index = 6 is "bac", which is an anagram of "abc".</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">s = "abab", p = "ab"</p>
+                            <p class="text-gray-300">Output: [0,1,2]</p>
+                            <p class="text-gray-300">Explanation: The substring with start index = 0 is "ab", which is an anagram of "ab".<br>
+                                The substring with start index = 1 is "ba", which is an anagram of "ab".<br>
+                                The substring with start index = 2 is "ab", which is an anagram of "ab".</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let p = "";
+        let s = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let result = [];
+
+        function initializeVisualization() {
+            // Get input values
+            p = document.getElementById('pInput').value;
+            s = document.getElementById('sInput').value;
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            result = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            result = [];
+            
+            if (p.length > s.length) {
+                steps.push({
+                    explanation: "Pattern string is longer than main string, no anagrams possible",
+                    result: []
+                });
+                return;
+            }
+
+            // Create frequency maps
+            const patternFreq = new Map();
+            const windowFreq = new Map();
+            
+            // Initialize pattern frequency
+            for (let char of p) {
+                patternFreq.set(char, (patternFreq.get(char) || 0) + 1);
+            }
+            
+            steps.push({
+                patternFreq: new Map(patternFreq),
+                windowFreq: new Map(windowFreq),
+                result: [],
+                explanation: "Initialized pattern frequency map"
+            });
+
+            // Initialize first window
+            for (let i = 0; i < p.length; i++) {
+                const char = s[i];
+                windowFreq.set(char, (windowFreq.get(char) || 0) + 1);
+                steps.push({
+                    windowStart: 0,
+                    windowEnd: i,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    result: [],
+                    explanation: `Building initial window: added '${char}'`
+                });
+            }
+
+            // Check first window
+            if (mapsEqual(patternFreq, windowFreq)) {
+                result.push(0);
+                steps.push({
+                    windowStart: 0,
+                    windowEnd: p.length - 1,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    result: [...result],
+                    explanation: "Found anagram at index 0!"
+                });
+            }
+
+            // Slide window
+            for (let i = p.length; i < s.length; i++) {
+                // Remove leftmost character
+                const leftChar = s[i - p.length];
+                windowFreq.set(leftChar, windowFreq.get(leftChar) - 1);
+                if (windowFreq.get(leftChar) === 0) {
+                    windowFreq.delete(leftChar);
+                }
+                
+                steps.push({
+                    windowStart: i - p.length + 1,
+                    windowEnd: i - 1,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    result: [...result],
+                    explanation: `Removed '${leftChar}' from window`
+                });
+
+                // Add new character
+                const rightChar = s[i];
+                windowFreq.set(rightChar, (windowFreq.get(rightChar) || 0) + 1);
+                
+                steps.push({
+                    windowStart: i - p.length + 1,
+                    windowEnd: i,
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    result: [...result],
+                    explanation: `Added '${rightChar}' to window`
+                });
+
+                // Check current window
+                if (mapsEqual(patternFreq, windowFreq)) {
+                    result.push(i - p.length + 1);
+                    steps.push({
+                        windowStart: i - p.length + 1,
+                        windowEnd: i,
+                        patternFreq: new Map(patternFreq),
+                        windowFreq: new Map(windowFreq),
+                        result: [...result],
+                        explanation: `Found anagram at index ${i - p.length + 1}!`
+                    });
+                }
+            }
+
+            if (result.length === 0) {
+                steps.push({
+                    patternFreq: new Map(patternFreq),
+                    windowFreq: new Map(windowFreq),
+                    result: [],
+                    explanation: "No anagrams found"
+                });
+            }
+        }
+
+        function mapsEqual(map1, map2) {
+            if (map1.size !== map2.size) return false;
+            for (let [key, value] of map1) {
+                if (map2.get(key) !== value) return false;
+            }
+            return true;
+        }
+
+        function updateVisualization() {
+            const pDiv = document.getElementById('pVisualization');
+            const sDiv = document.getElementById('sVisualization');
+            const patternFreqDiv = document.getElementById('patternFreqVisualization');
+            const windowFreqDiv = document.getElementById('windowFreqVisualization');
+            const resultDiv = document.getElementById('resultVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            pDiv.innerHTML = '';
+            sDiv.innerHTML = '';
+            patternFreqDiv.innerHTML = '';
+            windowFreqDiv.innerHTML = '';
+            
+            // Create pattern string visualization
+            for (let i = 0; i < p.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded';
+                element.textContent = p[i];
+                pDiv.appendChild(element);
+            }
+            
+            // Create main string visualization
+            for (let i = 0; i < s.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded';
+                
+                if (step.windowStart !== undefined && 
+                    i >= step.windowStart && 
+                    i <= step.windowEnd) {
+                    element.classList.add('window-element');
+                }
+                
+                if (step.result && step.result.includes(i)) {
+                    element.classList.add('match-element');
+                }
+                
+                element.textContent = s[i];
+                sDiv.appendChild(element);
+            }
+            
+            // Create frequency map visualizations
+            if (step.patternFreq) {
+                for (let [char, freq] of step.patternFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element w-20 h-12 flex items-center justify-center border rounded freq-map';
+                    element.textContent = `${char}: ${freq}`;
+                    patternFreqDiv.appendChild(element);
+                }
+            }
+            
+            if (step.windowFreq) {
+                for (let [char, freq] of step.windowFreq) {
+                    const element = document.createElement('div');
+                    element.className = 'array-element w-20 h-12 flex items-center justify-center border rounded freq-map';
+                    element.textContent = `${char}: ${freq}`;
+                    windowFreqDiv.appendChild(element);
+                }
+            }
+            
+            // Update result visualization
+            resultDiv.textContent = `[${step.result.join(', ')}]`;
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swap Nodes in Pairs - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .next {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .swapped {
+            background-color: #6366f1;
+            border-color: #818cf8;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+            transition: all 0.3s ease-in-out;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Swap Nodes in Pairs</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given a linked list, swap every two adjacent nodes and return its head.<br><br>
+                You must solve the problem without modifying the values in the list's nodes (i.e., only nodes themselves may be changed.)
+            </p>
+        </div>
+
+        <!-- Solution Approach Tabs -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 mb-4">
+                <div id="iterativeTab" class="tab active px-4 py-2 rounded" onclick="switchApproach('iterative')">
+                    Iterative Approach
+                </div>
+                <div id="recursiveTab" class="tab px-4 py-2 rounded" onclick="switchApproach('recursive')">
+                    Recursive Approach
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Linked List Values (comma-separated)</label>
+                    <input type="text" id="inputValues" placeholder="Enter values" 
+                        class="border p-2 rounded w-full" value="1,2,3,4">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Linked List:</h3>
+                <div id="linkedListVisualization" class="relative h-64 mb-4">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div id="iterativePseudoCode" class="approach-code">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(1)
+function swapPairs(head):
+    // If list is empty or has only one node
+    if not head or not head.next:
+        return head
+    
+    // Create dummy node to handle edge cases
+    dummy = new ListNode(0)
+    dummy.next = head
+    prev = dummy
+    
+    // Iterate while we have at least 2 nodes to swap
+    while prev.next and prev.next.next:
+        // Store nodes to be swapped
+        first = prev.next
+        second = first.next
+        
+        // Perform the swap
+        first.next = second.next
+        second.next = first
+        prev.next = second
+        
+        // Move prev two steps ahead
+        prev = first
+    
+    return dummy.next</pre>
+            </div>
+            <div id="recursivePseudoCode" class="approach-code hidden">
+                <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(n), Space Complexity: O(n)
+function swapPairs(head):
+    // Base case: if list is empty or has one node
+    if not head or not head.next:
+        return head
+    
+    // Store nodes to be swapped
+    first = head
+    second = head.next
+    
+    // Recursively swap rest of the list
+    remaining = swapPairs(second.next)
+    
+    // Perform the swap
+    second.next = first
+    first.next = remaining
+    
+    return second</pre>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">head = [1,2,3,4]</p>
+                    <p class="text-green-400">Output: [2,1,4,3]</p>
+                    <p class="text-gray-400">Explanation: Nodes are swapped in pairs (1,2) and (3,4)</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">head = []</p>
+                    <p class="text-green-400">Output: []</p>
+                    <p class="text-gray-400">Explanation: Empty list remains empty</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">head = [1]</p>
+                    <p class="text-green-400">Output: [1]</p>
+                    <p class="text-gray-400">Explanation: Single node remains unchanged</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let values = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+        let currentApproach = 'iterative';
+
+        class ListNode {
+            constructor(val) {
+                this.val = val;
+                this.next = null;
+            }
+        }
+
+        function createLinkedList(values) {
+            if (!values.length) return null;
+            
+            const nodes = values.map(val => new ListNode(val));
+            
+            for (let i = 0; i < nodes.length - 1; i++) {
+                nodes[i].next = nodes[i + 1];
+            }
+            
+            return nodes[0];
+        }
+
+        function switchApproach(approach) {
+            currentApproach = approach;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(approach + 'Tab').classList.add('active');
+            document.querySelectorAll('.approach-code').forEach(code => code.classList.add('hidden'));
+            document.getElementById(approach + 'PseudoCode').classList.remove('hidden');
+            initializeVisualization();
+        }
+
+        function generateIterativeSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    nodes: [...getListNodes(head)],
+                    current: null,
+                    next: null,
+                    explanation: "List is empty or has only one node, nothing to swap",
+                    done: true
+                });
+                return steps;
+            }
+
+            const dummy = new ListNode(0);
+            dummy.next = head;
+            let prev = dummy;
+
+            steps.push({
+                nodes: [...getListNodes(head)],
+                current: head,
+                next: head.next,
+                explanation: "Initialize with first pair of nodes"
+            });
+
+            while (prev.next && prev.next.next) {
+                const first = prev.next;
+                const second = first.next;
+
+                steps.push({
+                    nodes: [...getListNodes(dummy.next)],
+                    current: first,
+                    next: second,
+                    explanation: "Identify pair to swap"
+                });
+
+                first.next = second.next;
+                second.next = first;
+                prev.next = second;
+
+                steps.push({
+                    nodes: [...getListNodes(dummy.next)],
+                    current: second,
+                    next: first,
+                    swapped: true,
+                    explanation: "Swap the pair"
+                });
+
+                prev = first;
+
+                if (prev.next && prev.next.next) {
+                    steps.push({
+                        nodes: [...getListNodes(dummy.next)],
+                        current: prev.next,
+                        next: prev.next.next,
+                        explanation: "Move to next pair"
+                    });
+                }
+            }
+
+            steps.push({
+                nodes: [...getListNodes(dummy.next)],
+                current: null,
+                next: null,
+                explanation: "All pairs have been swapped",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function generateRecursiveSteps(head) {
+            const steps = [];
+            if (!head || !head.next) {
+                steps.push({
+                    nodes: [...getListNodes(head)],
+                    current: null,
+                    next: null,
+                    explanation: "Base case: List is empty or has only one node",
+                    done: true
+                });
+                return steps;
+            }
+
+            function recursiveSwap(node, depth = 0) {
+                if (!node || !node.next) {
+                    steps.push({
+                        nodes: [...getListNodes(head)],
+                        current: node,
+                        next: null,
+                        explanation: `Reached base case at depth ${depth}`,
+                        depth
+                    });
+                    return node;
+                }
+
+                const first = node;
+                const second = node.next;
+
+                steps.push({
+                    nodes: [...getListNodes(head)],
+                    current: first,
+                    next: second,
+                    explanation: `Identify pair to swap at depth ${depth}`,
+                    depth
+                });
+
+                const remaining = recursiveSwap(second.next, depth + 1);
+
+                second.next = first;
+                first.next = remaining;
+
+                steps.push({
+                    nodes: [...getListNodes(second)],
+                    current: second,
+                    next: first,
+                    swapped: true,
+                    explanation: `Swap pair and connect with remaining list at depth ${depth}`,
+                    depth
+                });
+
+                return second;
+            }
+
+            const result = recursiveSwap(head);
+            steps.push({
+                nodes: [...getListNodes(result)],
+                current: null,
+                next: null,
+                explanation: "All pairs have been swapped recursively",
+                done: true
+            });
+
+            return steps;
+        }
+
+        function getListNodes(head) {
+            const nodes = [];
+            let current = head;
+            while (current) {
+                nodes.push({...current});
+                current = current.next;
+            }
+            return nodes;
+        }
+
+        function initializeVisualization() {
+            values = document.getElementById('inputValues').value.split(',').map(x => parseInt(x.trim()));
+            currentStep = 0;
+            const head = createLinkedList(values);
+            steps = currentApproach === 'iterative' ? generateIterativeSteps(head) : generateRecursiveSteps(head);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const linkedListDiv = document.getElementById('linkedListVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            linkedListDiv.innerHTML = '';
+            
+            const nodePositions = new Map();
+            let x = 50;
+            let y = 100;
+            
+            step.nodes.forEach((node, index) => {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'node absolute w-12 h-12 rounded-full border-2 flex items-center justify-center text-lg';
+                
+                if (node === step.current) {
+                    nodeDiv.classList.add('current');
+                } else if (node === step.next) {
+                    nodeDiv.classList.add('next');
+                }
+                
+                if (step.swapped && (node === step.current || node === step.next)) {
+                    nodeDiv.classList.add('swapped');
+                }
+                
+                nodeDiv.style.left = `${x}px`;
+                nodeDiv.style.top = `${y}px`;
+                nodeDiv.textContent = node.val;
+                
+                linkedListDiv.appendChild(nodeDiv);
+                nodePositions.set(node, {x, y});
+                
+                x += 100;
+            });
+            
+            step.nodes.forEach((node, index) => {
+                if (node.next) {
+                    const start = nodePositions.get(node);
+                    const end = nodePositions.get(step.nodes[index + 1]);
+                    
+                    const arrow = document.createElement('div');
+                    arrow.className = 'arrow';
+                    
+                    const dx = end.x - start.x;
+                    const dy = end.y - start.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    arrow.style.left = `${start.x + 24}px`;
+                    arrow.style.top = `${start.y + 24}px`;
+                    arrow.style.width = `${length - 48}px`;
+                    arrow.style.transform = `rotate(${angle}deg)`;
+                    
+                    linkedListDiv.appendChild(arrow);
+                }
+            });
+            
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? '<p class="font-semibold mt-2">Swapping complete!</p>' : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

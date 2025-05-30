@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Three Sum Visualization</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #0f1729;
+      color: #e2e8f0;
+    }
+    .card {
+      background-color: #1e293b;
+      border: 1px solid #2d3748;
+    }
+    .array-elem {
+      width: 50px;
+      height: 50px;
+      margin: 0 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      background-color: #3b82f6;
+      color: white;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .array-elem.pointer-pivot {
+      background-color: #8b5cf6;
+      border: 2px solid #a78bfa;
+    }
+    .array-elem.pointer-left {
+      background-color: #4ade80;
+      border: 2px solid #86efac;
+    }
+    .array-elem.pointer-right {
+      background-color: #fb923c;
+      border: 2px solid #fdba74;
+    }
+    .array-elem.triplet {
+      background-color: #22c55e;
+      border: 2px solid #4ade80;
+    }
+    .array-elem.sorted {
+      background-color: #64748b;
+    }
+    .array-elem.skipped {
+      opacity: 0.5;
+    }
+    .code-line {
+      font-family: monospace;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .code-line.active {
+      background-color: #374151;
+      color: #10b981;
+    }
+    .triplet-result {
+      background-color: #1e293b;
+      border: 1px solid #64748b;
+      padding: 8px;
+      margin: 4px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-8">
+  <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+        <div class="flex space-x-4">
+          <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+          <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+          <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto mt-20">
+    <h1 class="text-3xl font-bold mb-6 text-blue-400">Three Sum Visualization</h1>
+    <p class="text-gray-300 mb-8">Visualize how to find all triplets in an array that sum to zero using the two-pointer technique.</p>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Left Column: Visualization -->
+      <div class="space-y-6">
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <div>
+            <label class="block text-sm font-medium mb-2">Array (comma-separated numbers)</label>
+            <input type="text" id="inputArray" value="-1,0,1,2,-1,-4" 
+              class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-4">
+            <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+              Start
+            </button>
+            <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card p-4 rounded-lg shadow-lg">
+          <div class="flex justify-center space-x-4">
+            <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+              Previous
+            </button>
+            <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+              Play
+            </button>
+            <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+              Next
+            </button>
+          </div>
+          <div class="mt-4">
+            <label class="block text-sm font-medium mb-2">Animation Speed</label>
+            <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+            <span id="speedValue" class="text-sm">50ms</span>
+          </div>
+        </div>
+
+        <!-- Array Visualization -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <h3 class="text-lg font-medium mb-4">Array Visualization</h3>
+          <div id="arrayVisualization" class="flex flex-wrap justify-center">
+          </div>
+        </div>
+
+        <!-- Pointers Info -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <h3 class="text-lg font-medium mb-4">Current Pointers</h3>
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <p class="text-sm font-medium mb-2">Pivot (Purple):</p>
+              <div id="pivotInfo" class="text-lg font-mono"></div>
+            </div>
+            <div>
+              <p class="text-sm font-medium mb-2">Left (Green):</p>
+              <div id="leftInfo" class="text-lg font-mono"></div>
+            </div>
+            <div>
+              <p class="text-sm font-medium mb-2">Right (Orange):</p>
+              <div id="rightInfo" class="text-lg font-mono"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Step Info -->
+        <div class="card p-4 rounded-lg shadow-lg">
+          <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+        </div>
+
+        <!-- Current Sum Info -->
+        <div class="card p-4 rounded-lg shadow-lg">
+          <div class="flex justify-between">
+            <span>Current Sum:</span>
+            <span id="currentSum" class="font-mono"></span>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <h3 class="text-lg font-medium mb-4">Found Triplets</h3>
+          <div id="resultsList" class="flex flex-wrap justify-start">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Code and Info -->
+      <div class="space-y-6">
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+          <div class="bg-gray-900 p-4 rounded-lg">
+            <pre id="pseudoCode" class="text-sm leading-relaxed">
+<span class="code-line" data-line="1">function threeSum(nums):</span>
+<span class="code-line" data-line="2">    result = []</span>
+<span class="code-line" data-line="3">    n = nums.length</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    // Sort the array first</span>
+<span class="code-line" data-line="6">    nums.sort()</span>
+<span class="code-line" data-line="7">    </span>
+<span class="code-line" data-line="8">    for i = 0 to n-3:</span>
+<span class="code-line" data-line="9">        // Skip duplicates for the first element</span>
+<span class="code-line" data-line="10">        if i > 0 and nums[i] == nums[i-1]:</span>
+<span class="code-line" data-line="11">            continue</span>
+<span class="code-line" data-line="12">        </span>
+<span class="code-line" data-line="13">        // Using two pointers for the remaining array</span>
+<span class="code-line" data-line="14">        left = i + 1</span>
+<span class="code-line" data-line="15">        right = n - 1</span>
+<span class="code-line" data-line="16">        target = -nums[i]</span>
+<span class="code-line" data-line="17">        </span>
+<span class="code-line" data-line="18">        while left < right:</span>
+<span class="code-line" data-line="19">            current_sum = nums[left] + nums[right]</span>
+<span class="code-line" data-line="20">            </span>
+<span class="code-line" data-line="21">            if current_sum < target:</span>
+<span class="code-line" data-line="22">                left++</span>
+<span class="code-line" data-line="23">            else if current_sum > target:</span>
+<span class="code-line" data-line="24">                right--</span>
+<span class="code-line" data-line="25">            else:</span>
+<span class="code-line" data-line="26">                // Found a triplet</span>
+<span class="code-line" data-line="27">                result.push([nums[i], nums[left], nums[right]])</span>
+<span class="code-line" data-line="28">                </span>
+<span class="code-line" data-line="29">                // Skip duplicates</span>
+<span class="code-line" data-line="30">                left++</span>
+<span class="code-line" data-line="31">                while left < right and nums[left] == nums[left-1]:</span>
+<span class="code-line" data-line="32">                    left++</span>
+<span class="code-line" data-line="33">                    </span>
+<span class="code-line" data-line="34">                right--</span>
+<span class="code-line" data-line="35">                while left < right and nums[right] == nums[right+1]:</span>
+<span class="code-line" data-line="36">                    right--</span>
+<span class="code-line" data-line="37">    </span>
+<span class="code-line" data-line="38">    return result</span>
+            </pre>
+          </div>
+        </div>
+
+        <!-- Algorithm Info -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+          <div class="space-y-4">
+            <div>
+              <h3 class="font-semibold mb-2">Time Complexity</h3>
+              <p class="text-gray-300">O(n²) where n is the length of the array</p>
+            </div>
+            <div>
+              <h3 class="font-semibold mb-2">Space Complexity</h3>
+              <p class="text-gray-300">O(1) - constant extra space (excluding the output array)</p>
+            </div>
+            <div>
+              <h3 class="font-semibold mb-2">How it Works</h3>
+              <p class="text-gray-300">
+                The 3Sum algorithm uses sorting and a two-pointer approach to efficiently find all triplets that sum to zero:
+                <br><br>1. First, we sort the array to enable the two-pointer technique
+                <br>2. We iterate through the array, using each element as a potential "pivot" of the triplet
+                <br>3. For each pivot, we use two pointers (left and right) to find pairs that sum with the pivot to zero
+                <br>4. When a triplet is found, we avoid duplicates by skipping any repeated values
+                <br>5. The left pointer moves right and right pointer moves left to find all possible combinations
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+          <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+          <div class="space-y-4">
+            <div>
+              <h3 class="font-semibold mb-2">Test Case 1:</h3>
+              <p class="text-gray-300">nums = [-1,0,1,2,-1,-4]</p>
+              <p class="text-gray-300">Output: [[-1,-1,2],[-1,0,1]]</p>
+              <p class="text-gray-300">Explanation: The triplets that sum to zero are [-1,-1,2] and [-1,0,1].</p>
+            </div>
+            <div>
+              <h3 class="font-semibold mb-2">Test Case 2:</h3>
+              <p class="text-gray-300">nums = [0,1,1]</p>
+              <p class="text-gray-300">Output: []</p>
+              <p class="text-gray-300">Explanation: There are no triplets that sum to zero.</p>
+            </div>
+            <div>
+              <h3 class="font-semibold mb-2">Test Case 3:</h3>
+              <p class="text-gray-300">nums = [0,0,0]</p>
+              <p class="text-gray-300">Output: [[0,0,0]]</p>
+              <p class="text-gray-300">Explanation: The only triplet that sums to zero is [0,0,0].</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let nums = [];
+    let sortedNums = [];
+    let currentStepIndex = -1;
+    let steps = [];
+    let isPlaying = false;
+    let animationInterval = null;
+    let triplets = [];
+
+    function initializeVisualization() {
+      // Get input values
+      nums = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+      
+      // Reset visualization state
+      steps = [];
+      triplets = [];
+      
+      // Generate steps
+      generateSteps();
+      
+      // Enable buttons
+      document.getElementById('prevBtn').disabled = false;
+      document.getElementById('playBtn').disabled = false;
+      document.getElementById('nextBtn').disabled = false;
+      
+      // Reset current step
+      currentStepIndex = -1;
+      
+      // Update visualization
+      nextStep();
+    }
+
+    function createArrayVisualization() {
+      const arrayArea = document.getElementById('arrayVisualization');
+      arrayArea.innerHTML = '';
+      
+      for (let i = 0; i < sortedNums.length; i++) {
+        const elem = document.createElement('div');
+        elem.className = 'array-elem';
+        elem.textContent = sortedNums[i];
+        elem.id = `elem-${i}`;
+        
+        arrayArea.appendChild(elem);
+      }
+    }
+
+    function resetVisualization() {
+      // Clear visualization
+      document.getElementById('arrayVisualization').innerHTML = '';
+      document.getElementById('pivotInfo').innerHTML = '';
+      document.getElementById('leftInfo').innerHTML = '';
+      document.getElementById('rightInfo').innerHTML = '';
+      document.getElementById('currentSum').innerHTML = '';
+      document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+      document.getElementById('resultsList').innerHTML = '';
+      
+      // Stop playing if active
+      if (isPlaying) {
+        togglePlay();
+      }
+      
+      // Reset state
+      currentStepIndex = -1;
+      steps = [];
+      triplets = [];
+      
+      // Disable buttons
+      document.getElementById('prevBtn').disabled = true;
+      document.getElementById('playBtn').disabled = true;
+      document.getElementById('nextBtn').disabled = true;
+    }
+
+    function generateSteps() {
+      steps = [];
+      triplets = [];
+      
+      // Copy the array to avoid mutating the original
+      sortedNums = [...nums];
+      
+      // Initialize - Original array
+      steps.push({
+        type: 'initial',
+        explanation: 'Original array before sorting',
+        activeLines: [1, 2, 3]
+      });
+      
+      // Sort the array
+      sortedNums.sort((a, b) => a - b);
+      steps.push({
+        type: 'sorted',
+        explanation: 'Array after sorting in ascending order',
+        activeLines: [5, 6]
+      });
+      
+      const n = sortedNums.length;
+      
+      // Main algorithm
+      for (let i = 0; i < n - 2; i++) {
+        // Skip duplicates for first element
+        if (i > 0 && sortedNums[i] === sortedNums[i - 1]) {
+          steps.push({
+            type: 'skip-duplicate-i',
+            i,
+            explanation: `Skip duplicate pivot value ${sortedNums[i]} at index ${i}`,
+            activeLines: [9, 10, 11]
+          });
+          continue;
+        }
+        
+        steps.push({
+          type: 'new-pivot',
+          i,
+          explanation: `New pivot at index ${i} with value ${sortedNums[i]}`,
+          activeLines: [8]
+        });
+        
+        let left = i + 1;
+        let right = n - 1;
+        const target = -sortedNums[i];
+        
+        steps.push({
+          type: 'init-pointers',
+          i,
+          left,
+          right,
+          target,
+          explanation: `Initialize left pointer at ${left} and right pointer at ${right}. Target sum = ${target}`,
+          activeLines: [13, 14, 15, 16]
+        });
+        
+        while (left < right) {
+          const currentSum = sortedNums[left] + sortedNums[right];
+          
+          steps.push({
+            type: 'check-sum',
+            i,
+            left,
+            right,
+            currentSum,
+            target,
+            explanation: `Check if ${sortedNums[left]} + ${sortedNums[right]} = ${currentSum} matches target ${target}`,
+            activeLines: [18, 19]
+          });
+          
+          if (currentSum < target) {
+            steps.push({
+              type: 'move-left',
+              i,
+              left,
+              right,
+              currentSum,
+              target,
+              explanation: `Sum ${currentSum} is less than target ${target}, move left pointer`,
+              activeLines: [21, 22]
+            });
+            left++;
+          } else if (currentSum > target) {
+            steps.push({
+              type: 'move-right',
+              i,
+              left,
+              right,
+              currentSum,
+              target,
+              explanation: `Sum ${currentSum} is greater than target ${target}, move right pointer`,
+              activeLines: [23, 24]
+            });
+            right--;
+          } else {
+            // Found a triplet
+            const triplet = [sortedNums[i], sortedNums[left], sortedNums[right]];
+            triplets.push(triplet);
+            
+            steps.push({
+              type: 'found-triplet',
+              i,
+              left,
+              right,
+              currentSum,
+              target,
+              triplet,
+              explanation: `Found triplet: [${triplet}] that sums to zero`,
+              activeLines: [25, 26, 27]
+            });
+            
+            // Skip duplicates
+            const oldLeft = left;
+            left++;
+            while (left < right && sortedNums[left] === sortedNums[left - 1]) {
+              steps.push({
+                type: 'skip-left',
+                i,
+                left,
+                right,
+                explanation: `Skip duplicate left value ${sortedNums[left]}`,
+                activeLines: [29, 30, 31, 32]
+              });
+              left++;
+            }
+            
+            const oldRight = right;
+            right--;
+            while (left < right && sortedNums[right] === sortedNums[right + 1]) {
+              steps.push({
+                type: 'skip-right',
+                i,
+                left,
+                right,
+                explanation: `Skip duplicate right value ${sortedNums[right]}`,
+                activeLines: [34, 35, 36]
+              });
+              right--;
+            }
+          }
+        }
+      }
+      
+      // Final result
+      steps.push({
+        type: 'complete',
+        result: triplets,
+        explanation: `Algorithm completed. Found ${triplets.length} triplets that sum to zero`,
+        activeLines: [38]
+      });
+    }
+
+    function updateVisualization() {
+      if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+      
+      const step = steps[currentStepIndex];
+      
+      // Update current step display
+      document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+      
+      // Create array visualization if not created yet
+      if (document.getElementById('arrayVisualization').children.length === 0 && currentStepIndex > 0) {
+        createArrayVisualization();
+      }
+      
+      // Reset all elements to default state
+      for (let i = 0; i < sortedNums.length; i++) {
+        const elem = document.getElementById(`elem-${i}`);
+        if (elem) {
+          elem.className = 'array-elem';
+          if (step.type === 'sorted' || step.type !== 'initial') {
+            elem.classList.add('sorted');
+          }
+        }
+      }
+      
+      // Update the elements based on current step
+      if (step.type !== 'initial' && step.type !== 'sorted') {
+        if (step.i !== undefined) {
+          document.getElementById(`elem-${step.i}`).classList.add('pointer-pivot');
+        }
+        
+        if (step.left !== undefined) {
+          document.getElementById(`elem-${step.left}`).classList.add('pointer-left');
+        }
+        
+        if (step.right !== undefined) {
+          document.getElementById(`elem-${step.right}`).classList.add('pointer-right');
+        }
+        
+        // Mark elements in found triplets
+        if (step.type === 'found-triplet') {
+          document.getElementById(`elem-${step.i}`).classList.add('triplet');
+          document.getElementById(`elem-${step.left}`).classList.add('triplet');
+          document.getElementById(`elem-${step.right}`).classList.add('triplet');
+          
+          // Add to results list if not already there
+          addTripletToResults(step.triplet);
+        }
+        
+        // Mark skipped elements
+        if (step.type === 'skip-duplicate-i' || step.type === 'skip-left' || step.type === 'skip-right') {
+          const index = (step.type === 'skip-duplicate-i') ? step.i : 
+                    (step.type === 'skip-left') ? step.left : step.right;
+          
+          document.getElementById(`elem-${index}`).classList.add('skipped');
+        }
+      }
+      
+      // Update pointers info
+      updatePointersInfo(step);
+      
+      // Update current sum if available
+      if (step.currentSum !== undefined) {
+        document.getElementById('currentSum').textContent = step.currentSum;
+        
+        // Highlight if sum equals target
+        if (step.currentSum === step.target) {
+          document.getElementById('currentSum').className = 'font-mono text-green-400';
+        } else {
+          document.getElementById('currentSum').className = 'font-mono';
+        }
+      } else {
+        document.getElementById('currentSum').textContent = '';
+      }
+      
+      // Highlight active code lines
+      if (step.activeLines) {
+        document.querySelectorAll('.code-line').forEach(line => {
+          line.classList.remove('active');
+        });
+        
+        step.activeLines.forEach(lineNum => {
+          document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+        });
+      }
+    }
+    
+    function updatePointersInfo(step) {
+      if (step.i !== undefined) {
+        document.getElementById('pivotInfo').textContent = 
+          `Index ${step.i}: ${sortedNums[step.i]}`;
+      } else {
+        document.getElementById('pivotInfo').textContent = '';
+      }
+      
+      if (step.left !== undefined) {
+        document.getElementById('leftInfo').textContent = 
+          `Index ${step.left}: ${sortedNums[step.left]}`;
+      } else {
+        document.getElementById('leftInfo').textContent = '';
+      }
+      
+      if (step.right !== undefined) {
+        document.getElementById('rightInfo').textContent = 
+          `Index ${step.right}: ${sortedNums[step.right]}`;
+      } else {
+        document.getElementById('rightInfo').textContent = '';
+      }
+    }
+    
+    function addTripletToResults(triplet) {
+      // Check if already added
+      for (const existing of document.querySelectorAll('.triplet-result')) {
+        if (existing.textContent === triplet.toString()) {
+          return;
+        }
+      }
+      
+      const resultsList = document.getElementById('resultsList');
+      const tripletElem = document.createElement('div');
+      tripletElem.className = 'triplet-result';
+      tripletElem.textContent = triplet.toString();
+      
+      resultsList.appendChild(tripletElem);
+    }
+
+    function nextStep() {
+      if (currentStepIndex < steps.length - 1) {
+        currentStepIndex++;
+        updateVisualization();
+      }
+      
+      // Disable/enable buttons as needed
+      document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+      document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+    }
+
+    function prevStep() {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        updateVisualization();
+      }
+      
+      // Disable/enable buttons as needed
+      document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+      document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      
+      document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+      document.getElementById('playBtn').className = isPlaying 
+        ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+        : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+      
+      if (isPlaying) {
+        animationInterval = setInterval(() => {
+          if (currentStepIndex < steps.length - 1) {
+            nextStep();
+          } else {
+            togglePlay(); // Auto-stop at the end
+          }
+        }, parseInt(document.getElementById('speedSlider').value));
+      } else {
+        clearInterval(animationInterval);
+      }
+    }
+
+    // Update speed value display when slider changes
+    document.getElementById('speedSlider').addEventListener('input', function() {
+      document.getElementById('speedValue').textContent = `${this.value}ms`;
+      
+      // Update interval if playing
+      if (isPlaying) {
+        clearInterval(animationInterval);
+        animationInterval = setInterval(() => {
+          if (currentStepIndex < steps.length - 1) {
+            nextStep();
+          } else {
+            togglePlay(); // Auto-stop at the end
+          }
+        }, parseInt(this.value));
+      }
+    });
+  </script>
+</body>
+</html>

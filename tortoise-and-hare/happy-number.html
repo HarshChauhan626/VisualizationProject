@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Number - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .node {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .tortoise {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .hare {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .cycle-node {
+            border: 2px solid #3b82f6;
+        }
+        .arrow {
+            position: absolute;
+            height: 2px;
+            background-color: #4b5563;
+            transform-origin: left center;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -4px;
+            border: 5px solid transparent;
+            border-left-color: #4b5563;
+        }
+        .calculation {
+            font-family: monospace;
+            white-space: pre;
+            color: #94a3b8;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Happy Number Algorithm Visualization</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Write an algorithm to determine if a number n is happy.<br><br>
+                A happy number is a number defined by the following process:<br>
+                - Starting with any positive integer, replace the number by the sum of the squares of its digits.<br>
+                - Repeat the process until the number equals 1 (where it will stay), or it loops endlessly in a cycle which does not include 1.<br>
+                - Those numbers for which this process ends in 1 are happy numbers.<br><br>
+                Return true if n is a happy number, and false if not.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Number</label>
+                    <input type="number" id="inputNumber" placeholder="Enter number" 
+                        class="border p-2 rounded w-full" value="19">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Number Sequence:</h3>
+                <div id="sequenceVisualization" class="relative h-64 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-green-400">Tortoise (Slow):</h4>
+                        <div id="tortoiseVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-orange-400">Hare (Fast):</h4>
+                        <div id="hareVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Calculation:</h3>
+                <div id="calculationVisualization" class="calculation text-lg">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(log n), where n is the input number
+function isHappy(n):
+    function getNext(n):
+        sum = 0
+        while n > 0:
+            digit = n % 10
+            sum += digit * digit
+            n = n / 10
+        return sum
+    
+    tortoise = n
+    hare = getNext(n)
+    
+    while hare != 1 and tortoise != hare:
+        tortoise = getNext(tortoise)
+        hare = getNext(getNext(hare))
+    
+    return hare == 1</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">n = 19</p>
+                    <p class="text-green-400">Output: true</p>
+                    <p class="text-gray-400">Explanation: 1² + 9² = 82 → 8² + 2² = 68 → 6² + 8² = 100 → 1² + 0² + 0² = 1</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">n = 2</p>
+                    <p class="text-red-400">Output: false</p>
+                    <p class="text-gray-400">Explanation: 2² = 4 → 4² = 16 → 1² + 6² = 37 → 3² + 7² = 58 → 5² + 8² = 89 → 8² + 9² = 145 → 1² + 4² + 5² = 42 → 4² + 2² = 20 → 2² + 0² = 4 (cycle detected)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let number = 0;
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function getNext(n) {
+            let sum = 0;
+            let calculation = `${n} → `;
+            let digits = [];
+            
+            while (n > 0) {
+                const digit = n % 10;
+                digits.unshift(digit);
+                sum += digit * digit;
+                n = Math.floor(n / 10);
+            }
+            
+            calculation += digits.map(d => `${d}²`).join(' + ');
+            calculation += ` = ${sum}`;
+            
+            return { value: sum, calculation };
+        }
+
+        function initializeVisualization() {
+            // Get input value
+            number = parseInt(document.getElementById('inputNumber').value);
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            let tortoise = number;
+            let hareNext = getNext(number);
+            let hare = hareNext.value;
+            
+            steps.push({
+                tortoise,
+                hare,
+                calculation: hareNext.calculation,
+                explanation: "Initialize tortoise at n and hare at next value"
+            });
+            
+            while (hare !== 1 && tortoise !== hare) {
+                const tortoiseNext = getNext(tortoise);
+                tortoise = tortoiseNext.value;
+                
+                const hareNext1 = getNext(hare);
+                const hareNext2 = getNext(hareNext1.value);
+                hare = hareNext2.value;
+                
+                steps.push({
+                    tortoise,
+                    hare,
+                    calculation: `Tortoise: ${tortoiseNext.calculation}\nHare: ${hareNext1.calculation} → ${hareNext2.calculation}`,
+                    explanation: "Move tortoise one step and hare two steps"
+                });
+            }
+            
+            steps.push({
+                tortoise,
+                hare,
+                calculation: "",
+                done: true,
+                isHappy: hare === 1,
+                explanation: hare === 1 ? 
+                    "Found 1! Number is happy" : 
+                    "Cycle detected! Number is not happy"
+            });
+        }
+
+        function updateVisualization() {
+            const sequenceDiv = document.getElementById('sequenceVisualization');
+            const tortoiseDiv = document.getElementById('tortoiseVisualization');
+            const hareDiv = document.getElementById('hareVisualization');
+            const calculationDiv = document.getElementById('calculationVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            sequenceDiv.innerHTML = '';
+            
+            // Create sequence visualization
+            const values = new Set();
+            const nodePositions = new Map();
+            let x = 50;
+            let y = 100;
+            let prevNode = null;
+            
+            for (let i = 0; i <= currentStep; i++) {
+                const s = steps[i];
+                if (!values.has(s.tortoise)) {
+                    const nodeDiv = document.createElement('div');
+                    nodeDiv.className = 'node absolute w-16 h-16 rounded-full border-2 flex items-center justify-center text-lg';
+                    
+                    if (s.tortoise === step.tortoise && s.tortoise === step.hare) {
+                        nodeDiv.classList.add('tortoise', 'hare');
+                    } else if (s.tortoise === step.tortoise) {
+                        nodeDiv.classList.add('tortoise');
+                    }
+                    
+                    nodeDiv.style.left = `${x}px`;
+                    nodeDiv.style.top = `${y}px`;
+                    nodeDiv.textContent = s.tortoise;
+                    
+                    sequenceDiv.appendChild(nodeDiv);
+                    nodePositions.set(s.tortoise, {x, y});
+                    
+                    // Draw arrow from previous node if exists
+                    if (prevNode !== null) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow';
+                        
+                        const startX = nodePositions.get(prevNode).x;
+                        const startY = nodePositions.get(prevNode).y;
+                        const dx = x - startX;
+                        const dy = y - startY;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                        
+                        arrow.style.left = `${startX + 32}px`;
+                        arrow.style.top = `${startY + 32}px`;
+                        arrow.style.width = `${length - 64}px`;
+                        arrow.style.transform = `rotate(${angle}deg)`;
+                        
+                        sequenceDiv.appendChild(arrow);
+                    }
+                    
+                    prevNode = s.tortoise;
+                    values.add(s.tortoise);
+                    x += 120;
+                }
+                
+                if (!values.has(s.hare)) {
+                    const nodeDiv = document.createElement('div');
+                    nodeDiv.className = 'node absolute w-16 h-16 rounded-full border-2 flex items-center justify-center text-lg';
+                    
+                    if (s.hare === step.hare) {
+                        nodeDiv.classList.add('hare');
+                    }
+                    
+                    nodeDiv.style.left = `${x}px`;
+                    nodeDiv.style.top = `${y}px`;
+                    nodeDiv.textContent = s.hare;
+                    
+                    sequenceDiv.appendChild(nodeDiv);
+                    nodePositions.set(s.hare, {x, y});
+                    
+                    // Draw arrow from previous node if exists
+                    if (prevNode !== null) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'arrow';
+                        
+                        const startX = nodePositions.get(prevNode).x;
+                        const startY = nodePositions.get(prevNode).y;
+                        const dx = x - startX;
+                        const dy = y - startY;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                        
+                        arrow.style.left = `${startX + 32}px`;
+                        arrow.style.top = `${startY + 32}px`;
+                        arrow.style.width = `${length - 64}px`;
+                        arrow.style.transform = `rotate(${angle}deg)`;
+                        
+                        sequenceDiv.appendChild(arrow);
+                    }
+                    
+                    prevNode = s.hare;
+                    values.add(s.hare);
+                    x += 120;
+                }
+            }
+            
+            // Update pointer values
+            tortoiseDiv.textContent = `Value: ${step.tortoise}`;
+            hareDiv.textContent = `Value: ${step.hare}`;
+            
+            // Update calculation
+            calculationDiv.textContent = step.calculation;
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+                ${step.done ? `<p class="font-semibold mt-2">Result: ${step.isHappy ? 'Happy number!' : 'Not a happy number'}</p>` : ''}
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

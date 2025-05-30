@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Window Subsequence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .array-element {
+            transition: all 0.3s ease-in-out;
+        }
+        .window-element {
+            background-color: #4ade80;
+        }
+        .match-element {
+            background-color: #fb923c;
+        }
+        .min-window {
+            background-color: #60a5fa;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">Minimum Window Subsequence</h1>
+        
+        <!-- Problem Statement -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Problem Statement</h2>
+            <p class="text-gray-700">
+                Given strings s and t, find the minimum (contiguous) substring w of s, such that t is a subsequence of w.<br><br>
+                If there is no such window in s that covers all characters in t, return the empty string "".<br><br>
+                If there are multiple such minimum-length windows, return the one with the leftmost starting position.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">String s</label>
+                    <input type="text" id="inputS" placeholder="Enter string s" 
+                        class="border p-2 rounded w-full" value="abcdebdde">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">String t</label>
+                    <input type="text" id="inputT" placeholder="Enter string t" 
+                        class="border p-2 rounded w-full" value="bde">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">String s:</h3>
+                <div id="stringVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">String t:</h3>
+                <div id="targetVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Current Window:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Window Content:</h4>
+                        <div id="windowVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Matched Characters:</h4>
+                        <div id="matchedVisualization" class="text-lg font-mono">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Minimum Window Found:</h3>
+                <div id="minWindowVisualization" class="text-lg font-mono">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-700 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">Pseudo Code</h2>
+            <pre class="bg-gray-100 p-4 rounded">
+// Time Complexity: O(n * m), where n is length of s and m is length of t
+function minWindow(s, t):
+    // Initialize variables
+    minLen = Infinity
+    minStart = 0
+    
+    // Try each starting position in s
+    for i from 0 to s.length-1:
+        if s[i] === t[0]:
+            // Try to find subsequence starting at i
+            j = 0  // index in t
+            k = i  // index in s
+            
+            while k < s.length and j < t.length:
+                if s[k] === t[j]:
+                    j++
+                k++
+            
+            // If found complete subsequence
+            if j === t.length:
+                // Update minimum window if current is smaller
+                if k - i < minLen:
+                    minLen = k - i
+                    minStart = i
+    
+    // Return minimum window or empty string if not found
+    if minLen === Infinity:
+        return ""
+    else:
+        return s.substring(minStart, minStart + minLen)</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 1:</p>
+                    <p>s = "abcdebdde", t = "bde"</p>
+                    <p>Output: "bcde"</p>
+                    <p>Explanation: "bcde" is the answer because it contains "bde" as a subsequence.</p>
+                </div>
+                <div class="border-b pb-4">
+                    <p class="font-semibold">Test Case 2:</p>
+                    <p>s = "jmeqksfrsdcmsiwvaovztaqenprpvnbstl", t = "u"</p>
+                    <p>Output: ""</p>
+                    <p>Explanation: No substring contains "u".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let s = "";
+        let t = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input values
+            s = document.getElementById('inputS').value;
+            t = document.getElementById('inputT').value;
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            let minLen = Infinity;
+            let minStart = 0;
+            
+            steps.push({
+                explanation: "Starting search for minimum window subsequence",
+                minLen: Infinity
+            });
+
+            // Try each starting position in s
+            for (let i = 0; i < s.length; i++) {
+                if (s[i] === t[0]) {
+                    steps.push({
+                        i,
+                        matched: 0,
+                        minLen,
+                        minStart,
+                        explanation: `Found first character '${t[0]}' at position ${i}`
+                    });
+
+                    // Try to find subsequence starting at i
+                    let j = 0;  // index in t
+                    let k = i;  // index in s
+                    
+                    while (k < s.length && j < t.length) {
+                        if (s[k] === t[j]) {
+                            j++;
+                            
+                            steps.push({
+                                i,
+                                k,
+                                matched: j,
+                                minLen,
+                                minStart,
+                                explanation: `Matched character '${s[k]}' at position ${k}`
+                            });
+                        }
+                        k++;
+                    }
+
+                    // If found complete subsequence
+                    if (j === t.length) {
+                        // Update minimum window if current is smaller
+                        if (k - i < minLen) {
+                            minLen = k - i;
+                            minStart = i;
+                            
+                            steps.push({
+                                i,
+                                k: k - 1,
+                                matched: j,
+                                minLen,
+                                minStart,
+                                explanation: `Found new minimum window: "${s.substring(minStart, minStart + minLen)}"`
+                            });
+                        }
+                    }
+                }
+            }
+
+            steps.push({
+                minLen,
+                minStart,
+                explanation: minLen === Infinity ? 
+                    "No valid window found" : 
+                    `Final result: minimum window is "${s.substring(minStart, minStart + minLen)}"`
+            });
+        }
+
+        function updateVisualization() {
+            const stringDiv = document.getElementById('stringVisualization');
+            const targetDiv = document.getElementById('targetVisualization');
+            const windowDiv = document.getElementById('windowVisualization');
+            const matchedDiv = document.getElementById('matchedVisualization');
+            const minWindowDiv = document.getElementById('minWindowVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            stringDiv.innerHTML = '';
+            targetDiv.innerHTML = '';
+            
+            // Create string visualization
+            for (let i = 0; i < s.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.i !== undefined && step.k !== undefined) {
+                    if (i >= step.i && i <= step.k) {
+                        element.classList.add('window-element');
+                    }
+                }
+                
+                if (step.minLen !== Infinity && i >= step.minStart && i < step.minStart + step.minLen) {
+                    element.classList.add('min-window');
+                }
+                
+                if (step.matched !== undefined && i < s.length) {
+                    for (let j = 0; j < step.matched; j++) {
+                        if (s[i] === t[j]) {
+                            element.classList.add('match-element');
+                        }
+                    }
+                }
+                
+                element.textContent = s[i];
+                stringDiv.appendChild(element);
+            }
+            
+            // Create target string visualization
+            for (let i = 0; i < t.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                if (step.matched !== undefined && i < step.matched) {
+                    element.classList.add('match-element');
+                }
+                
+                element.textContent = t[i];
+                targetDiv.appendChild(element);
+            }
+            
+            // Update current window
+            if (step.i !== undefined && step.k !== undefined) {
+                windowDiv.textContent = s.substring(step.i, step.k + 1);
+                matchedDiv.textContent = t.substring(0, step.matched);
+            }
+            
+            // Update minimum window
+            if (step.minLen !== Infinity) {
+                minWindowDiv.textContent = s.substring(step.minStart, step.minStart + step.minLen);
+            } else {
+                minWindowDiv.textContent = "No valid window found";
+            }
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                playBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                playBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

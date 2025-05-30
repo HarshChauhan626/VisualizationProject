@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Substring with Two Distinct Characters Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .char-box {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+        }
+        .char-box.pointer-left {
+            border-left: 4px solid #4ade80;
+        }
+        .char-box.pointer-right {
+            border-right: 4px solid #fb923c;
+        }
+        .char-box.window {
+            background-color: #93c5fd;
+        }
+        .char-box.distinct {
+            background-color: #f472b6;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Longest Substring with At Most Two Distinct Characters</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the longest substring with at most two distinct characters using the sliding window technique.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Input String</label>
+                        <input type="text" id="inputString" value="eceba" 
+                            class="w-full px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400">
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            Start
+                        </button>
+                        <button onclick="resetVisualization()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="prevStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevBtn" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playBtn" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextBtn" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- String Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">String Visualization</h3>
+                    <div id="stringVisualization" class="flex flex-wrap justify-center">
+                    </div>
+                </div>
+
+                <!-- Pointers Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Pointers</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Left Pointer (Green):</p>
+                            <div id="leftPointerInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Right Pointer (Orange):</p>
+                            <div id="rightPointerInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                </div>
+
+                <!-- Current Window Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium mb-2">Distinct Characters:</p>
+                            <div id="distinctCharsInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium mb-2">Current Length:</p>
+                            <div id="currentLengthInfo" class="text-lg font-mono">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p class="text-sm font-medium mb-2">Max Length:</p>
+                    <p id="maxLengthInfo" class="text-lg font-mono">
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function lengthOfLongestSubstringTwoDistinct(s):</span>
+<span class="code-line" data-line="2">    if s.length < 3:</span>
+<span class="code-line" data-line="3">        return s.length</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    left = 0</span>
+<span class="code-line" data-line="6">    maxLen = 2</span>
+<span class="code-line" data-line="7">    charCount = new Map()</span>
+<span class="code-line" data-line="8">    </span>
+<span class="code-line" data-line="9">    for right in range(s.length):</span>
+<span class="code-line" data-line="10">        // Add right character to window</span>
+<span class="code-line" data-line="11">        charCount[s[right]] = (charCount[s[right]] || 0) + 1</span>
+<span class="code-line" data-line="12">        </span>
+<span class="code-line" data-line="13">        // Shrink window while we have more than 2 distinct chars</span>
+<span class="code-line" data-line="14">        while charCount.size > 2:</span>
+<span class="code-line" data-line="15">            charCount[s[left]]--</span>
+<span class="code-line" data-line="16">            if charCount[s[left]] === 0:</span>
+<span class="code-line" data-line="17">                delete charCount[s[left]]</span>
+<span class="code-line" data-line="18">            left++</span>
+<span class="code-line" data-line="19">        </span>
+<span class="code-line" data-line="20">        // Update max length</span>
+<span class="code-line" data-line="21">        maxLen = max(maxLen, right - left + 1)</span>
+<span class="code-line" data-line="22">    </span>
+<span class="code-line" data-line="23">    return maxLen</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the length of the string</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) since we store at most 3 characters in the hash map</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm finds the longest substring with at most two distinct characters by:
+                                <br>1. Using a sliding window with left and right pointers 
+                                <br>2. Expanding the window by moving the right pointer
+                                <br>3. Tracking character frequencies in a hash map
+                                <br>4. When more than 2 unique characters are in the window, shrinking the window from the left
+                                <br>5. Continually updating the maximum length of valid windows
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Cases -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 1:</h3>
+                            <p class="text-gray-300">s = "eceba"</p>
+                            <p class="text-gray-300">Output: 3</p>
+                            <p class="text-gray-300">Explanation: The substring "ece" has length 3 and contains 2 distinct characters.</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Test Case 2:</h3>
+                            <p class="text-gray-300">s = "ccaabbb"</p>
+                            <p class="text-gray-300">Output: 5</p>
+                            <p class="text-gray-300">Explanation: The substring "aabbb" has length 5 and contains 2 distinct characters.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inputString = "";
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function initializeVisualization() {
+            // Get input values
+            inputString = document.getElementById('inputString').value;
+            
+            // Reset visualization state
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Enable buttons
+            document.getElementById('prevBtn').disabled = false;
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('nextBtn').disabled = false;
+            
+            // Reset current step
+            currentStepIndex = -1;
+            
+            // Update visualization
+            nextStep();
+        }
+
+        function createStringVisualization() {
+            const stringContainer = document.getElementById('stringVisualization');
+            stringContainer.innerHTML = '';
+            
+            for (let i = 0; i < inputString.length; i++) {
+                const box = document.createElement('div');
+                box.className = 'char-box';
+                box.textContent = inputString[i];
+                box.id = `char-${i}`;
+                stringContainer.appendChild(box);
+            }
+        }
+
+        function resetVisualization() {
+            // Clear visualization
+            document.getElementById('stringVisualization').innerHTML = '';
+            document.getElementById('leftPointerInfo').innerHTML = '';
+            document.getElementById('rightPointerInfo').innerHTML = '';
+            document.getElementById('distinctCharsInfo').innerHTML = '';
+            document.getElementById('currentLengthInfo').innerHTML = '';
+            document.getElementById('maxLengthInfo').innerHTML = '';
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            
+            // Stop playing if active
+            if (isPlaying) {
+                togglePlay();
+            }
+            
+            // Reset state
+            currentStepIndex = -1;
+            steps = [];
+            
+            // Disable buttons
+            document.getElementById('prevBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function generateSteps() {
+            steps = [];
+            let left = 0;
+            let maxLen = inputString.length < 3 ? inputString.length : 2;
+            let charCount = new Map();
+            let currentMaxLen = 0;
+            
+            if (inputString.length < 3) {
+                steps.push({
+                    left: 0,
+                    right: inputString.length - 1,
+                    charCount: new Map(),
+                    currentLen: inputString.length,
+                    maxLen: inputString.length,
+                    activeLines: [2, 3],
+                    explanation: `String length (${inputString.length}) is less than 3, returning ${inputString.length}`
+                });
+                return;
+            }
+            
+            steps.push({
+                left: 0,
+                right: -1,
+                charCount: new Map(),
+                currentLen: 0,
+                maxLen: 2,
+                activeLines: [5, 6, 7],
+                explanation: "Initialize pointers and variables"
+            });
+
+            for (let right = 0; right < inputString.length; right++) {
+                // Add right character
+                charCount.set(
+                    inputString[right],
+                    (charCount.get(inputString[right]) || 0) + 1
+                );
+                
+                steps.push({
+                    left,
+                    right,
+                    charCount: new Map(charCount),
+                    currentLen: right - left + 1,
+                    maxLen: currentMaxLen,
+                    activeLines: [9, 10, 11],
+                    explanation: `Add character '${inputString[right]}' at position ${right}`
+                });
+
+                // Shrink window if needed
+                while (charCount.size > 2) {
+                    steps.push({
+                        left,
+                        right,
+                        charCount: new Map(charCount),
+                        currentLen: right - left + 1,
+                        maxLen: currentMaxLen,
+                        activeLines: [13, 14],
+                        explanation: `More than 2 distinct characters, need to shrink window from the left`
+                    });
+                    
+                    charCount.set(
+                        inputString[left],
+                        charCount.get(inputString[left]) - 1
+                    );
+                    
+                    steps.push({
+                        left,
+                        right,
+                        charCount: new Map(charCount),
+                        currentLen: right - left + 1,
+                        maxLen: currentMaxLen,
+                        reducing: true,
+                        activeLines: [15],
+                        explanation: `Reducing count of character '${inputString[left]}' at position ${left}`
+                    });
+                    
+                    if (charCount.get(inputString[left]) === 0) {
+                        charCount.delete(inputString[left]);
+                        
+                        steps.push({
+                            left,
+                            right,
+                            charCount: new Map(charCount),
+                            currentLen: right - left + 1,
+                            maxLen: currentMaxLen,
+                            deleting: true,
+                            activeLines: [16, 17],
+                            explanation: `Character '${inputString[left]}' count reached 0, removing from distinct characters`
+                        });
+                    }
+                    
+                    left++;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        charCount: new Map(charCount),
+                        currentLen: right - left + 1,
+                        maxLen: currentMaxLen,
+                        activeLines: [18],
+                        explanation: `Move left pointer to position ${left}`
+                    });
+                }
+
+                // Update max length
+                const currentWindowLength = right - left + 1;
+                if (currentWindowLength > currentMaxLen) {
+                    currentMaxLen = currentWindowLength;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        charCount: new Map(charCount),
+                        currentLen: currentWindowLength,
+                        maxLen: currentMaxLen,
+                        newMaxLen: true,
+                        activeLines: [20, 21],
+                        explanation: `Update max length to ${currentMaxLen}`
+                    });
+                } else {
+                    steps.push({
+                        left,
+                        right,
+                        charCount: new Map(charCount),
+                        currentLen: currentWindowLength,
+                        maxLen: currentMaxLen,
+                        activeLines: [20, 21],
+                        explanation: `Current window length (${currentWindowLength}) is not greater than max length (${currentMaxLen})`
+                    });
+                }
+            }
+
+            steps.push({
+                left,
+                right: inputString.length - 1,
+                charCount: new Map(charCount),
+                currentLen: (inputString.length - 1) - left + 1,
+                maxLen: currentMaxLen,
+                completed: true,
+                activeLines: [23],
+                explanation: `Algorithm completed. Max length of substring with at most 2 distinct characters: ${currentMaxLen}`
+            });
+        }
+
+        function updateVisualization() {
+            if (currentStepIndex < 0 || currentStepIndex >= steps.length) return;
+            
+            const step = steps[currentStepIndex];
+            
+            // Update current step display
+            document.getElementById('currentStep').textContent = `Step ${currentStepIndex + 1}/${steps.length}: ${step.explanation}`;
+            
+            // Create string visualization if not created yet
+            if (document.getElementById('stringVisualization').children.length === 0) {
+                createStringVisualization();
+            }
+            
+            // Reset all boxes to default state
+            for (let i = 0; i < inputString.length; i++) {
+                const box = document.getElementById(`char-${i}`);
+                box.className = 'char-box';
+            }
+            
+            // Update the boxes based on current step
+            for (let i = step.left; i <= step.right; i++) {
+                if (i >= 0 && i < inputString.length) {
+                    document.getElementById(`char-${i}`).classList.add('window');
+                }
+            }
+            
+            if (step.left >= 0 && step.left < inputString.length) {
+                document.getElementById(`char-${step.left}`).classList.add('pointer-left');
+            }
+            
+            if (step.right >= 0 && step.right < inputString.length) {
+                document.getElementById(`char-${step.right}`).classList.add('pointer-right');
+            }
+            
+            // Highlight distinct characters
+            if (step.charCount) {
+                for (let i = step.left; i <= step.right; i++) {
+                    if (i >= 0 && i < inputString.length && step.charCount.has(inputString[i])) {
+                        document.getElementById(`char-${i}`).classList.add('distinct');
+                    }
+                }
+            }
+            
+            // Update pointer info
+            document.getElementById('leftPointerInfo').textContent = 
+                step.left < inputString.length ? 
+                    `Position ${step.left}: '${inputString[step.left]}'` : 
+                    "End of string";
+            
+            document.getElementById('rightPointerInfo').textContent = 
+                step.right >= 0 ? 
+                    `Position ${step.right}: '${inputString[step.right]}'` : 
+                    "Not started";
+            
+            // Update distinct characters
+            if (step.charCount) {
+                let distinctChars = '';
+                for (const [char, count] of step.charCount.entries()) {
+                    distinctChars += `'${char}': ${count}, `;
+                }
+                document.getElementById('distinctCharsInfo').textContent = 
+                    distinctChars ? distinctChars.slice(0, -2) : "None";
+            }
+            
+            // Update current and max length
+            document.getElementById('currentLengthInfo').textContent = 
+                `${step.currentLen}`;
+            
+            document.getElementById('maxLengthInfo').textContent = 
+                `${step.maxLen}`;
+            
+            if (step.newMaxLen) {
+                document.getElementById('maxLengthInfo').className = 
+                    "text-green-500 text-lg font-mono";
+            } else {
+                document.getElementById('maxLengthInfo').className = 
+                    "text-lg font-mono";
+            }
+            
+            // Highlight active code lines
+            if (step.activeLines) {
+                document.querySelectorAll('.code-line').forEach(line => {
+                    line.classList.remove('active');
+                });
+                
+                step.activeLines.forEach(lineNum => {
+                    document.querySelector(`.code-line[data-line="${lineNum}"]`).classList.add('active');
+                });
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                updateVisualization();
+            }
+            
+            // Disable/enable buttons as needed
+            document.getElementById('prevBtn').disabled = currentStepIndex <= 0;
+            document.getElementById('nextBtn').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+            document.getElementById('playBtn').className = isPlaying 
+                ? 'bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors'
+                : 'bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors';
+            
+            if (isPlaying) {
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(document.getElementById('speedSlider').value));
+            } else {
+                clearInterval(animationInterval);
+            }
+        }
+
+        // Update speed value display when slider changes
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = `${this.value}ms`;
+            
+            // Update interval if playing
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                animationInterval = setInterval(() => {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        togglePlay(); // Auto-stop at the end
+                    }
+                }, parseInt(this.value));
+            }
+        });
+    </script>
+</body>
+</html> 

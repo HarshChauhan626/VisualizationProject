@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Rotation Count - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .pivot {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .current {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .mid {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Find Rotation Count in Rotated Array</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given a sorted array that has been rotated k times, find the value of k.<br><br>
+                A rotation of an array means that all elements are shifted right by one position, and the last element is moved to the first position.<br><br>
+                Example: Original array = [1,2,3,4,5], k = 2<br>
+                After rotation: [4,5,1,2,3]<br><br>
+                The rotation count is the index of the minimum element in the array.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                    <input type="text" id="array" placeholder="4,5,1,2,3" 
+                        class="border p-2 rounded w-full" value="4,5,1,2,3">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="flex flex-wrap items-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div id="stateVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+            <div id="result" class="text-lg font-mono text-blue-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+// Time Complexity: O(log n), Space Complexity: O(1)
+function findRotationCount(arr):
+    n = arr.length
+    left = 0
+    right = n - 1
+    
+    // Array is not rotated
+    if arr[left] <= arr[right]:
+        return 0
+        
+    while left <= right:
+        // If there is only one element
+        if left == right:
+            return left
+            
+        mid = left + (right - left) // 2
+        
+        // Check if mid+1 is minimum element
+        if mid < right && arr[mid] > arr[mid + 1]:
+            return mid + 1
+            
+        // Check if mid is minimum element
+        if mid > left && arr[mid - 1] > arr[mid]:
+            return mid
+            
+        // Decide which half to search
+        if arr[left] <= arr[mid]:
+            left = mid + 1  // Left half is sorted
+        else:
+            right = mid - 1  // Right half is sorted</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">arr = [4,5,1,2,3]</p>
+                    <p class="text-green-400">Output: 2</p>
+                    <p class="text-gray-400">Explanation: Array was rotated 2 times, minimum element is at index 2.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">arr = [1,2,3,4,5]</p>
+                    <p class="text-green-400">Output: 0</p>
+                    <p class="text-gray-400">Explanation: Array is not rotated.</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">arr = [5,1,2,3,4]</p>
+                    <p class="text-green-400">Output: 1</p>
+                    <p class="text-gray-400">Explanation: Array was rotated once, minimum element is at index 1.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let arr = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function generateSteps(arr) {
+            const steps = [];
+            const n = arr.length;
+            let left = 0;
+            let right = n - 1;
+            
+            steps.push({
+                arr,
+                left,
+                right,
+                explanation: "Initialize binary search with left and right pointers"
+            });
+
+            // Check if array is not rotated
+            if (arr[left] <= arr[right]) {
+                steps.push({
+                    arr,
+                    result: 0,
+                    explanation: "Array is not rotated",
+                    done: true
+                });
+                return steps;
+            }
+
+            while (left <= right) {
+                // If there is only one element
+                if (left === right) {
+                    steps.push({
+                        arr,
+                        left,
+                        result: left,
+                        explanation: "Found pivot at single element",
+                        done: true
+                    });
+                    return steps;
+                }
+
+                const mid = Math.floor(left + (right - left) / 2);
+                steps.push({
+                    arr,
+                    left,
+                    right,
+                    mid,
+                    explanation: `Check mid element at index ${mid}`
+                });
+
+                // Check if mid+1 is minimum element
+                if (mid < right && arr[mid] > arr[mid + 1]) {
+                    steps.push({
+                        arr,
+                        result: mid + 1,
+                        pivotIndex: mid + 1,
+                        explanation: "Found pivot: element greater than next element",
+                        done: true
+                    });
+                    return steps;
+                }
+
+                // Check if mid is minimum element
+                if (mid > left && arr[mid - 1] > arr[mid]) {
+                    steps.push({
+                        arr,
+                        result: mid,
+                        pivotIndex: mid,
+                        explanation: "Found pivot: element less than previous element",
+                        done: true
+                    });
+                    return steps;
+                }
+
+                // Decide which half to search
+                if (arr[left] <= arr[mid]) {
+                    steps.push({
+                        arr,
+                        left: mid + 1,
+                        right,
+                        lastMid: mid,
+                        explanation: "Left half is sorted, search in right half"
+                    });
+                    left = mid + 1;
+                } else {
+                    steps.push({
+                        arr,
+                        left,
+                        right: mid - 1,
+                        lastMid: mid,
+                        explanation: "Right half is sorted, search in left half"
+                    });
+                    right = mid - 1;
+                }
+            }
+
+            steps.push({
+                arr,
+                explanation: "No rotation found",
+                result: 0,
+                done: true
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            arr = document.getElementById('array').value.split(',').map(x => parseInt(x.trim()));
+            currentStep = 0;
+            steps = generateSteps(arr);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const stateDiv = document.getElementById('stateVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualization
+            arrayDiv.innerHTML = '';
+            
+            // Create array visualization
+            step.arr.forEach((num, i) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-12 h-12 rounded-lg border-2 flex items-center justify-center text-lg';
+                
+                if (step.pivotIndex === i) {
+                    elementDiv.classList.add('pivot');
+                }
+                if (step.mid === i) {
+                    elementDiv.classList.add('mid');
+                }
+                if ((step.left === i || step.right === i) && !step.done) {
+                    elementDiv.classList.add('current');
+                }
+                
+                elementDiv.textContent = num;
+                arrayDiv.appendChild(elementDiv);
+            });
+            
+            // Update state
+            let stateText = '';
+            if (step.left !== undefined && !step.done) {
+                stateText = `Left: ${step.left}, Right: ${step.right}`;
+                if (step.mid !== undefined) {
+                    stateText += `, Mid: ${step.mid}`;
+                }
+            }
+            stateDiv.innerHTML = stateText;
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.done) {
+                resultDiv.textContent = `Rotation Count: ${step.result}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

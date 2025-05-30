@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Sum Subarray - Algorithm Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .window {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current-window {
+            background-color: #059669;
+            border-color: #34d399;
+        }
+        .max-window {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .number {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+            border-radius: 4px;
+        }
+        .number.highlighted {
+            background-color: #2563eb;
+            color: white;
+        }
+        .number.included {
+            background-color: #059669;
+            color: white;
+        }
+        .number.duplicate {
+            background-color: #dc2626;
+            color: white;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Maximum Sum Subarray</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an array of integers and a number k, find the maximum sum of any contiguous subarray of size k.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated)</label>
+                    <input type="text" id="inputArray" placeholder="Enter numbers" 
+                        class="border p-2 rounded w-full" value="2,1,5,1,3,2">
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Window Size (k)</label>
+                    <input type="number" id="windowSize" placeholder="Enter k" 
+                        class="border p-2 rounded w-full" value="3">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="relative h-32 mb-4 flex items-center justify-center gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current State:</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-green-400">Current Window Sum:</h4>
+                        <div id="currentSumVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium mb-2 text-orange-400">Maximum Sum:</h4>
+                        <div id="maxSumVisualization" class="text-lg font-mono text-gray-300">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+function maxSumSubarray(nums, k):
+    if (nums.length < k) return 0
+    
+    // Calculate sum of first window
+    windowSum = 0
+    for i = 0 to k-1:
+        windowSum += nums[i]
+    
+    maxSum = windowSum
+    
+    // Slide window and update maxSum
+    for i = k to nums.length-1:
+        windowSum = windowSum - nums[i-k] + nums[i]
+        maxSum = max(maxSum, windowSum)
+    
+    return maxSum</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [2,1,5,1,3,2], k = 3</p>
+                    <p class="text-green-400">Output: 9</p>
+                    <p class="text-gray-400">Explanation: Subarray with maximum sum is [5,1,3].</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [1,4,2,10,23,3,1,0,20], k = 4</p>
+                    <p class="text-green-400">Output: 39</p>
+                    <p class="text-gray-400">Explanation: Subarray with maximum sum is [10,23,3,1].</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [2,3], k = 3</p>
+                    <p class="text-red-400">Output: 0</p>
+                    <p class="text-gray-400">Explanation: Array length is less than k.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        let steps = [];
+        let isPlaying = false;
+        let playInterval;
+
+        function generateSteps(nums, k) {
+            const steps = [];
+            let maxSum = 0;
+            let windowSum = 0;
+            let left = 0;
+
+            // Calculate sum of first window
+            for (let i = 0; i < k; i++) {
+                windowSum += nums[i];
+                steps.push({
+                    left: 0,
+                    right: i,
+                    windowSum,
+                    maxSum: windowSum,
+                    explanation: `Building initial window: added ${nums[i]} at index ${i}`,
+                    newNumber: true
+                });
+            }
+            maxSum = windowSum;
+
+            // Slide window
+            for (let right = k; right < nums.length; right++) {
+                windowSum = windowSum - nums[right - k] + nums[right];
+                left = right - k + 1;
+                
+                steps.push({
+                    left,
+                    right,
+                    windowSum,
+                    maxSum,
+                    explanation: `Sliding window: removed ${nums[right - k]}, added ${nums[right]}`,
+                    slide: true
+                });
+
+                if (windowSum > maxSum) {
+                    maxSum = windowSum;
+                    steps.push({
+                        left,
+                        right,
+                        windowSum,
+                        maxSum,
+                        explanation: `New maximum sum found: ${maxSum}`,
+                        newMax: true
+                    });
+                }
+            }
+
+            return steps;
+        }
+
+        function updateVisualization(step) {
+            const nums = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            const arrayViz = document.getElementById('arrayVisualization');
+            const currentSumViz = document.getElementById('currentSumVisualization');
+            const maxSumViz = document.getElementById('maxSumVisualization');
+            const explanation = document.getElementById('explanation');
+
+            // Clear previous visualization
+            arrayViz.innerHTML = '';
+
+            // Create number boxes
+            for (let i = 0; i < nums.length; i++) {
+                const numBox = document.createElement('div');
+                numBox.className = 'number';
+                numBox.textContent = nums[i];
+
+                if (i >= step.left && i <= step.right) {
+                    numBox.classList.add('included');
+                }
+                if (i === step.left) {
+                    numBox.style.borderLeftColor = '#34d399';
+                    numBox.style.borderLeftWidth = '4px';
+                }
+                if (i === step.right) {
+                    numBox.style.borderRightColor = '#fb923c';
+                    numBox.style.borderRightWidth = '4px';
+                }
+
+                arrayViz.appendChild(numBox);
+            }
+
+            // Update current sum
+            currentSumViz.textContent = step.windowSum;
+
+            // Update max sum
+            maxSumViz.textContent = step.maxSum;
+
+            // Update explanation
+            explanation.textContent = step.explanation;
+            if (step.newMax) {
+                explanation.classList.add('text-green-400');
+            } else if (step.slide) {
+                explanation.classList.add('text-blue-400');
+            } else {
+                explanation.classList.remove('text-green-400', 'text-blue-400');
+            }
+        }
+
+        function initializeVisualization() {
+            const nums = document.getElementById('inputArray').value.split(',').map(x => parseInt(x.trim()));
+            const k = parseInt(document.getElementById('windowSize').value);
+            steps = generateSteps(nums, k);
+            currentStep = 0;
+            updateVisualization(steps[0]);
+            stopPlay();
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization(steps[currentStep]);
+            }
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization(steps[currentStep]);
+            } else {
+                stopPlay();
+            }
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                stopPlay();
+            } else {
+                startPlay();
+            }
+        }
+
+        function startPlay() {
+            isPlaying = true;
+            document.getElementById('playBtn').textContent = 'Pause';
+            document.getElementById('playBtn').classList.remove('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('playBtn').classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            playInterval = setInterval(() => {
+                if (currentStep < steps.length - 1) {
+                    next();
+                } else {
+                    stopPlay();
+                }
+            }, 1000);
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            clearInterval(playInterval);
+            document.getElementById('playBtn').textContent = 'Play';
+            document.getElementById('playBtn').classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+            document.getElementById('playBtn').classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+
+        // Initialize visualization on page load
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

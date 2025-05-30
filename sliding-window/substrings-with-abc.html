@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of Substrings Containing All Three Characters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border: 2px solid #3b82f6;
+            color: #e2e8f0;
+        }
+        .window-element {
+            background-color: #059669;
+            color: white;
+        }
+        .current-longest {
+            background-color: #fb923c;
+            color: white;
+        }
+        .freq-map {
+            background-color: #2563eb;
+            color: white;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        input::placeholder {
+            color: #64748b !important;
+        }
+        .char-a {
+            background-color: #dc2626;
+            color: white;
+        }
+        .char-b {
+            background-color: #2563eb;
+            color: white;
+        }
+        .char-c {
+            background-color: #059669;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Number of Substrings Containing All Three Characters</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given a string s consisting only of characters a, b and c, return the number of substrings containing at least one occurrence of all these characters.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Input String</label>
+                    <input type="text" id="inputString" placeholder="Enter string" 
+                        class="border p-2 rounded w-full" value="abcabc">
+                </div>
+            </div>
+            <button onclick="initializeVisualization()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                Initialize
+            </button>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">String:</h3>
+                <div id="stringVisualization" class="flex flex-wrap gap-2 mb-4">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Character Count Map:</h3>
+                <div id="countMapVisualization" class="flex flex-wrap gap-2">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current Window:</h3>
+                <div id="windowVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Total Valid Substrings:</h3>
+                <div id="totalVisualization" class="text-lg font-mono text-gray-300">
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <pre class="p-4 rounded text-gray-300">
+function numberOfSubstrings(s):
+    count = [0, 0, 0]  // count of a, b, c
+    total = 0
+    left = 0
+    
+    for right = 0 to s.length-1:
+        // Add right character to count
+        count[s[right] - 'a']++
+        
+        // Shrink window while we have all characters
+        while count[0] > 0 and count[1] > 0 and count[2] > 0:
+            // All substrings starting from left to end are valid
+            total += s.length - right
+            
+            // Remove left character
+            count[s[left] - 'a']--
+            left++
+    
+    return total</pre>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">Input: s = "abcabc"</p>
+                    <p class="text-green-400">Output: 10</p>
+                    <p class="text-gray-400">Explanation: The substrings containing at least one occurrence of 'a', 'b' and 'c' are "abc", "abca", "abcab", "abcabc", "bca", "bcab", "bcabc", "cab", "cabc" and "abc" (again).</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">Input: s = "aaacb"</p>
+                    <p class="text-green-400">Output: 3</p>
+                    <p class="text-gray-400">Explanation: The substrings containing at least one occurrence of 'a', 'b' and 'c' are "aaacb", "aacb" and "acb".</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let inputStr = "";
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function initializeVisualization() {
+            // Get input value
+            inputStr = document.getElementById('inputString').value;
+            
+            // Reset visualization state
+            currentStep = 0;
+            steps = [];
+            
+            // Generate steps
+            generateSteps();
+            
+            // Update visualization
+            updateVisualization();
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            let result = 0;
+            const counts = [0, 0, 0];  // counts of a, b, c
+            let left = 0;
+            
+            steps.push({
+                explanation: "Initialized sliding window",
+                left: 0,
+                right: -1,
+                counts: [...counts],
+                result: 0
+            });
+
+            // For each right pointer
+            for (let right = 0; right < inputStr.length; right++) {
+                // Add right character
+                counts[inputStr.charCodeAt(right) - 97]++;
+                
+                steps.push({
+                    left,
+                    right,
+                    counts: [...counts],
+                    result,
+                    explanation: `Added character '${inputStr[right]}'`
+                });
+
+                // Shrink window while possible
+                while (counts[0] > 0 && counts[1] > 0 && counts[2] > 0) {
+                    // All substrings ending after right are valid
+                    result += inputStr.length - right;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        counts: [...counts],
+                        result,
+                        explanation: `Found valid window, adding ${inputStr.length - right} substrings`
+                    });
+
+                    // Remove left character
+                    counts[inputStr.charCodeAt(left) - 97]--;
+                    
+                    steps.push({
+                        left,
+                        right,
+                        counts: [...counts],
+                        result,
+                        explanation: `Removed character '${inputStr[left]}'`
+                    });
+                    
+                    left++;
+                }
+            }
+
+            steps.push({
+                result,
+                explanation: `Final result: ${result} substrings containing all three characters`
+            });
+        }
+
+        function updateVisualization() {
+            const stringDiv = document.getElementById('stringVisualization');
+            const aCountDiv = document.getElementById('aCountVisualization');
+            const bCountDiv = document.getElementById('bCountVisualization');
+            const cCountDiv = document.getElementById('cCountVisualization');
+            const resultDiv = document.getElementById('resultVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            
+            if (currentStep >= steps.length) {
+                currentStep = steps.length - 1;
+            }
+            if (currentStep < 0) {
+                currentStep = 0;
+            }
+            
+            const step = steps[currentStep];
+            
+            // Clear previous visualizations
+            stringDiv.innerHTML = '';
+            
+            // Create string visualization
+            for (let i = 0; i < inputStr.length; i++) {
+                const element = document.createElement('div');
+                element.className = 'array-element w-12 h-12 flex items-center justify-center border rounded text-lg';
+                
+                // Color based on character
+                if (inputStr[i] === 'a') {
+                    element.classList.add('char-a');
+                } else if (inputStr[i] === 'b') {
+                    element.classList.add('char-b');
+                } else {
+                    element.classList.add('char-c');
+                }
+                
+                if (step.left !== undefined && step.right !== undefined && 
+                    i >= step.left && i <= step.right) {
+                    element.classList.add('window-element');
+                }
+                
+                element.textContent = inputStr[i];
+                stringDiv.appendChild(element);
+            }
+            
+            // Update character counts
+            if (step.counts) {
+                aCountDiv.textContent = step.counts[0];
+                bCountDiv.textContent = step.counts[1];
+                cCountDiv.textContent = step.counts[2];
+            } else {
+                aCountDiv.textContent = '0';
+                bCountDiv.textContent = '0';
+                cCountDiv.textContent = '0';
+            }
+            
+            // Update result
+            resultDiv.textContent = step.result !== undefined ? step.result : '0';
+            
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, 1000);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        // Initialize with default values
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html> 

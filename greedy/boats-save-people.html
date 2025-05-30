@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boats to Save People</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .person {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            font-family: monospace;
+            margin: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease-in-out;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+            position: relative;
+        }
+        .person.current {
+            background-color: #eab308;
+        }
+        .person.assigned {
+            background-color: #22c55e;
+        }
+        .person.heavy {
+            background-color: #ef4444;
+        }
+        .person.light {
+            background-color: #8b5cf6;
+        }
+        .person-index {
+            position: absolute;
+            top: -20px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .people-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .boat {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            background-color: #1f2937;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            min-width: 150px;
+            min-height: 100px;
+            position: relative;
+        }
+        .boat-label {
+            position: absolute;
+            top: -20px;
+            left: 10px;
+            background-color: #374151;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .boat-weight {
+            position: absolute;
+            bottom: -20px;
+            right: 10px;
+            background-color: #374151;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .boats-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Boats to Save People</h1>
+        <p class="text-gray-300 mb-8">Visualize how to find the minimum number of boats needed to save all people, with each boat carrying at most 2 people and a weight limit.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">People Weights</label>
+                            <input type="text" id="weightsInput" value="3,2,2,1" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter weights as comma-separated values">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Boat Weight Limit</label>
+                            <input type="number" id="limitInput" value="3" min="1" 
+                                class="w-full px-3 py-2 bg-gray-700 rounded text-white"
+                                placeholder="Enter boat weight limit">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="applyInputs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors w-full">
+                            Apply Inputs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- People Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">People to Rescue</h3>
+                    <div id="peopleContainer" class="people-container"></div>
+                </div>
+
+                <!-- Boats Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Boats</h3>
+                    <div id="boatsContainer" class="boats-container"></div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Minimum Boats Needed: 0</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function numRescueBoats(people, limit):</span>
+<span class="code-line" data-line="2">    # Sort people by weight</span>
+<span class="code-line" data-line="3">    people.sort()</span>
+<span class="code-line" data-line="4">    </span>
+<span class="code-line" data-line="5">    # Initialize pointers</span>
+<span class="code-line" data-line="6">    light = 0  # Lightest person</span>
+<span class="code-line" data-line="7">    heavy = people.length - 1  # Heaviest person</span>
+<span class="code-line" data-line="8">    boats = 0  # Count of boats</span>
+<span class="code-line" data-line="9">    </span>
+<span class="code-line" data-line="10">    while light <= heavy:</span>
+<span class="code-line" data-line="11">        # Try to pair the heaviest with the lightest</span>
+<span class="code-line" data-line="12">        if people[light] + people[heavy] <= limit:</span>
+<span class="code-line" data-line="13">            # We can fit both in one boat</span>
+<span class="code-line" data-line="14">            light += 1</span>
+<span class="code-line" data-line="15">        </span>
+<span class="code-line" data-line="16">        # Either way, the heaviest person gets a boat</span>
+<span class="code-line" data-line="17">        heavy -= 1</span>
+<span class="code-line" data-line="18">        boats += 1</span>
+<span class="code-line" data-line="19">    </span>
+<span class="code-line" data-line="20">    return boats</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Problem Description</h3>
+                            <p class="text-gray-300">
+                                You are given an array people where people[i] is the weight of the i-th person, 
+                                and an infinite number of boats where each boat can carry a maximum weight of limit. 
+                                Each boat carries at most two people at the same time, provided the sum of their weight is at most limit.
+                                <br><br>
+                                Return the minimum number of boats to carry every given person.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n log n) due to sorting, where n is the number of people</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(1) extra space (not counting input and output)</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The greedy algorithm works by:
+                                <br>1. Sorting people by weight
+                                <br>2. Using two pointers: one for the lightest person and one for the heaviest
+                                <br>3. For each boat, we attempt to pair the heaviest person with the lightest person
+                                <br>4. If their combined weight is within the limit, both go on the boat
+                                <br>5. Otherwise, only the heaviest person goes on the boat
+                                <br>6. We continue until all people are assigned to boats
+                                <br><br>This approach is optimal because we always try to pair the heaviest person with someone, and if not possible, they get their own boat.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let weights = [];
+        let limit = 0;
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function createPersonElement(weight, index, className = '') {
+            const personDiv = document.createElement('div');
+            personDiv.className = `person ${className}`;
+            personDiv.textContent = weight;
+            personDiv.id = `person-${index}`;
+            
+            const indexSpan = document.createElement('span');
+            indexSpan.className = 'person-index';
+            indexSpan.textContent = index;
+            personDiv.appendChild(indexSpan);
+            
+            return personDiv;
+        }
+
+        function applyInputs() {
+            const weightsInput = document.getElementById('weightsInput').value;
+            const limitInput = document.getElementById('limitInput').value;
+            
+            try {
+                weights = weightsInput.split(',').map(w => parseInt(w.trim()));
+                limit = parseInt(limitInput);
+                
+                if (weights.some(isNaN) || isNaN(limit) || limit <= 0) {
+                    throw new Error('Invalid inputs');
+                }
+                
+                createPeopleVisualization();
+                clearBoatsVisualization();
+                generateSteps();
+                toggleControls(true);
+                document.getElementById('playPauseButton').textContent = 'Play';
+            } catch (error) {
+                alert('Please enter valid inputs: ' + error.message);
+            }
+        }
+
+        function createPeopleVisualization() {
+            const container = document.getElementById('peopleContainer');
+            container.innerHTML = '';
+            
+            weights.forEach((weight, index) => {
+                container.appendChild(createPersonElement(weight, index));
+            });
+        }
+
+        function clearBoatsVisualization() {
+            const container = document.getElementById('boatsContainer');
+            container.innerHTML = '';
+        }
+
+        function updateBoatsVisualization(boats) {
+            const container = document.getElementById('boatsContainer');
+            container.innerHTML = '';
+            
+            boats.forEach((boat, index) => {
+                const boatDiv = document.createElement('div');
+                boatDiv.className = 'boat';
+                
+                const boatLabel = document.createElement('div');
+                boatLabel.className = 'boat-label';
+                boatLabel.textContent = `Boat ${index + 1}`;
+                boatDiv.appendChild(boatLabel);
+                
+                let totalWeight = 0;
+                boat.people.forEach(person => {
+                    const personDiv = createPersonElement(person.weight, person.index, person.type);
+                    boatDiv.appendChild(personDiv);
+                    totalWeight += person.weight;
+                });
+                
+                const weightLabel = document.createElement('div');
+                weightLabel.className = 'boat-weight';
+                weightLabel.textContent = `${totalWeight}/${limit}`;
+                boatDiv.appendChild(weightLabel);
+                
+                container.appendChild(boatDiv);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            
+            // Initial step
+            steps.push({
+                type: 'init',
+                description: 'Initialize with people weights and boat limit',
+                weights: [...weights],
+                limit: limit,
+                boats: [],
+                highlightIndices: [],
+                codeLine: 1
+            });
+            
+            // Sort people by weight
+            const sortedWeights = [...weights].sort((a, b) => a - b);
+            
+            steps.push({
+                type: 'sort',
+                description: 'Sort people by weight',
+                weights: sortedWeights,
+                limit: limit,
+                boats: [],
+                highlightIndices: [],
+                codeLine: 3
+            });
+            
+            // Initialize pointers
+            let light = 0;
+            let heavy = sortedWeights.length - 1;
+            let boats = [];
+            
+            steps.push({
+                type: 'initialize_pointers',
+                description: `Initialize light pointer at ${light} (weight: ${sortedWeights[light]}) and heavy pointer at ${heavy} (weight: ${sortedWeights[heavy]})`,
+                weights: sortedWeights,
+                limit: limit,
+                boats: [...boats],
+                light: light,
+                heavy: heavy,
+                highlightIndices: [light, heavy],
+                codeLine: 7
+            });
+            
+            // Process people
+            while (light <= heavy) {
+                const currentBoat = { people: [] };
+                
+                steps.push({
+                    type: 'check_pair',
+                    description: `Checking if person ${light} (weight: ${sortedWeights[light]}) and person ${heavy} (weight: ${sortedWeights[heavy]}) can fit in one boat`,
+                    weights: sortedWeights,
+                    limit: limit,
+                    boats: [...boats],
+                    light: light,
+                    heavy: heavy,
+                    highlightIndices: [light, heavy],
+                    codeLine: 12
+                });
+                
+                if (sortedWeights[light] + sortedWeights[heavy] <= limit) {
+                    // Both can fit in one boat
+                    currentBoat.people.push({
+                        weight: sortedWeights[light],
+                        index: light,
+                        type: 'light'
+                    });
+                    
+                    currentBoat.people.push({
+                        weight: sortedWeights[heavy],
+                        index: heavy,
+                        type: 'heavy'
+                    });
+                    
+                    steps.push({
+                        type: 'pair_fit',
+                        description: `Person ${light} (weight: ${sortedWeights[light]}) and person ${heavy} (weight: ${sortedWeights[heavy]}) can fit in one boat`,
+                        weights: sortedWeights,
+                        limit: limit,
+                        boats: [...boats, currentBoat],
+                        light: light + 1,
+                        heavy: heavy - 1,
+                        highlightIndices: [light, heavy],
+                        codeLine: 14
+                    });
+                    
+                    light++;
+                } else {
+                    // Only heavy person fits
+                    currentBoat.people.push({
+                        weight: sortedWeights[heavy],
+                        index: heavy,
+                        type: 'heavy'
+                    });
+                    
+                    steps.push({
+                        type: 'heavy_only',
+                        description: `Only person ${heavy} (weight: ${sortedWeights[heavy]}) fits in the boat`,
+                        weights: sortedWeights,
+                        limit: limit,
+                        boats: [...boats, currentBoat],
+                        light: light,
+                        heavy: heavy - 1,
+                        highlightIndices: [heavy],
+                        codeLine: 17
+                    });
+                }
+                
+                heavy--;
+                boats.push(currentBoat);
+            }
+            
+            // Final result
+            steps.push({
+                type: 'result',
+                description: `Final result: ${boats.length} boats needed`,
+                weights: sortedWeights,
+                limit: limit,
+                boats: boats,
+                highlightIndices: [],
+                result: boats.length,
+                codeLine: 20
+            });
+        }
+
+        function startVisualization() {
+            currentStepIndex = -1;
+            isPlaying = true;
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Update people visualization
+            const peopleContainer = document.getElementById('peopleContainer');
+            peopleContainer.innerHTML = '';
+            
+            step.weights.forEach((weight, index) => {
+                let className = '';
+                if (step.highlightIndices && step.highlightIndices.includes(index)) {
+                    className = step.type === 'pair_fit' || step.type === 'heavy_only' ? 'assigned' : 'current';
+                }
+                if (step.light === index) {
+                    className = 'light';
+                }
+                if (step.heavy === index) {
+                    className = 'heavy';
+                }
+                
+                peopleContainer.appendChild(createPersonElement(weight, index, className));
+            });
+            
+            // Update boats visualization
+            if (step.boats) {
+                updateBoatsVisualization(step.boats);
+            }
+
+            // Update info display
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'result') {
+                document.getElementById('result').textContent = `Minimum Boats Needed: ${step.result}`;
+            }
+            
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            applyInputs();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 

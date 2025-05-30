@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroid Collision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        .asteroid {
+            transition: all 0.3s ease-in-out;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: monospace;
+            margin: 2px;
+            position: relative;
+        }
+        .asteroid.positive {
+            background-color: #3b82f6;
+        }
+        .asteroid.negative {
+            background-color: #ef4444;
+        }
+        .asteroid.current {
+            border: 2px solid #eab308;
+        }
+        .asteroid.colliding {
+            background-color: #eab308;
+        }
+        .asteroid.destroyed {
+            opacity: 0.3;
+        }
+        .asteroid.remaining {
+            background-color: #22c55e;
+        }
+        .stack-item {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            margin: 2px;
+            border-radius: 50%;
+            transition: all 0.3s ease-in-out;
+            color: white;
+            font-size: 20px;
+        }
+        .stack-item.positive {
+            background-color: #3b82f6;
+        }
+        .stack-item.negative {
+            background-color: #ef4444;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Visualizations</a>
+                    <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Asteroid Collision</h1>
+        <p class="text-gray-300 mb-8">Visualize how asteroids collide and which ones remain after all collisions using a stack-based approach.</p>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Left Column: Visualization -->
+            <div class="space-y-6">
+                <!-- Input Section -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Asteroid Sizes Array</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="asteroidsInput" value="5,10,-5,8,-8" 
+                                    class="flex-1 px-3 py-2 bg-gray-700 rounded text-white placeholder-gray-400"
+                                    placeholder="Enter comma-separated integers (+ for right, - for left)">
+                                <button onclick="applyCustomArray()" 
+                                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-400 mt-2">Positive values move right, negative values move left. Example: 5,10,-5</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-4">
+                        <button onclick="generateNewArray()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                            New Array
+                        </button>
+                        <button onclick="startVisualization()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors" id="startButton">
+                            Start
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="previousStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="prevButton" disabled>
+                            Previous
+                        </button>
+                        <button onclick="togglePlay()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors" id="playPauseButton" disabled>
+                            Play
+                        </button>
+                        <button onclick="nextStep()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors" id="nextButton" disabled>
+                            Next
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                        <input type="range" min="1" max="100" value="50" class="w-full" id="speedSlider">
+                        <span id="speedValue" class="text-sm">50ms</span>
+                    </div>
+                </div>
+
+                <!-- Asteroids Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Asteroids</h3>
+                    <div id="asteroidsContainer" class="flex flex-wrap justify-center gap-4 min-h-[100px]"></div>
+                </div>
+
+                <!-- Stack Visualization -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-lg font-medium mb-4">Stack</h3>
+                    <div class="flex flex-col items-center">
+                        <div id="stackContainer" class="flex flex-col-reverse items-center border-2 border-gray-600 p-2 min-h-[200px] w-[150px]"></div>
+                        <div class="mt-2 text-gray-400">Stack Bottom</div>
+                    </div>
+                </div>
+
+                <!-- Current Step Info -->
+                <div class="card p-4 rounded-lg shadow-lg">
+                    <p id="currentStep" class="text-gray-300">Current Step: Initializing...</p>
+                    <p id="result" class="text-gray-300 mt-2">Result: </p>
+                </div>
+            </div>
+
+            <!-- Right Column: Code and Info -->
+            <div class="space-y-6">
+                <!-- Pseudo Code -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function asteroidCollision(asteroids):</span>
+<span class="code-line" data-line="2">    stack = []</span>
+<span class="code-line" data-line="3">    for asteroid in asteroids:</span>
+<span class="code-line" data-line="4">        // Keep colliding with stack top if needed</span>
+<span class="code-line" data-line="5">        while stack and asteroid < 0 and stack.top > 0:</span>
+<span class="code-line" data-line="6">            // Determine collision outcome</span>
+<span class="code-line" data-line="7">            if stack.top > abs(asteroid):</span>
+<span class="code-line" data-line="8">                // Current asteroid destroyed</span>
+<span class="code-line" data-line="9">                asteroid = 0</span>
+<span class="code-line" data-line="10">                break</span>
+<span class="code-line" data-line="11">            elif stack.top < abs(asteroid):</span>
+<span class="code-line" data-line="12">                // Stack top asteroid destroyed</span>
+<span class="code-line" data-line="13">                stack.pop()</span>
+<span class="code-line" data-line="14">            else:</span>
+<span class="code-line" data-line="15">                // Both asteroids destroyed</span>
+<span class="code-line" data-line="16">                stack.pop()</span>
+<span class="code-line" data-line="17">                asteroid = 0</span>
+<span class="code-line" data-line="18">                break</span>
+<span class="code-line" data-line="19">        // Add asteroid to stack if it wasn't destroyed</span>
+<span class="code-line" data-line="20">        if asteroid != 0:</span>
+<span class="code-line" data-line="21">            stack.push(asteroid)</span>
+<span class="code-line" data-line="22">    return stack</span>
+                        </pre>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold mb-2">Time Complexity</h3>
+                            <p class="text-gray-300">O(n) where n is the number of asteroids</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Space Complexity</h3>
+                            <p class="text-gray-300">O(n) for the stack in worst case</p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">How it Works</h3>
+                            <p class="text-gray-300">
+                                The algorithm works by:
+                                <br>1. Processing asteroids from left to right
+                                <br>2. Using a stack to track asteroids that haven't been destroyed
+                                <br>3. When a left-moving asteroid (negative) encounters right-moving asteroids (positive) in the stack:
+                                <br>&nbsp;&nbsp;&nbsp;- If the right-moving asteroid is larger, the left-moving one is destroyed
+                                <br>&nbsp;&nbsp;&nbsp;- If the left-moving asteroid is larger, the right-moving one is destroyed
+                                <br>&nbsp;&nbsp;&nbsp;- If they're equal size, both are destroyed
+                                <br>4. Asteroids moving in the same direction never collide
+                                <br>5. Final stack contains remaining asteroids
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let asteroids = [];
+        let currentStepIndex = -1;
+        let steps = [];
+        let isPlaying = false;
+        let animationInterval = null;
+
+        function generateNewArray() {
+            const size = Math.floor(Math.random() * 5) + 5; // 5-10 elements
+            asteroids = Array(size).fill().map(() => {
+                const magnitude = Math.floor(Math.random() * 9) + 1; // 1-10
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                return magnitude * direction;
+            });
+            document.getElementById('asteroidsInput').value = asteroids.join(',');
+            createAsteroidElements();
+            resetVisualization();
+        }
+
+        function applyCustomArray() {
+            const input = document.getElementById('asteroidsInput').value;
+            const customArray = input.split(',')
+                .map(num => parseInt(num.trim()))
+                .filter(num => !isNaN(num));
+            
+            if (customArray.length < 2) {
+                alert('Please enter at least 2 valid asteroid sizes separated by commas');
+                return;
+            }
+            
+            asteroids = customArray;
+            createAsteroidElements();
+            resetVisualization();
+        }
+
+        function createAsteroidElements() {
+            const container = document.getElementById('asteroidsContainer');
+            container.innerHTML = '';
+            
+            asteroids.forEach((size, idx) => {
+                const asteroid = document.createElement('div');
+                const absSize = Math.abs(size);
+                asteroid.className = `asteroid ${size > 0 ? 'positive' : 'negative'}`;
+                asteroid.style.width = `${Math.max(40, absSize * 6)}px`;
+                asteroid.style.height = `${Math.max(40, absSize * 6)}px`;
+                asteroid.textContent = size;
+                asteroid.id = `asteroid-${idx}`;
+                container.appendChild(asteroid);
+            });
+        }
+
+        function updateStack(stack) {
+            const container = document.getElementById('stackContainer');
+            container.innerHTML = '';
+            
+            stack.forEach(size => {
+                const item = document.createElement('div');
+                item.className = `stack-item ${size > 0 ? 'positive' : 'negative'}`;
+                item.textContent = size;
+                container.appendChild(item);
+            });
+        }
+
+        function generateSteps() {
+            steps = [];
+            const stack = [];
+            let updatedAsteroids = [...asteroids];
+            
+            steps.push({
+                type: 'init',
+                stack: [],
+                updated: [...updatedAsteroids],
+                remaining: [],
+                description: 'Starting with an empty stack',
+                codeLine: 2
+            });
+            
+            for (let i = 0; i < asteroids.length; i++) {
+                let asteroid = asteroids[i];
+                
+                steps.push({
+                    type: 'process',
+                    stack: [...stack],
+                    current: i,
+                    asteroid: asteroid,
+                    updated: [...updatedAsteroids],
+                    destroyed: false,
+                    description: `Processing asteroid ${asteroid} at index ${i}`,
+                    codeLine: 3
+                });
+                
+                let isDestroyed = false;
+                
+                while (stack.length > 0 && asteroid < 0 && stack[stack.length - 1] > 0) {
+                    const topAsteroid = stack[stack.length - 1];
+                    
+                    steps.push({
+                        type: 'collision',
+                        stack: [...stack],
+                        current: i,
+                        asteroid: asteroid,
+                        topAsteroid: topAsteroid,
+                        updated: [...updatedAsteroids],
+                        description: `Collision between ${asteroid} and ${topAsteroid}`,
+                        codeLine: 5
+                    });
+                    
+                    if (Math.abs(topAsteroid) > Math.abs(asteroid)) {
+                        // Current asteroid is destroyed
+                        steps.push({
+                            type: 'destroy_current',
+                            stack: [...stack],
+                            current: i,
+                            asteroid: asteroid,
+                            topAsteroid: topAsteroid,
+                            updated: [...updatedAsteroids],
+                            description: `Asteroid ${asteroid} destroyed by ${topAsteroid}`,
+                            codeLine: 9
+                        });
+                        
+                        updatedAsteroids[i] = 0;
+                        isDestroyed = true;
+                        break;
+                    } else if (Math.abs(topAsteroid) < Math.abs(asteroid)) {
+                        // Stack top asteroid is destroyed
+                        const poppedIndex = updatedAsteroids.indexOf(topAsteroid);
+                        updatedAsteroids[poppedIndex] = 0;
+                        
+                        steps.push({
+                            type: 'destroy_top',
+                            stack: [...stack],
+                            poppedIndex: poppedIndex,
+                            current: i,
+                            asteroid: asteroid,
+                            topAsteroid: topAsteroid,
+                            updated: [...updatedAsteroids],
+                            description: `Asteroid ${topAsteroid} destroyed by ${asteroid}`,
+                            codeLine: 13
+                        });
+                        
+                        stack.pop();
+                    } else {
+                        // Both asteroids are destroyed
+                        const poppedIndex = updatedAsteroids.indexOf(topAsteroid);
+                        updatedAsteroids[poppedIndex] = 0;
+                        updatedAsteroids[i] = 0;
+                        
+                        steps.push({
+                            type: 'destroy_both',
+                            stack: [...stack],
+                            poppedIndex: poppedIndex,
+                            current: i,
+                            asteroid: asteroid,
+                            topAsteroid: topAsteroid,
+                            updated: [...updatedAsteroids],
+                            description: `Both asteroids ${asteroid} and ${topAsteroid} destroyed`,
+                            codeLine: 16
+                        });
+                        
+                        stack.pop();
+                        isDestroyed = true;
+                        break;
+                    }
+                }
+                
+                if (!isDestroyed) {
+                    stack.push(asteroid);
+                    steps.push({
+                        type: 'push',
+                        stack: [...stack],
+                        current: i,
+                        asteroid: asteroid,
+                        updated: [...updatedAsteroids],
+                        description: `Pushing asteroid ${asteroid} to stack`,
+                        codeLine: 21
+                    });
+                }
+            }
+            
+            steps.push({
+                type: 'complete',
+                stack: [...stack],
+                updated: [...updatedAsteroids],
+                description: `Algorithm complete. Remaining asteroids: ${stack.join(', ')}`,
+                codeLine: 22
+            });
+        }
+
+        function startVisualization() {
+            if (asteroids.length === 0) {
+                alert('Please generate or enter asteroids first');
+                return;
+            }
+
+            generateSteps();
+            currentStepIndex = -1;
+            isPlaying = true;
+            toggleControls(true);
+            document.getElementById('playPauseButton').textContent = 'Pause';
+            startAnimation();
+        }
+
+        function resetVisualization() {
+            stopAnimation();
+            currentStepIndex = -1;
+            steps = [];
+            isPlaying = false;
+            toggleControls(false);
+            document.getElementById('currentStep').textContent = 'Current Step: Initializing...';
+            document.getElementById('playPauseButton').textContent = 'Play';
+            document.getElementById('result').textContent = 'Result: ';
+            highlightCodeLine(1);
+            createAsteroidElements();
+            updateStack([]);
+        }
+
+        function startAnimation() {
+            if (animationInterval) clearInterval(animationInterval);
+            const speed = 1000 - (parseInt(document.getElementById('speedSlider').value) * 9);
+            animationInterval = setInterval(() => {
+                if (isPlaying) {
+                    if (currentStepIndex < steps.length - 1) {
+                        nextStep();
+                    } else {
+                        stopAnimation();
+                    }
+                }
+            }, speed);
+        }
+
+        function stopAnimation() {
+            clearInterval(animationInterval);
+            animationInterval = null;
+            isPlaying = false;
+            document.getElementById('playPauseButton').textContent = 'Play';
+            if (currentStepIndex >= steps.length - 1) {
+                toggleControls(false);
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseButton').textContent = isPlaying ? 'Pause' : 'Play';
+            if (isPlaying) {
+                startAnimation();
+            } else {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        function previousStep() {
+            if (isPlaying) togglePlay();
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function nextStep() {
+            if (currentStepIndex < steps.length - 1) {
+                currentStepIndex++;
+                applyStep(steps[currentStepIndex]);
+                updateControlButtons();
+            }
+        }
+
+        function applyStep(step) {
+            // Reset all asteroids
+            const asteroidElements = document.querySelectorAll('.asteroid');
+            asteroidElements.forEach(element => {
+                element.className = `asteroid ${parseInt(element.textContent) > 0 ? 'positive' : 'negative'}`;
+            });
+
+            // Update stack visualization
+            updateStack(step.stack);
+
+            // Update asteroids based on step type
+            switch (step.type) {
+                case 'process':
+                    document.getElementById(`asteroid-${step.current}`).classList.add('current');
+                    break;
+                case 'collision':
+                    document.getElementById(`asteroid-${step.current}`).classList.add('colliding');
+                    // Find the top asteroid in the visualization
+                    for (let i = 0; i < asteroids.length; i++) {
+                        if (asteroids[i] === step.topAsteroid && document.getElementById(`asteroid-${i}`)) {
+                            document.getElementById(`asteroid-${i}`).classList.add('colliding');
+                            break;
+                        }
+                    }
+                    break;
+                case 'destroy_current':
+                case 'destroy_both':
+                    document.getElementById(`asteroid-${step.current}`).classList.add('destroyed');
+                    break;
+                case 'destroy_top':
+                    // Find the destroyed top asteroid
+                    if (step.poppedIndex >= 0) {
+                        document.getElementById(`asteroid-${step.poppedIndex}`).classList.add('destroyed');
+                    }
+                    break;
+                case 'complete':
+                    // Mark destroyed and remaining asteroids
+                    for (let i = 0; i < step.updated.length; i++) {
+                        if (step.updated[i] === 0) {
+                            document.getElementById(`asteroid-${i}`).classList.add('destroyed');
+                        } else {
+                            document.getElementById(`asteroid-${i}`).classList.add('remaining');
+                        }
+                    }
+                    break;
+            }
+
+            // Update description and result
+            document.getElementById('currentStep').textContent = `Current Step: ${step.description}`;
+            if (step.type === 'complete') {
+                document.getElementById('result').textContent = `Result: [${step.stack.join(', ')}]`;
+            }
+            
+            // Highlight code line
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function updateControlButtons() {
+            document.getElementById('prevButton').disabled = currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = currentStepIndex >= steps.length - 1;
+        }
+
+        function toggleControls(enabled) {
+            document.getElementById('prevButton').disabled = !enabled || currentStepIndex <= 0;
+            document.getElementById('nextButton').disabled = !enabled || currentStepIndex >= steps.length - 1;
+            document.getElementById('playPauseButton').disabled = !enabled;
+            document.getElementById('startButton').disabled = enabled;
+        }
+
+        // Handle speed slider
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + 'ms';
+            if (isPlaying && animationInterval) {
+                startAnimation();
+            }
+        });
+
+        // Initialize on page load
+        window.onload = () => {
+            generateNewArray();
+            toggleControls(false);
+        };
+    </script>
+</body>
+</html> 
