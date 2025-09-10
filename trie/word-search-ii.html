@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Search II - Trie Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f1729; color: #e2e8f0; }
+        .board-cell { transition: all 0.3s ease-in-out; background-color: #1e293b; border: 2px solid #3b82f6; }
+        .board-cell.current { background-color: #ea580c; border-color: #fb923c; }
+        .board-cell.visited { background-color: #8b5cf6; border-color: #a78bfa; }
+        .board-cell.found { background-color: #16a34a; border-color: #22c55e; }
+        .card { background-color: #1e293b; border: 1px solid #2d3748; }
+        pre { background-color: #0f172a !important; border: 1px solid #2d3748; }
+        input { background-color: #1e293b !important; border-color: #3b82f6 !important; color: #e2e8f0 !important; }
+        input::placeholder { color: #64748b !important; }
+        .code-line { font-family: monospace; padding: 2px 8px; border-radius: 4px; }
+        .code-line.active { background-color: #374151; color: #10b981; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Word Search II - Trie + Backtracking</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an m x n board of characters and a list of strings words, return all words on the board. Each word must be constructed from letters of sequentially adjacent cells, where adjacent cells are horizontally or vertically neighboring.<br><br>
+                <strong>Example:</strong><br>
+                board = [["o","a","a","n"],["e","t","a","e"],["i","h","k","r"],["i","f","l","v"]]<br>
+                words = ["oath","pea","eat","rain"]<br>
+                Output: ["eat","oath"]<br><br>
+                <strong>Difficulty:</strong> Hard<br>
+                <strong>Pattern:</strong> Trie + Backtracking
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Board (rows separated by semicolons)</label>
+                    <input type="text" id="boardInput" placeholder="o,a,a,n;e,t,a,e;i,h,k,r;i,f,l,v" 
+                        class="border p-2 rounded w-full" value="o,a,a,n;e,t,a,e;i,h,k,r;i,f,l,v">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Words (comma-separated)</label>
+                    <input type="text" id="wordsInput" placeholder="oath,pea,eat,rain" 
+                        class="border p-2 rounded w-full" value="oath,pea,eat,rain">
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Initialize</button>
+                <button onclick="generateRandomBoard()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Random Board</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-4">
+                <button id="prevBtn" onclick="prev()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Previous</button>
+                <button id="playBtn" onclick="togglePlay()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Play</button>
+                <button id="nextBtn" onclick="next()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Next</button>
+            </div>
+            <div class="flex justify-center">
+                <input type="range" min="1" max="100" value="50" class="w-40" id="speedSlider">
+                <span class="ml-2" id="speedValue">50%</span>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Board Visualization</h2>
+            <div id="boardVisualization" class="grid gap-2 justify-center mb-4"></div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current Position:</h3>
+                <div id="currentPosition" class="text-lg font-mono text-blue-400">Ready to start</div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">Click Initialize to start the word search algorithm</div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Found Words:</h3>
+                <div id="foundWords" class="text-lg font-mono text-green-400">[]</div>
+            </div>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Time Complexity</h3>
+                    <p class="text-gray-300">O(M×N×4^L) where M×N is board size, L is max word length</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Space Complexity</h3>
+                    <p class="text-gray-300">O(K×L) for trie storage where K is number of words</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Algorithm Steps</h3>
+                    <p class="text-gray-300">
+                        1. Build a Trie from all words<br>
+                        2. For each cell, start DFS with trie traversal<br>
+                        3. Use backtracking to explore all paths<br>
+                        4. Collect words when reaching end nodes
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.word = null;
+            }
+        }
+
+        class WordSearchII {
+            constructor() {
+                this.board = [];
+                this.words = [];
+                this.trie = new TrieNode();
+                this.steps = [];
+                this.currentStep = 0;
+                this.foundWords = [];
+            }
+
+            buildTrie(words) {
+                for (let word of words) {
+                    let node = this.trie;
+                    for (let char of word) {
+                        if (!node.children[char]) {
+                            node.children[char] = new TrieNode();
+                        }
+                        node = node.children[char];
+                    }
+                    node.word = word;
+                }
+            }
+
+            findWords(board, words) {
+                this.board = board;
+                this.words = words;
+                this.foundWords = [];
+                this.steps = [];
+                
+                this.buildTrie(words);
+                
+                this.steps.push({
+                    type: 'start',
+                    explanation: 'Built Trie from words. Starting board search...',
+                    board: board.map(row => [...row]),
+                    foundWords: [...this.foundWords]
+                });
+
+                for (let i = 0; i < board.length; i++) {
+                    for (let j = 0; j < board[0].length; j++) {
+                        this.dfs(board, i, j, this.trie);
+                    }
+                }
+
+                this.steps.push({
+                    type: 'complete',
+                    explanation: 'Search completed!',
+                    board: board.map(row => [...row]),
+                    foundWords: [...this.foundWords]
+                });
+
+                this.currentStep = 0;
+                this.updateVisualization();
+                return this.foundWords;
+            }
+
+            dfs(board, i, j, node) {
+                if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return;
+                
+                const char = board[i][j];
+                if (!node.children[char]) return;
+
+                node = node.children[char];
+                
+                this.steps.push({
+                    type: 'visit',
+                    position: [i, j],
+                    char: char,
+                    explanation: `Visiting cell (${i},${j}) with character '${char}'`,
+                    board: board.map(row => [...row]),
+                    foundWords: [...this.foundWords]
+                });
+
+                if (node.word) {
+                    this.foundWords.push(node.word);
+                    this.steps.push({
+                        type: 'found',
+                        position: [i, j],
+                        word: node.word,
+                        explanation: `Found word: "${node.word}"`,
+                        board: board.map(row => [...row]),
+                        foundWords: [...this.foundWords]
+                    });
+                    node.word = null; // Avoid duplicates
+                }
+
+                const temp = board[i][j];
+                board[i][j] = '#'; // Mark as visited
+
+                // Explore all 4 directions
+                const directions = [[0,1], [1,0], [0,-1], [-1,0]];
+                for (let [dx, dy] of directions) {
+                    this.dfs(board, i + dx, j + dy, node);
+                }
+
+                board[i][j] = temp; // Backtrack
+                
+                this.steps.push({
+                    type: 'backtrack',
+                    position: [i, j],
+                    explanation: `Backtracking from (${i},${j})`,
+                    board: board.map(row => [...row]),
+                    foundWords: [...this.foundWords]
+                });
+            }
+
+            updateVisualization() {
+                this.drawBoard();
+                this.highlightCurrentStep();
+            }
+
+            drawBoard() {
+                const boardDiv = document.getElementById('boardVisualization');
+                if (this.board.length === 0) {
+                    boardDiv.innerHTML = '<p class="text-gray-400">No board loaded</p>';
+                    return;
+                }
+
+                const rows = this.board.length;
+                const cols = this.board[0].length;
+                boardDiv.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                boardDiv.innerHTML = '';
+
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'board-cell w-12 h-12 flex items-center justify-center text-white font-bold rounded';
+                        cell.textContent = this.board[i][j];
+                        cell.id = `cell-${i}-${j}`;
+                        boardDiv.appendChild(cell);
+                    }
+                }
+            }
+
+            highlightCurrentStep() {
+                // Reset highlights
+                document.querySelectorAll('.board-cell').forEach(cell => {
+                    cell.classList.remove('current', 'visited', 'found');
+                });
+
+                if (this.steps.length === 0 || this.currentStep >= this.steps.length) return;
+
+                const step = this.steps[this.currentStep];
+                document.getElementById('explanation').textContent = step.explanation;
+                document.getElementById('foundWords').textContent = JSON.stringify(step.foundWords);
+
+                if (step.position) {
+                    const [i, j] = step.position;
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    if (cell) {
+                        if (step.type === 'found') {
+                            cell.classList.add('found');
+                        } else if (step.type === 'visit') {
+                            cell.classList.add('current');
+                        }
+                    }
+                }
+
+                document.getElementById('currentPosition').textContent = 
+                    step.position ? `(${step.position[0]}, ${step.position[1]})` : 'N/A';
+            }
+        }
+
+        let wordSearch = new WordSearchII();
+
+        function initializeVisualization() {
+            const boardStr = document.getElementById('boardInput').value;
+            const wordsStr = document.getElementById('wordsInput').value;
+            
+            const board = boardStr.split(';').map(row => row.split(','));
+            const words = wordsStr.split(',').map(w => w.trim());
+            
+            wordSearch.findWords(board, words);
+        }
+
+        function generateRandomBoard() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            const board = [];
+            for (let i = 0; i < 4; i++) {
+                const row = [];
+                for (let j = 0; j < 4; j++) {
+                    row.push(chars[Math.floor(Math.random() * chars.length)]);
+                }
+                board.push(row);
+            }
+            
+            const boardStr = board.map(row => row.join(',')).join(';');
+            document.getElementById('boardInput').value = boardStr;
+            document.getElementById('wordsInput').value = 'cat,car,card,ate,eat';
+        }
+
+        function next() {
+            if (wordSearch.currentStep < wordSearch.steps.length - 1) {
+                wordSearch.currentStep++;
+                wordSearch.highlightCurrentStep();
+            }
+        }
+
+        function prev() {
+            if (wordSearch.currentStep > 0) {
+                wordSearch.currentStep--;
+                wordSearch.highlightCurrentStep();
+            }
+        }
+
+        function togglePlay() {
+            if (wordSearch.currentStep < wordSearch.steps.length - 1) {
+                next();
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + '%';
+        });
+
+        // Initialize with empty board
+        wordSearch.updateVisualization();
+    </script>
+</body>
+</html>

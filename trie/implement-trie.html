@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implement Trie - Trie Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f1729; color: #e2e8f0; }
+        .trie-node { transition: all 0.3s ease-in-out; background-color: #1e293b; border: 2px solid #3b82f6; }
+        .trie-node.highlight { background-color: #ea580c; border-color: #fb923c; }
+        .trie-node.found { background-color: #16a34a; border-color: #22c55e; }
+        .trie-node.end-word { background-color: #8b5cf6; border-color: #a78bfa; }
+        .trie-edge { stroke: #3b82f6; stroke-width: 2; transition: all 0.3s ease-in-out; }
+        .trie-edge.active { stroke: #ea580c; stroke-width: 4; }
+        .card { background-color: #1e293b; border: 1px solid #2d3748; }
+        pre { background-color: #0f172a !important; border: 1px solid #2d3748; }
+        input { background-color: #1e293b !important; border-color: #3b82f6 !important; color: #e2e8f0 !important; }
+        input::placeholder { color: #64748b !important; }
+        .code-line { font-family: monospace; padding: 2px 8px; border-radius: 4px; }
+        .code-line.active { background-color: #374151; color: #10b981; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Implement Trie (Prefix Tree)</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                A trie (pronounced as "try") or prefix tree is a tree data structure used to efficiently store and retrieve keys in a dataset of strings. Design and implement a Trie with insert, search, and startsWith operations.<br><br>
+                <strong>Difficulty:</strong> Medium<br>
+                <strong>Pattern:</strong> Trie/Prefix Tree
+            </p>
+        </div>
+
+        <!-- Operations -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Operations</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <input type="text" id="insertInput" placeholder="apple" class="border p-2 rounded w-full mb-2">
+                    <button onclick="insertWord()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">Insert</button>
+                </div>
+                <div>
+                    <input type="text" id="searchInput" placeholder="app" class="border p-2 rounded w-full mb-2">
+                    <button onclick="searchWord()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Search</button>
+                </div>
+                <div>
+                    <input type="text" id="prefixInput" placeholder="app" class="border p-2 rounded w-full mb-2">
+                    <button onclick="checkPrefix()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full">StartsWith</button>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="clearTrie()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Clear</button>
+                <button onclick="loadExample()" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Load Example</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-4">
+                <button id="prevBtn" onclick="prev()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Previous</button>
+                <button id="playBtn" onclick="togglePlay()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Play</button>
+                <button id="nextBtn" onclick="next()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Next</button>
+            </div>
+            <div class="flex justify-center">
+                <input type="range" min="1" max="100" value="50" class="w-40" id="speedSlider">
+                <span class="ml-2" id="speedValue">50%</span>
+            </div>
+        </div>
+
+        <!-- Visualization -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Trie Visualization</h2>
+            <svg id="trieVisualization" width="100%" height="400" class="border border-gray-600 rounded"></svg>
+            <div id="explanation" class="text-gray-300 mt-4">Start by inserting words to see the trie in action</div>
+            <div id="result" class="text-lg font-mono text-green-400 mt-2"></div>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Time Complexity</h3>
+                    <p class="text-gray-300">Insert/Search/StartsWith: O(m) where m is the word length</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Space Complexity</h3>
+                    <p class="text-gray-300">O(ALPHABET_SIZE * N * M) where N is number of words, M is average length</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.isEndOfWord = false;
+                this.x = 0;
+                this.y = 0;
+                this.id = Math.random().toString(36).substr(2, 9);
+            }
+        }
+
+        class Trie {
+            constructor() {
+                this.root = new TrieNode();
+                this.steps = [];
+                this.currentStep = 0;
+                this.isPlaying = false;
+            }
+
+            insert(word) {
+                this.steps = [{ type: 'start', operation: 'insert', word: word, explanation: `Inserting "${word}"` }];
+                let current = this.root;
+                
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    if (!current.children[char]) {
+                        current.children[char] = new TrieNode();
+                    }
+                    current = current.children[char];
+                    this.steps.push({ type: 'traverse', char: char, explanation: `Processing '${char}'` });
+                }
+                
+                current.isEndOfWord = true;
+                this.steps.push({ type: 'complete', explanation: `Completed inserting "${word}"` });
+                this.currentStep = 0;
+                this.updateVisualization();
+            }
+
+            search(word) {
+                this.steps = [{ type: 'start', operation: 'search', word: word, explanation: `Searching for "${word}"` }];
+                let current = this.root;
+                
+                for (let char of word) {
+                    if (!current.children[char]) {
+                        this.steps.push({ type: 'notfound', result: false, explanation: `"${word}" not found` });
+                        this.updateVisualization();
+                        return false;
+                    }
+                    current = current.children[char];
+                    this.steps.push({ type: 'traverse', char: char, explanation: `Found '${char}'` });
+                }
+                
+                const result = current.isEndOfWord;
+                this.steps.push({ type: 'result', result: result, explanation: result ? `Found "${word}"` : `"${word}" is prefix only` });
+                this.updateVisualization();
+                return result;
+            }
+
+            startsWith(prefix) {
+                this.steps = [{ type: 'start', operation: 'startsWith', word: prefix, explanation: `Checking prefix "${prefix}"` }];
+                let current = this.root;
+                
+                for (let char of prefix) {
+                    if (!current.children[char]) {
+                        this.steps.push({ type: 'notfound', result: false, explanation: `No words start with "${prefix}"` });
+                        this.updateVisualization();
+                        return false;
+                    }
+                    current = current.children[char];
+                    this.steps.push({ type: 'traverse', char: char, explanation: `Found '${char}'` });
+                }
+                
+                this.steps.push({ type: 'result', result: true, explanation: `Prefix "${prefix}" exists` });
+                this.updateVisualization();
+                return true;
+            }
+
+            updateVisualization() {
+                this.calculatePositions();
+                this.drawTrie();
+                this.highlightCurrentStep();
+            }
+
+            calculatePositions() {
+                const layers = this.getTrieLayers();
+                const width = 800, height = 400;
+                const layerHeight = height / (layers.length + 1);
+
+                for (let i = 0; i < layers.length; i++) {
+                    const layer = layers[i];
+                    const layerWidth = width / (layer.length + 1);
+                    for (let j = 0; j < layer.length; j++) {
+                        layer[j].x = (j + 1) * layerWidth;
+                        layer[j].y = (i + 1) * layerHeight;
+                    }
+                }
+            }
+
+            getTrieLayers() {
+                const layers = [];
+                const queue = [{node: this.root, level: 0}];
+                
+                while (queue.length > 0) {
+                    const {node, level} = queue.shift();
+                    if (!layers[level]) layers[level] = [];
+                    layers[level].push(node);
+                    
+                    Object.values(node.children).forEach(child => {
+                        queue.push({node: child, level: level + 1});
+                    });
+                }
+                return layers;
+            }
+
+            drawTrie() {
+                const svg = document.getElementById('trieVisualization');
+                svg.innerHTML = '';
+                this.drawTrieRecursive(this.root, svg, null, '');
+            }
+
+            drawTrieRecursive(node, svg, parent, edgeLabel) {
+                if (parent) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', parent.x);
+                    line.setAttribute('y1', parent.y);
+                    line.setAttribute('x2', node.x);
+                    line.setAttribute('y2', node.y);
+                    line.setAttribute('class', 'trie-edge');
+                    svg.appendChild(line);
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', (parent.x + node.x) / 2);
+                    text.setAttribute('y', (parent.y + node.y) / 2 - 5);
+                    text.setAttribute('fill', '#e2e8f0');
+                    text.setAttribute('font-size', '14');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.textContent = edgeLabel;
+                    svg.appendChild(text);
+                }
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.x);
+                circle.setAttribute('cy', node.y);
+                circle.setAttribute('r', node.isEndOfWord ? '20' : '15');
+                circle.setAttribute('class', `trie-node ${node.isEndOfWord ? 'end-word' : ''}`);
+                circle.setAttribute('id', `node-${node.id}`);
+                svg.appendChild(circle);
+
+                if (node.isEndOfWord) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', node.x);
+                    text.setAttribute('y', node.y + 5);
+                    text.setAttribute('fill', '#ffffff');
+                    text.setAttribute('font-size', '12');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.textContent = '✓';
+                    svg.appendChild(text);
+                }
+
+                Object.entries(node.children).forEach(([char, child]) => {
+                    this.drawTrieRecursive(child, svg, node, char);
+                });
+            }
+
+            highlightCurrentStep() {
+                if (this.steps.length === 0 || this.currentStep >= this.steps.length) return;
+                const step = this.steps[this.currentStep];
+                document.getElementById('explanation').textContent = step.explanation;
+                if (step.result !== undefined) {
+                    document.getElementById('result').textContent = `Result: ${step.result}`;
+                }
+            }
+        }
+
+        let trie = new Trie();
+
+        function insertWord() {
+            const word = document.getElementById('insertInput').value.trim().toLowerCase();
+            if (word) {
+                trie.insert(word);
+                document.getElementById('insertInput').value = '';
+            }
+        }
+
+        function searchWord() {
+            const word = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (word) {
+                trie.search(word);
+                document.getElementById('searchInput').value = '';
+            }
+        }
+
+        function checkPrefix() {
+            const prefix = document.getElementById('prefixInput').value.trim().toLowerCase();
+            if (prefix) {
+                trie.startsWith(prefix);
+                document.getElementById('prefixInput').value = '';
+            }
+        }
+
+        function clearTrie() {
+            trie = new Trie();
+            trie.updateVisualization();
+            document.getElementById('result').textContent = '';
+            document.getElementById('explanation').textContent = 'Trie cleared. Start by inserting words.';
+        }
+
+        function loadExample() {
+            clearTrie();
+            ['cat', 'car', 'card', 'care', 'dog'].forEach(word => trie.insert(word));
+        }
+
+        function next() {
+            if (trie.currentStep < trie.steps.length - 1) {
+                trie.currentStep++;
+                trie.highlightCurrentStep();
+            }
+        }
+
+        function prev() {
+            if (trie.currentStep > 0) {
+                trie.currentStep--;
+                trie.highlightCurrentStep();
+            }
+        }
+
+        function togglePlay() {
+            // Simplified play functionality
+            if (!trie.isPlaying && trie.currentStep < trie.steps.length - 1) {
+                next();
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + '%';
+        });
+
+        // Initialize
+        trie.updateVisualization();
+    </script>
+</body>
+</html>

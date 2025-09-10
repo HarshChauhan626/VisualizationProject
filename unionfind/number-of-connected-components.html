@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of Connected Components Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="/script.js"></script>
+</head>
+<body>
+    <main class="max-w-6xl mx-auto p-4">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-blue-600">Number of Connected Components Visualization</h1>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Problem Statement Card -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Problem Statement</h2>
+                <p>Find the number of connected components in an undirected graph using Union-Find.</p>
+            </div>
+
+            <!-- Solution Approach Tabs -->
+            <div class="card md:col-span-2">
+                <h2 class="text-xl font-semibold mb-2">Solution Approach</h2>
+                <div class="border-b border-gray-200 mb-4">
+                    <ul class="flex space-x-4">
+                        <li class="pb-2 px-1 border-b-2 border-blue-500 text-blue-500">Union-Find</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Input Controls -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Input Controls</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2">Number of Nodes:</label>
+                        <input type="number" id="nodeCount" class="w-full p-2 border rounded" value="5" min="1" max="20">
+                    </div>
+                    <div>
+                        <label class="block mb-2">Number of Edges:</label>
+                        <input type="number" id="edgeCount" class="w-full p-2 border rounded" value="2" min="0" max="50">
+                    </div>
+                    <button id="generateGraph" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Generate Graph
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="card md:col-span-2">
+                <h2 class="text-xl font-semibold mb-2">Visualization</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <!-- Visualization Controls -->
+                    <div class="flex space-x-2">
+                        <button id="prevStep" class="p-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.707l-3 3a1 1 0 010 1.414l3 3a1 1 0 01-1.414 1.414l-3.5-3.5a1 1 0 010-1.414l3.5-3.5a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button id="playPause" class="p-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 play-icon" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 01-16 0 8 8 0 0116 0zM7 8a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1H7zm7 0a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1h-1z" clip-rule="evenodd" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pause-icon hidden" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 01-16 0 8 8 0 0116 0zM7 8a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1H7zm7 0a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1h-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button id="nextStep" class="p-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 01-16 0 8 8 0 0116 0zM7 8a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1H7zm7 0a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1h-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div>
+                        <label for="speedControl" class="block text-sm">Speed:</label>
+                        <input type="range" id="speedControl" min="100" max="1000" value="500" class="w-24">
+                    </div>
+                </div>
+                <div id="graphVisualization" class="h-64 mb-4">
+                    <!-- Graph visualization will be dynamically added here -->
+                    <svg class="w-full h-full" viewBox="0 0 400 300">
+                        <!-- Nodes will be dynamically added here -->
+                    </svg>
+                </div>
+                <div id="parentArrayVisualization" class="mt-4">
+                    <!-- Parent array visualization will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Pseudo Code -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Pseudo Code</h2>
+                <pre class="bg-gray-100 p-4 rounded overflow-x-auto">
+<code class="language-javascript">function countComponents(n, edges) {
+    // Initialize parent array
+    const parent = Array(n).fill(0).map((_, i) => i);
+    
+    // Find function with path compression
+    function find(x) {
+        if (parent[x] !== x) {
+            parent[x] = find(parent[x]);
+        }
+        return parent[x];
+    }
+    
+    // Union function
+    function union(x, y) {
+        const rootX = find(x);
+        const rootY = find(y);
+        if (rootX !== rootY) {
+            parent[rootY] = rootX;
+            return true;
+        }
+        return false;
+    }
+    
+    let components = n;
+    
+    // Process each edge
+    for (const [u, v] of edges) {
+        if (union(u, v)) {
+            components--;
+        }
+    }
+    
+    return components;
+}</code>
+                </pre>
+            </div>
+
+            <!-- Test Cases -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Test Cases</h2>
+                <div class="space-y-2">
+                    <div class="test-case">
+                        <p class="font-medium">Test Case 1:</p>
+                        <p>Input: n = 5, edges = [[0,1],[1,2],[3,4]]</p>
+                        <p>Expected Output: 2</p>
+                    </div>
+                    <div class="test-case">
+                        <p class="font-medium">Test Case 2:</p>
+                        <p>Input: n = 4, edges = [[0,1],[2,3],[1,2]]</p>
+                        <p>Expected Output: 1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

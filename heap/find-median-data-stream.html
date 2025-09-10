@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Median from Data Stream Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="/script.js"></script>
+    <script type="module" src="/visualization-utils.js"></script>
+    <script type="module" src="/heap/heap-visualization.js"></script>
+</head>
+<body>
+    <main class="max-w-6xl mx-auto p-4">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-blue-600">Find Median from Data Stream Visualization</h1>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Problem Statement Card -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Problem Statement</h2>
+                <p>Find the median from a data stream using two heaps approach.</p>
+            </div>
+
+            <!-- Solution Approach Tabs -->
+            <div class="card md:col-span-2">
+                <h2 class="text-xl font-semibold mb-2">Solution Approach</h2>
+                <div class="border-b border-gray-200 mb-4">
+                    <ul class="flex space-x-4">
+                        <li class="pb-2 px-1 border-b-2 border-blue-500 text-blue-500">Two Heaps</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Input Controls -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Input Controls</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-2">Add Number:</label>
+                        <div class="flex">
+                            <input type="number" id="numberInput" class="w-full p-2 border rounded" value="0">
+                            <button id="addNumber" class="ml-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                Add
+                            </button>
+                        </div>
+                    </div>
+                    <button id="randomNumbers" class="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        Add Random Numbers
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="card md:col-span-2">
+                <h2 class="text-xl font-semibold mb-2">Visualization</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <!-- Visualization Controls -->
+                    <div class="flex space-x-2">
+                        <button id="prevStep" class="p-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.707l-3 3a1 1 0 010 1.414l3 3a1 1 0 01-1.414 1.414l-3.5-3.5a1 1 0 010-1.414l3.5-3.5a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button id="playPause" class="p-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 play-icon" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pause-icon hidden" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1H7zm7 0a1 1 0 00-1 1v2a1 1 0 001 1h1a1 1 0 001-1V9a1 1 0 00-1-1h-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button id="nextStep" class="p-2 bg-gray-200 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L11.586 10l-2.293 2.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div>
+                        <label for="speedControl" class="block text-sm">Speed:</label>
+                        <input type="range" id="speedControl" min="100" max="1000" value="500" class="w-24">
+                    </div>
+                </div>
+                <div class="flex justify-between items-start">
+                    <div id="maxHeapVisualization" class="w-1/2 pr-2">
+                        <h3 class="text-lg font-semibold mb-2">Max Heap</h3>
+                        <div class="h-64 flex items-end space-x-1">
+                            <!-- Max heap bars will be dynamically added here -->
+                        </div>
+                    </div>
+                    <div id="minHeapVisualization" class="w-1/2 pl-2">
+                        <h3 class="text-lg font-semibold mb-2">Min Heap</h3>
+                        <div class="h-64 flex items-end space-x-1">
+                            <!-- Min heap bars will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 p-4 bg-gray-100 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">Current Median</h3>
+                    <div id="currentMedian" class="text-2xl font-bold text-center">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Pseudo Code -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Pseudo Code</h2>
+                <pre class="bg-gray-100 p-4 rounded overflow-x-auto">
+<code class="language-javascript">class MedianFinder {
+    constructor() {
+        this.maxHeap = new MaxHeap(); // For smaller half
+        this.minHeap = new MinHeap(); // For larger half
+    }
+
+    addNum(num) {
+        // Add to appropriate heap
+        if (this.maxHeap.isEmpty() || num &lt;= this.maxHeap.peek()) {
+            this.maxHeap.insert(num);
+        } else {
+            this.minHeap.insert(num);
+        }
+
+        // Balance heaps
+        if (this.maxHeap.size() > this.minHeap.size() + 1) {
+            this.minHeap.insert(this.maxHeap.extractMax());
+        } else if (this.minHeap.size() > this.maxHeap.size()) {
+            this.maxHeap.insert(this.minHeap.extractMin());
+        }
+    }
+
+    findMedian() {
+        if (this.maxHeap.size() === this.minHeap.size()) {
+            return (this.maxHeap.peek() + this.minHeap.peek()) / 2;
+        } else {
+            return this.maxHeap.peek();
+        }
+    }
+}</code>
+                </pre>
+            </div>
+
+            <!-- Test Cases -->
+            <div class="card">
+                <h2 class="text-xl font-semibold mb-2">Test Cases</h2>
+                <div class="space-y-2">
+                    <div class="test-case">
+                        <p class="font-medium">Test Case 1:</p>
+                        <p>Operations: addNum(1), addNum(2), findMedian(), addNum(3), findMedian()</p>
+                        <p>Expected Output: 1.5, 2</p>
+                    </div>
+                    <div class="test-case">
+                        <p class="font-medium">Test Case 2:</p>
+                        <p>Operations: addNum(-1), addNum(-2), addNum(-3), findMedian()</p>
+                        <p>Expected Output: -2</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum XOR of Two Numbers - Binary Trie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f1729; color: #e2e8f0; }
+        .trie-node { transition: all 0.3s ease-in-out; background-color: #1e293b; border: 2px solid #3b82f6; }
+        .trie-node.highlight { background-color: #ea580c; border-color: #fb923c; }
+        .trie-node.found { background-color: #16a34a; border-color: #22c55e; }
+        .trie-node.current-path { background-color: #8b5cf6; border-color: #a78bfa; }
+        .trie-edge { stroke: #3b82f6; stroke-width: 2; transition: all 0.3s ease-in-out; }
+        .trie-edge.active { stroke: #ea580c; stroke-width: 4; }
+        .array-element { transition: all 0.3s ease-in-out; background-color: #1e293b; border: 2px solid #3b82f6; }
+        .array-element.current { background-color: #ea580c; border-color: #fb923c; }
+        .array-element.compared { background-color: #8b5cf6; border-color: #a78bfa; }
+        .card { background-color: #1e293b; border: 1px solid #2d3748; }
+        pre { background-color: #0f172a !important; border: 1px solid #2d3748; }
+        input { background-color: #1e293b !important; border-color: #3b82f6 !important; color: #e2e8f0 !important; }
+        input::placeholder { color: #64748b !important; }
+        .binary-bit { font-family: 'Courier New', monospace; font-weight: bold; }
+        .bit-0 { color: #ef4444; }
+        .bit-1 { color: #22c55e; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Maximum XOR of Two Numbers in Array</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an integer array nums, return the maximum result of nums[i] XOR nums[j], where 0 ≤ i ≤ j < n. Use a Binary Trie to efficiently find the maximum XOR by storing binary representations and greedily choosing opposite bits.<br><br>
+                <strong>Example:</strong><br>
+                Input: nums = [3,10,5,25,2,8]<br>
+                Output: 28<br>
+                Explanation: The maximum result is 5 XOR 25 = 28.<br><br>
+                <strong>Difficulty:</strong> Medium<br>
+                <strong>Pattern:</strong> Binary Trie + Bit Manipulation
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (comma-separated integers)</label>
+                    <input type="text" id="arrayInput" placeholder="3,10,5,25,2,8" 
+                        class="border p-2 rounded w-full" value="3,10,5,25,2,8">
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Find Maximum XOR</button>
+                <button onclick="generateRandomArray()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Generate Random</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-4">
+                <button id="prevBtn" onclick="prev()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Previous</button>
+                <button id="playBtn" onclick="togglePlay()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Play</button>
+                <button id="nextBtn" onclick="next()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Next</button>
+            </div>
+            <div class="flex justify-center">
+                <input type="range" min="1" max="100" value="50" class="w-40" id="speedSlider">
+                <span class="ml-2" id="speedValue">50%</span>
+            </div>
+        </div>
+
+        <!-- Array Visualization -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Array & Binary Representation</h2>
+            <div id="arrayVisualization" class="flex flex-wrap gap-2 justify-center mb-4"></div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current Numbers:</h3>
+                <div id="currentNumbers" class="text-lg font-mono text-blue-400">Ready to start</div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">Click "Find Maximum XOR" to start the algorithm</div>
+        </div>
+
+        <!-- Binary Trie Visualization -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Binary Trie Structure</h2>
+            <svg id="trieVisualization" width="100%" height="300" class="border border-gray-600 rounded"></svg>
+            <div class="mt-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current XOR Result:</h3>
+                <div id="xorResult" class="text-lg font-mono text-green-400">0 (binary: 00000)</div>
+            </div>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Time Complexity</h3>
+                    <p class="text-gray-300">O(n × log(max_num)) where n is array length</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Space Complexity</h3>
+                    <p class="text-gray-300">O(n × log(max_num)) for binary trie storage</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Algorithm Steps</h3>
+                    <p class="text-gray-300">
+                        1. Build binary trie with all numbers<br>
+                        2. For each number, find maximum XOR by going opposite direction<br>
+                        3. At each bit level, choose opposite bit if possible<br>
+                        4. Track the maximum XOR found across all numbers
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.x = 0;
+                this.y = 0;
+                this.id = Math.random().toString(36).substr(2, 9);
+            }
+        }
+
+        class MaxXORFinder {
+            constructor() {
+                this.root = new TrieNode();
+                this.steps = [];
+                this.currentStep = 0;
+                this.maxBits = 5; // For visualization, limit to 5 bits
+                this.nums = [];
+            }
+
+            insert(num) {
+                let current = this.root;
+                for (let i = this.maxBits - 1; i >= 0; i--) {
+                    const bit = (num >> i) & 1;
+                    if (!current.children[bit]) {
+                        current.children[bit] = new TrieNode();
+                    }
+                    current = current.children[bit];
+                }
+            }
+
+            findMaxXOR(nums) {
+                this.nums = nums;
+                this.steps = [];
+                this.root = new TrieNode();
+                
+                this.steps.push({
+                    type: 'start',
+                    explanation: 'Building binary trie with all numbers...',
+                    nums: [...nums],
+                    maxXOR: 0
+                });
+
+                // Insert all numbers into trie
+                for (let num of nums) {
+                    this.insert(num);
+                }
+
+                this.steps.push({
+                    type: 'trie_built',
+                    explanation: 'Binary trie built. Now finding maximum XOR for each number...',
+                    nums: [...nums],
+                    maxXOR: 0
+                });
+
+                let maxXOR = 0;
+                
+                // For each number, find maximum XOR
+                for (let i = 0; i < nums.length; i++) {
+                    const num = nums[i];
+                    
+                    this.steps.push({
+                        type: 'start_search',
+                        currentNum: num,
+                        currentIndex: i,
+                        explanation: `Finding maximum XOR for ${num} (${this.toBinary(num)})`,
+                        nums: [...nums],
+                        maxXOR: maxXOR
+                    });
+
+                    const xor = this.findMaxXORForNumber(num);
+                    
+                    if (xor > maxXOR) {
+                        maxXOR = xor;
+                        this.steps.push({
+                            type: 'new_max',
+                            currentNum: num,
+                            currentIndex: i,
+                            xorValue: xor,
+                            explanation: `New maximum XOR found: ${xor} (${this.toBinary(xor)})`,
+                            nums: [...nums],
+                            maxXOR: maxXOR
+                        });
+                    } else {
+                        this.steps.push({
+                            type: 'no_improvement',
+                            currentNum: num,
+                            currentIndex: i,
+                            xorValue: xor,
+                            explanation: `XOR result: ${xor} (${this.toBinary(xor)}) - no improvement`,
+                            nums: [...nums],
+                            maxXOR: maxXOR
+                        });
+                    }
+                }
+
+                this.steps.push({
+                    type: 'complete',
+                    explanation: `Algorithm complete! Maximum XOR: ${maxXOR} (${this.toBinary(maxXOR)})`,
+                    nums: [...nums],
+                    maxXOR: maxXOR
+                });
+
+                this.currentStep = 0;
+                this.updateVisualization();
+                return maxXOR;
+            }
+
+            findMaxXORForNumber(num) {
+                let current = this.root;
+                let result = 0;
+
+                for (let i = this.maxBits - 1; i >= 0; i--) {
+                    const bit = (num >> i) & 1;
+                    const oppositeBit = 1 - bit;
+
+                    this.steps.push({
+                        type: 'bit_search',
+                        currentNum: num,
+                        bitPosition: i,
+                        currentBit: bit,
+                        oppositeBit: oppositeBit,
+                        currentResult: result,
+                        explanation: `Bit ${i}: current=${bit}, looking for opposite=${oppositeBit}`,
+                        nums: [...this.nums]
+                    });
+
+                    if (current.children[oppositeBit]) {
+                        result |= (1 << i);
+                        current = current.children[oppositeBit];
+                        
+                        this.steps.push({
+                            type: 'found_opposite',
+                            currentNum: num,
+                            bitPosition: i,
+                            currentBit: bit,
+                            oppositeBit: oppositeBit,
+                            currentResult: result,
+                            explanation: `Found opposite bit ${oppositeBit}, XOR result bit ${i} = 1`,
+                            nums: [...this.nums]
+                        });
+                    } else {
+                        current = current.children[bit];
+                        
+                        this.steps.push({
+                            type: 'same_bit',
+                            currentNum: num,
+                            bitPosition: i,
+                            currentBit: bit,
+                            currentResult: result,
+                            explanation: `No opposite bit, taking same bit ${bit}, XOR result bit ${i} = 0`,
+                            nums: [...this.nums]
+                        });
+                    }
+                }
+
+                return result;
+            }
+
+            toBinary(num) {
+                return num.toString(2).padStart(this.maxBits, '0');
+            }
+
+            updateVisualization() {
+                this.calculateTriePositions();
+                this.drawArray();
+                this.drawTrie();
+                this.highlightCurrentStep();
+            }
+
+            drawArray() {
+                const arrayDiv = document.getElementById('arrayVisualization');
+                arrayDiv.innerHTML = '';
+
+                this.nums.forEach((num, index) => {
+                    const container = document.createElement('div');
+                    container.className = 'text-center';
+                    
+                    const element = document.createElement('div');
+                    element.className = `array-element w-16 h-16 flex flex-col items-center justify-center text-white font-bold rounded`;
+                    element.id = `element-${index}`;
+                    
+                    const numDiv = document.createElement('div');
+                    numDiv.textContent = num;
+                    numDiv.className = 'text-sm';
+                    
+                    const binaryDiv = document.createElement('div');
+                    binaryDiv.textContent = this.toBinary(num);
+                    binaryDiv.className = 'text-xs binary-bit';
+                    
+                    element.appendChild(numDiv);
+                    element.appendChild(binaryDiv);
+                    container.appendChild(element);
+                    arrayDiv.appendChild(container);
+                });
+            }
+
+            calculateTriePositions() {
+                if (!this.root || Object.keys(this.root.children).length === 0) return;
+
+                const layers = this.getTrieLayers();
+                const width = 800, height = 280;
+                const layerHeight = height / (layers.length + 1);
+
+                for (let i = 0; i < layers.length; i++) {
+                    const layer = layers[i];
+                    const layerWidth = width / (layer.length + 1);
+                    for (let j = 0; j < layer.length; j++) {
+                        layer[j].x = (j + 1) * layerWidth;
+                        layer[j].y = (i + 1) * layerHeight;
+                    }
+                }
+            }
+
+            getTrieLayers() {
+                const layers = [];
+                const queue = [{node: this.root, level: 0}];
+                
+                while (queue.length > 0) {
+                    const {node, level} = queue.shift();
+                    if (!layers[level]) layers[level] = [];
+                    layers[level].push(node);
+                    
+                    Object.values(node.children).forEach(child => {
+                        queue.push({node: child, level: level + 1});
+                    });
+                }
+                return layers;
+            }
+
+            drawTrie() {
+                const svg = document.getElementById('trieVisualization');
+                svg.innerHTML = '';
+                
+                if (Object.keys(this.root.children).length > 0) {
+                    this.drawTrieRecursive(this.root, svg, null, '');
+                }
+            }
+
+            drawTrieRecursive(node, svg, parent, edgeLabel) {
+                if (parent) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', parent.x);
+                    line.setAttribute('y1', parent.y);
+                    line.setAttribute('x2', node.x);
+                    line.setAttribute('y2', node.y);
+                    line.setAttribute('class', 'trie-edge');
+                    line.setAttribute('id', `edge-${parent.id}-${node.id}`);
+                    svg.appendChild(line);
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', (parent.x + node.x) / 2);
+                    text.setAttribute('y', (parent.y + node.y) / 2 - 5);
+                    text.setAttribute('fill', edgeLabel === '0' ? '#ef4444' : '#22c55e');
+                    text.setAttribute('font-size', '16');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.textContent = edgeLabel;
+                    svg.appendChild(text);
+                }
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.x);
+                circle.setAttribute('cy', node.y);
+                circle.setAttribute('r', '15');
+                circle.setAttribute('class', 'trie-node');
+                circle.setAttribute('id', `node-${node.id}`);
+                svg.appendChild(circle);
+
+                Object.entries(node.children).forEach(([bit, child]) => {
+                    this.drawTrieRecursive(child, svg, node, bit);
+                });
+            }
+
+            highlightCurrentStep() {
+                // Reset highlights
+                document.querySelectorAll('.array-element').forEach(el => {
+                    el.classList.remove('current', 'compared');
+                });
+                document.querySelectorAll('.trie-node').forEach(node => {
+                    node.classList.remove('highlight', 'found', 'current-path');
+                });
+
+                if (this.steps.length === 0 || this.currentStep >= this.steps.length) return;
+
+                const step = this.steps[this.currentStep];
+                document.getElementById('explanation').textContent = step.explanation;
+
+                if (step.currentIndex !== undefined) {
+                    const element = document.getElementById(`element-${step.currentIndex}`);
+                    if (element) element.classList.add('current');
+                }
+
+                if (step.maxXOR !== undefined) {
+                    document.getElementById('xorResult').textContent = 
+                        `${step.maxXOR} (binary: ${this.toBinary(step.maxXOR)})`;
+                }
+
+                if (step.currentNum !== undefined) {
+                    document.getElementById('currentNumbers').textContent = 
+                        `Processing: ${step.currentNum} (${this.toBinary(step.currentNum)})`;
+                }
+            }
+        }
+
+        let maxXORFinder = new MaxXORFinder();
+
+        function initializeVisualization() {
+            const input = document.getElementById('arrayInput').value;
+            const nums = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n >= 0 && n < 32);
+            
+            if (nums.length < 2) {
+                alert('Please enter at least 2 valid numbers (0-31 for visualization)');
+                return;
+            }
+            
+            maxXORFinder.findMaxXOR(nums);
+        }
+
+        function generateRandomArray() {
+            const length = 5 + Math.floor(Math.random() * 3);
+            const nums = [];
+            for (let i = 0; i < length; i++) {
+                nums.push(Math.floor(Math.random() * 32));
+            }
+            document.getElementById('arrayInput').value = nums.join(',');
+        }
+
+        function next() {
+            if (maxXORFinder.currentStep < maxXORFinder.steps.length - 1) {
+                maxXORFinder.currentStep++;
+                maxXORFinder.highlightCurrentStep();
+            }
+        }
+
+        function prev() {
+            if (maxXORFinder.currentStep > 0) {
+                maxXORFinder.currentStep--;
+                maxXORFinder.highlightCurrentStep();
+            }
+        }
+
+        function togglePlay() {
+            if (maxXORFinder.currentStep < maxXORFinder.steps.length - 1) {
+                next();
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + '%';
+        });
+
+        // Initialize
+        maxXORFinder.updateVisualization();
+    </script>
+</body>
+</html>

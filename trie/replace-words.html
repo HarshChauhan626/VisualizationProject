@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replace Words - Trie Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f1729; color: #e2e8f0; }
+        .trie-node { transition: all 0.3s ease-in-out; background-color: #1e293b; border: 2px solid #3b82f6; }
+        .trie-node.highlight { background-color: #ea580c; border-color: #fb923c; }
+        .trie-node.found { background-color: #16a34a; border-color: #22c55e; }
+        .trie-node.root-word { background-color: #8b5cf6; border-color: #a78bfa; }
+        .trie-edge { stroke: #3b82f6; stroke-width: 2; transition: all 0.3s ease-in-out; }
+        .trie-edge.active { stroke: #ea580c; stroke-width: 4; }
+        .word-item { transition: all 0.3s ease-in-out; background-color: #1e293b; border: 2px solid #3b82f6; }
+        .word-item.current { background-color: #ea580c; border-color: #fb923c; }
+        .word-item.replaced { background-color: #16a34a; border-color: #22c55e; }
+        .card { background-color: #1e293b; border: 1px solid #2d3748; }
+        pre { background-color: #0f172a !important; border: 1px solid #2d3748; }
+        input, textarea { background-color: #1e293b !important; border-color: #3b82f6 !important; color: #e2e8f0 !important; }
+        input::placeholder, textarea::placeholder { color: #64748b !important; }
+        .root-word { color: #8b5cf6; font-weight: bold; }
+        .replaced-word { color: #16a34a; font-weight: bold; }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">Replace Words - Trie Application</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                In English, we have a concept called root, which can be followed by some other word to form another longer word - let's call this word successor. Given a dictionary consisting of many roots and a sentence consisting of words separated by spaces, replace all the successors in the sentence with the root forming it. If a successor can be replaced by more than one root, replace it with the root that has the shortest length.<br><br>
+                <strong>Example:</strong><br>
+                dictionary = ["cat","bat","rat"]<br>
+                sentence = "the cattle was rattled by the battery"<br>
+                Output: "the cat was rat by the bat"<br><br>
+                <strong>Difficulty:</strong> Medium<br>
+                <strong>Pattern:</strong> Trie + String Processing
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Dictionary (comma-separated roots)</label>
+                    <input type="text" id="dictionaryInput" placeholder="cat,bat,rat" 
+                        class="border p-2 rounded w-full" value="cat,bat,rat">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Sentence</label>
+                    <textarea id="sentenceInput" placeholder="the cattle was rattled by the battery" 
+                        class="border p-2 rounded w-full h-20" rows="3">the cattle was rattled by the battery</textarea>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="initializeVisualization()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Replace Words</button>
+                <button onclick="loadExample()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Load Example</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-4">
+                <button id="prevBtn" onclick="prev()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Previous</button>
+                <button id="playBtn" onclick="togglePlay()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Play</button>
+                <button id="nextBtn" onclick="next()" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600">Next</button>
+            </div>
+            <div class="flex justify-center">
+                <input type="range" min="1" max="100" value="50" class="w-40" id="speedSlider">
+                <span class="ml-2" id="speedValue">50%</span>
+            </div>
+        </div>
+
+        <!-- Words Processing -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Words Processing</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Original Sentence:</h3>
+                <div id="originalSentence" class="text-lg font-mono text-gray-400 bg-gray-800 p-3 rounded">Ready to process</div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Words:</h3>
+                <div id="wordsVisualization" class="flex flex-wrap gap-2 mb-4"></div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current Word Processing:</h3>
+                <div id="currentWord" class="text-lg font-mono text-blue-400">Ready to start</div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">Click "Replace Words" to start processing</div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Result:</h3>
+                <div id="resultSentence" class="text-lg font-mono text-green-400 bg-gray-800 p-3 rounded">Result will appear here</div>
+            </div>
+        </div>
+
+        <!-- Trie Visualization -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Root Dictionary Trie</h2>
+            <svg id="trieVisualization" width="100%" height="300" class="border border-gray-600 rounded"></svg>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Time Complexity</h3>
+                    <p class="text-gray-300">O(N + W) where N is total characters in dictionary, W is total characters in sentence</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Space Complexity</h3>
+                    <p class="text-gray-300">O(N) for trie storage</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Algorithm Steps</h3>
+                    <p class="text-gray-300">
+                        1. Build trie with all dictionary roots<br>
+                        2. Split sentence into words<br>
+                        3. For each word, search for shortest root prefix in trie<br>
+                        4. Replace word with root if found, otherwise keep original<br>
+                        5. Join all processed words back into sentence
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.isRoot = false;
+                this.word = null;
+                this.x = 0;
+                this.y = 0;
+                this.id = Math.random().toString(36).substr(2, 9);
+            }
+        }
+
+        class WordReplacer {
+            constructor() {
+                this.root = new TrieNode();
+                this.steps = [];
+                this.currentStep = 0;
+                this.dictionary = [];
+                this.words = [];
+                this.result = [];
+            }
+
+            buildTrie(dictionary) {
+                this.dictionary = dictionary;
+                this.root = new TrieNode();
+                
+                for (let word of dictionary) {
+                    let current = this.root;
+                    for (let char of word) {
+                        if (!current.children[char]) {
+                            current.children[char] = new TrieNode();
+                        }
+                        current = current.children[char];
+                    }
+                    current.isRoot = true;
+                    current.word = word;
+                }
+            }
+
+            findRoot(word) {
+                let current = this.root;
+                let prefix = '';
+                
+                for (let char of word) {
+                    if (!current.children[char]) {
+                        break;
+                    }
+                    prefix += char;
+                    current = current.children[char];
+                    
+                    if (current.isRoot) {
+                        return current.word;
+                    }
+                }
+                
+                return null;
+            }
+
+            replaceWords(dictionary, sentence) {
+                this.buildTrie(dictionary);
+                this.words = sentence.split(' ');
+                this.result = [];
+                this.steps = [];
+
+                this.steps.push({
+                    type: 'start',
+                    explanation: 'Built trie with dictionary roots. Starting to process words...',
+                    dictionary: [...dictionary],
+                    sentence: sentence,
+                    words: [...this.words],
+                    result: []
+                });
+
+                for (let i = 0; i < this.words.length; i++) {
+                    const word = this.words[i];
+                    
+                    this.steps.push({
+                        type: 'process_word',
+                        currentIndex: i,
+                        currentWord: word,
+                        explanation: `Processing word: "${word}"`,
+                        dictionary: [...dictionary],
+                        sentence: sentence,
+                        words: [...this.words],
+                        result: [...this.result]
+                    });
+
+                    const root = this.findRoot(word);
+                    
+                    if (root) {
+                        this.result.push(root);
+                        this.steps.push({
+                            type: 'replace',
+                            currentIndex: i,
+                            currentWord: word,
+                            root: root,
+                            explanation: `Found root "${root}" for "${word}" - replacing!`,
+                            dictionary: [...dictionary],
+                            sentence: sentence,
+                            words: [...this.words],
+                            result: [...this.result]
+                        });
+                    } else {
+                        this.result.push(word);
+                        this.steps.push({
+                            type: 'keep',
+                            currentIndex: i,
+                            currentWord: word,
+                            explanation: `No root found for "${word}" - keeping original`,
+                            dictionary: [...dictionary],
+                            sentence: sentence,
+                            words: [...this.words],
+                            result: [...this.result]
+                        });
+                    }
+                }
+
+                const finalResult = this.result.join(' ');
+                this.steps.push({
+                    type: 'complete',
+                    explanation: 'Processing complete!',
+                    dictionary: [...dictionary],
+                    sentence: sentence,
+                    words: [...this.words],
+                    result: [...this.result],
+                    finalResult: finalResult
+                });
+
+                this.currentStep = 0;
+                this.updateVisualization();
+                return finalResult;
+            }
+
+            updateVisualization() {
+                this.calculateTriePositions();
+                this.drawTrie();
+                this.drawWords();
+                this.highlightCurrentStep();
+            }
+
+            drawWords() {
+                const wordsDiv = document.getElementById('wordsVisualization');
+                wordsDiv.innerHTML = '';
+
+                this.words.forEach((word, index) => {
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'word-item px-3 py-2 rounded text-center';
+                    wordElement.id = `word-${index}`;
+                    wordElement.textContent = word;
+                    wordsDiv.appendChild(wordElement);
+                });
+            }
+
+            calculateTriePositions() {
+                if (!this.root || Object.keys(this.root.children).length === 0) return;
+
+                const layers = this.getTrieLayers();
+                const width = 800, height = 280;
+                const layerHeight = height / (layers.length + 1);
+
+                for (let i = 0; i < layers.length; i++) {
+                    const layer = layers[i];
+                    const layerWidth = width / (layer.length + 1);
+                    for (let j = 0; j < layer.length; j++) {
+                        layer[j].x = (j + 1) * layerWidth;
+                        layer[j].y = (i + 1) * layerHeight;
+                    }
+                }
+            }
+
+            getTrieLayers() {
+                const layers = [];
+                const queue = [{node: this.root, level: 0}];
+                
+                while (queue.length > 0) {
+                    const {node, level} = queue.shift();
+                    if (!layers[level]) layers[level] = [];
+                    layers[level].push(node);
+                    
+                    Object.values(node.children).forEach(child => {
+                        queue.push({node: child, level: level + 1});
+                    });
+                }
+                return layers;
+            }
+
+            drawTrie() {
+                const svg = document.getElementById('trieVisualization');
+                svg.innerHTML = '';
+                
+                if (Object.keys(this.root.children).length > 0) {
+                    this.drawTrieRecursive(this.root, svg, null, '');
+                }
+            }
+
+            drawTrieRecursive(node, svg, parent, edgeLabel) {
+                if (parent) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', parent.x);
+                    line.setAttribute('y1', parent.y);
+                    line.setAttribute('x2', node.x);
+                    line.setAttribute('y2', node.y);
+                    line.setAttribute('class', 'trie-edge');
+                    line.setAttribute('id', `edge-${parent.id}-${node.id}`);
+                    svg.appendChild(line);
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', (parent.x + node.x) / 2);
+                    text.setAttribute('y', (parent.y + node.y) / 2 - 5);
+                    text.setAttribute('fill', '#e2e8f0');
+                    text.setAttribute('font-size', '14');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.textContent = edgeLabel;
+                    svg.appendChild(text);
+                }
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.x);
+                circle.setAttribute('cy', node.y);
+                circle.setAttribute('r', node.isRoot ? '20' : '15');
+                circle.setAttribute('class', `trie-node ${node.isRoot ? 'root-word' : ''}`);
+                circle.setAttribute('id', `node-${node.id}`);
+                svg.appendChild(circle);
+
+                if (node.isRoot) {
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', node.x);
+                    text.setAttribute('y', node.y + 5);
+                    text.setAttribute('fill', '#ffffff');
+                    text.setAttribute('font-size', '12');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('text-anchor', 'middle');
+                    text.textContent = '✓';
+                    svg.appendChild(text);
+                }
+
+                Object.entries(node.children).forEach(([char, child]) => {
+                    this.drawTrieRecursive(child, svg, node, char);
+                });
+            }
+
+            highlightCurrentStep() {
+                // Reset highlights
+                document.querySelectorAll('.word-item').forEach(el => {
+                    el.classList.remove('current', 'replaced');
+                });
+                document.querySelectorAll('.trie-node').forEach(node => {
+                    node.classList.remove('highlight', 'found');
+                });
+
+                if (this.steps.length === 0 || this.currentStep >= this.steps.length) return;
+
+                const step = this.steps[this.currentStep];
+                document.getElementById('explanation').textContent = step.explanation;
+
+                if (step.sentence) {
+                    document.getElementById('originalSentence').textContent = step.sentence;
+                }
+
+                if (step.currentIndex !== undefined) {
+                    const wordElement = document.getElementById(`word-${step.currentIndex}`);
+                    if (wordElement) {
+                        wordElement.classList.add('current');
+                        if (step.type === 'replace') {
+                            wordElement.classList.add('replaced');
+                        }
+                    }
+                    
+                    document.getElementById('currentWord').textContent = 
+                        `"${step.currentWord}"${step.root ? ` → "${step.root}"` : ''}`;
+                }
+
+                if (step.result) {
+                    const resultText = step.result.join(' ');
+                    document.getElementById('resultSentence').innerHTML = 
+                        resultText.split(' ').map((word, i) => {
+                            const originalWord = step.words[i];
+                            if (word !== originalWord && this.dictionary.includes(word)) {
+                                return `<span class="replaced-word">${word}</span>`;
+                            }
+                            return word;
+                        }).join(' ');
+                }
+
+                if (step.finalResult) {
+                    document.getElementById('resultSentence').innerHTML = 
+                        step.finalResult.split(' ').map((word, i) => {
+                            const originalWord = step.words[i];
+                            if (word !== originalWord && this.dictionary.includes(word)) {
+                                return `<span class="replaced-word">${word}</span>`;
+                            }
+                            return word;
+                        }).join(' ');
+                }
+            }
+        }
+
+        let wordReplacer = new WordReplacer();
+
+        function initializeVisualization() {
+            const dictionaryStr = document.getElementById('dictionaryInput').value.trim();
+            const sentence = document.getElementById('sentenceInput').value.trim();
+            
+            if (!dictionaryStr || !sentence) {
+                alert('Please enter both dictionary and sentence');
+                return;
+            }
+            
+            const dictionary = dictionaryStr.split(',').map(w => w.trim()).filter(w => w);
+            wordReplacer.replaceWords(dictionary, sentence);
+        }
+
+        function loadExample() {
+            document.getElementById('dictionaryInput').value = 'cat,bat,rat';
+            document.getElementById('sentenceInput').value = 'the cattle was rattled by the battery';
+        }
+
+        function next() {
+            if (wordReplacer.currentStep < wordReplacer.steps.length - 1) {
+                wordReplacer.currentStep++;
+                wordReplacer.highlightCurrentStep();
+            }
+        }
+
+        function prev() {
+            if (wordReplacer.currentStep > 0) {
+                wordReplacer.currentStep--;
+                wordReplacer.highlightCurrentStep();
+            }
+        }
+
+        function togglePlay() {
+            if (wordReplacer.currentStep < wordReplacer.steps.length - 1) {
+                next();
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value + '%';
+        });
+
+        // Initialize
+        wordReplacer.updateVisualization();
+    </script>
+</body>
+</html>

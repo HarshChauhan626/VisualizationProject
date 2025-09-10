@@ -97,7 +97,7 @@
             <!-- Category Filters -->
             <div class="flex flex-wrap gap-3">
                 <button onclick="filterByCategory('all')" class="category-filter active bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    All <span class="ml-2 bg-blue-500 px-2 py-0.5 rounded-full text-sm">73</span>
+                    All <span class="ml-2 bg-blue-500 px-2 py-0.5 rounded-full text-sm">85</span>
                 </button>
                 <button onclick="filterByCategory('sorting')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Sorting <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">12</span>
@@ -147,6 +147,16 @@
                 </button>
                 <button onclick="filterByCategory('trees')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Trees <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">7</span>
+                </button>
+                <button onclick="filterByCategory('trie')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Trie <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">5</span>
+                </button>
+                <!-- Heap and Union-Find categories -->
+                <button onclick="filterByCategory('heap')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Heap <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">7</span>
+                </button>
+                <button onclick="filterByCategory('unionfind')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Union-Find <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">5</span>
                 </button>
             </div>
         </div>
@@ -199,27 +209,50 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Sliding Window</h2>
                 <div class="space-y-2">
-                    <a href="sliding-window/at-most-two-distinct.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">At Most Two Distinct</a>
-                    <a href="sliding-window/binary-subarrays-with-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Binary Subarrays with Sum</a>
-                    <a href="sliding-window/concatenation-of-words.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Concatenation of Words</a>
-                    <a href="sliding-window/find-all-anagrams.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Anagrams</a>
-                    <a href="sliding-window/fruits-into-baskets.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Fruits into Baskets</a>
-                    <a href="sliding-window/k-different-integers.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">K Different Integers</a>
-                    <a href="sliding-window/longest-ones-after-delete.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Ones After Delete</a>
-                    <a href="sliding-window/longest-substring-no-repeat.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring No Repeat</a>
-                    <a href="sliding-window/max-consecutive-ones-iii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Consecutive Ones III</a>
-                    <a href="sliding-window/maximum-substring-without-repeating-character.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Substring Without Repeating Character</a>
-                    <a href="sliding-window/maximum-sum-subarray.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum Subarray</a>
-                    <a href="sliding-window/minimum-size-subarray.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Size Subarray</a>
-                    <a href="sliding-window/minimum-window-subsequence.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Window Subsequence</a>
-                    <a href="sliding-window/minimum-window-substring.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Window Substring</a>
-                    <a href="sliding-window/nice-subarrays.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Nice Subarrays</a>
+                    <a href="sliding-window/longest-substring-without-repeating-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring Without Repeating Characters</a>
+                    <a href="sliding-window/longest-substring-with-k-distinct-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring with K Distinct Characters</a>
+                    <a href="sliding-window/longest-substring-with-at-most-two-distinct-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring with At Most Two Distinct Characters</a>
+                    <a href="sliding-window/min-window-substring.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Min Window Substring</a>
                     <a href="sliding-window/permutation-in-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Permutation in String</a>
-                    <a href="sliding-window/sliding-window-maximum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sliding Window Maximum</a>
-                    <a href="sliding-window/subarray-product-less-than-k.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarray Product Less Than K</a>
-                    <a href="sliding-window/subarray-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarray Sum</a>
-                    <a href="sliding-window/substrings-differ-by-one.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Substrings Differ by One</a>
-                    <a href="sliding-window/substrings-with-abc.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Substrings with ABC</a>
+                    <a href="sliding-window/find-all-anagrams-in-a-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Anagrams in a String</a>
+                    <a href="sliding-window/longest-repeating-character-replacement.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Repeating Character Replacement</a>
+                    <a href="sliding-window/max-consecutive-ones-iii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Consecutive Ones III</a>
+                    <a href="sliding-window/grumpy-bookstore-owner.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Grumpy Bookstore Owner</a>
+                    <a href="sliding-window/max-number-of-k-count-in-a-window.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Number of K Count in a Window</a>
+                    <a href="sliding-window/maximum-sum-of-two-non-overlapping-subarrays.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum of Two Non-Overlapping Subarrays</a>
+                    <a href="sliding-window/maximum-sum-of-three-non-overlapping-subarrays.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum of Three Non-Overlapping Subarrays</a>
+                    <a href="sliding-window/longest-subarray-with-zero-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Subarray with Zero Sum</a>
+                    <a href="sliding-window/maximum-points-you-can-see.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Points You Can See</a>
+                    <a href="sliding-window/minimum-window-substring-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Window Substring II</a>
+                    <a href="sliding-window/number-of-substrings-with-all-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Substrings with All Characters</a>
+                    <a href="sliding-window/number-of-substrings-with-k-unique-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Substrings with K Unique Characters</a>
+                    <a href="sliding-window/smallest-window-in-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Smallest Window in String</a>
+                </div>
+            </div>
+
+            <!-- Heap Algorithms -->
+            <div class="card rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Heap</h2>
+                <div class="space-y-2">
+                    <a href="heap/top-k-elements.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Top K Elements</a>
+                    <a href="heap/merge-k-sorted-lists.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge K Sorted Lists</a>
+                    <a href="heap/find-median-data-stream.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Median from Data Stream</a>
+                    <a href="heap/task-scheduler.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Task Scheduler</a>
+                    <a href="heap/ugly-number-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Ugly Number II</a>
+                    <a href="heap/meeting-rooms-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Meeting Rooms II</a>
+                    <a href="heap/k-closest-points-to-origin.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">K Closest Points to Origin</a>
+                </div>
+            </div>
+
+            <!-- Union-Find -->
+            <div class="card rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Union-Find</h2>
+                <div class="space-y-2">
+                    <a href="unionfind/number-of-connected-components.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Connected Components</a>
+                    <a href="unionfind/graph-valid-tree.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Graph Valid Tree</a>
+                    <a href="unionfind/accounts-merge.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Accounts Merge</a>
+                    <a href="unionfind/redundant-connection-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Redundant Connection II</a>
+                    <a href="unionfind/most-stones-removed.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Most Stones Removed</a>
                 </div>
             </div>
 
@@ -430,6 +463,18 @@
                     <a href="trees/max_depth_tree.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Depth Tree</a>
                     <a href="trees/tree_diameter.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tree Diameter</a>
                     <a href="trees/validate_bst.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Validate BST</a>
+                </div>
+            </div>
+
+            <!-- Trie -->
+            <div class="card rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-400">Trie (Prefix Tree)</h2>
+                <div class="space-y-2">
+                    <a href="trie/implement-trie.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Implement Trie</a>
+                    <a href="trie/word-search-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Search II</a>
+                    <a href="trie/add-and-search-word.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Add and Search Word</a>
+                    <a href="trie/maximum-xor-two-numbers.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum XOR of Two Numbers</a>
+                    <a href="trie/replace-words.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Replace Words</a>
                 </div>
             </div>
         </div>
