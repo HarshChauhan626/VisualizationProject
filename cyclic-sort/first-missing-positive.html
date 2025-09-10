@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Missing Positive - Cyclic Sort Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .array-element {
+            transition: all 0.3s ease-in-out;
+            background-color: #1e293b;
+            border-color: #3b82f6;
+        }
+        .current {
+            background-color: #ea580c;
+            border-color: #fb923c;
+        }
+        .correct-position {
+            background-color: #16a34a;
+            border-color: #22c55e;
+        }
+        .swapping {
+            background-color: #8b5cf6;
+            border-color: #a78bfa;
+        }
+        .missing {
+            background-color: #dc2626;
+            border-color: #f87171;
+        }
+        .ignored {
+            background-color: #64748b;
+            border-color: #94a3b8;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+        }
+        pre {
+            background-color: #0f172a !important;
+            border: 1px solid #2d3748;
+        }
+        input {
+            background-color: #1e293b !important;
+            border-color: #3b82f6 !important;
+            color: #e2e8f0 !important;
+        }
+        .code-line {
+            font-family: monospace;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .code-line.active {
+            background-color: #374151;
+            color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-400">First Missing Positive - Cyclic Sort</h1>
+        
+        <!-- Problem Statement -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Problem Statement</h2>
+            <p class="text-gray-300">
+                Given an unsorted integer array nums, return the smallest missing positive integer.<br><br>
+                You must implement an algorithm that runs in O(n) time and uses constant extra space.<br><br>
+                <strong>Example:</strong><br>
+                Input: nums = [3,4,-1,1]<br>
+                Output: 2<br>
+                Explanation: 1 is in the array but 2 is missing.<br><br>
+                <strong>Difficulty:</strong> Hard<br>
+                <strong>Pattern:</strong> Cyclic Sort<br>
+                <strong>Note:</strong> Only positive integers 1 to n can be placed at their correct positions.
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Input</h2>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Array (integers, can be negative, zero, or out of range)</label>
+                    <input type="text" id="array" placeholder="3,4,-1,1" 
+                        class="border p-2 rounded w-full" value="3,4,-1,1">
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="initializeVisualization()" 
+                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                    Initialize
+                </button>
+                <button onclick="generateNewArray()" 
+                    class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors">
+                    Generate Random
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Controls -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex gap-4 justify-center mb-6">
+                <button id="prevBtn" onclick="prev()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Previous
+                </button>
+                <button id="playBtn" onclick="togglePlay()" 
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                    Play
+                </button>
+                <button id="nextBtn" onclick="next()" 
+                    class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Next
+                </button>
+            </div>
+            <div class="flex justify-center">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Animation Speed</label>
+                    <input type="range" min="1" max="100" value="50" class="w-40" id="speedSlider">
+                    <div class="text-center text-sm mt-1"><span id="speedValue">50</span>% speed</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualization Area -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Visualization</h2>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Array:</h3>
+                <div id="arrayVisualization" class="flex flex-wrap items-center gap-2 justify-center">
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Current Index:</h3>
+                <div id="currentIndex" class="text-lg font-mono text-blue-400">
+                    i = 0
+                </div>
+            </div>
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2 text-gray-300">Legend:</h3>
+                <div class="flex flex-wrap gap-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-orange-600 border border-orange-400 rounded"></div>
+                        <span>Current</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-green-600 border border-green-400 rounded"></div>
+                        <span>Correct Position</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-purple-600 border border-purple-400 rounded"></div>
+                        <span>Swapping</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-gray-600 border border-gray-400 rounded"></div>
+                        <span>Out of Range</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 bg-red-600 border border-red-400 rounded"></div>
+                        <span>Missing Position</span>
+                    </div>
+                </div>
+            </div>
+            <div id="explanation" class="text-gray-300 mb-4">
+                Click Initialize to start the algorithm
+            </div>
+            <div id="result" class="text-lg font-mono text-green-400 mb-4">
+            </div>
+        </div>
+
+        <!-- Pseudo Code -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Pseudo Code</h2>
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <pre id="pseudoCode" class="text-sm">
+<span class="code-line" data-line="1">function firstMissingPositive(nums):</span>
+<span class="code-line" data-line="2">    n = nums.length</span>
+<span class="code-line" data-line="3">    i = 0</span>
+<span class="code-line" data-line="4">    
+<span class="code-line" data-line="5">    // Phase 1: Cyclic sort (only for numbers 1 to n)</span>
+<span class="code-line" data-line="6">    while i < n:</span>
+<span class="code-line" data-line="7">        j = nums[i] - 1  // correct position for current element</span>
+<span class="code-line" data-line="8">        if nums[i] > 0 and nums[i] <= n and nums[i] != nums[j]:</span>
+<span class="code-line" data-line="9">            swap(nums, i, j)  // place element at correct position</span>
+<span class="code-line" data-line="10">        else:</span>
+<span class="code-line" data-line="11">            i++  // move to next element</span>
+<span class="code-line" data-line="12">    
+<span class="code-line" data-line="13">    // Phase 2: Find first missing positive</span>
+<span class="code-line" data-line="14">    for i = 0 to n - 1:</span>
+<span class="code-line" data-line="15">        if nums[i] != i + 1:</span>
+<span class="code-line" data-line="16">            return i + 1  // first missing positive</span>
+<span class="code-line" data-line="17">    
+<span class="code-line" data-line="18">    return n + 1  // all numbers 1 to n are present</span>
+                </pre>
+            </div>
+        </div>
+
+        <!-- Algorithm Details -->
+        <div class="card p-6 rounded-lg shadow-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Algorithm Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="font-semibold mb-2">Time Complexity</h3>
+                    <p class="text-gray-300">O(n) where n is the length of the array</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Space Complexity</h3>
+                    <p class="text-gray-300">O(1) - constant extra space</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-2">Key Insights</h3>
+                    <p class="text-gray-300">
+                        1. Only numbers 1 to n can be placed at their correct positions<br>
+                        2. Numbers ≤ 0 or > n are ignored (can't be the answer)<br>
+                        3. After sorting, the first position with wrong number gives the answer<br>
+                        4. If all positions are correct, the answer is n+1
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Cases -->
+        <div class="card p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 text-blue-400">Test Cases</h2>
+            <div class="space-y-4">
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 1:</p>
+                    <p class="text-gray-400">nums = [1,2,0] → Output: 3</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 2:</p>
+                    <p class="text-gray-400">nums = [3,4,-1,1] → Output: 2</p>
+                </div>
+                <div class="border-b border-gray-700 pb-4">
+                    <p class="font-semibold text-gray-300">Test Case 3:</p>
+                    <p class="text-gray-400">nums = [7,8,9,11,12] → Output: 1</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let arr = [];
+        let currentStep = 0;
+        let isPlaying = false;
+        let playInterval;
+        let steps = [];
+
+        function generateNewArray() {
+            const size = Math.floor(Math.random() * 7) + 4; // 4-10 elements
+            const arr = [];
+            
+            // Add some positive numbers in range [1, size]
+            for (let i = 1; i <= size; i++) {
+                if (Math.random() < 0.6) { // 60% chance to include
+                    arr.push(i);
+                }
+            }
+            
+            // Add some out of range numbers
+            while (arr.length < size) {
+                if (Math.random() < 0.3) {
+                    // Add negative or zero
+                    arr.push(Math.floor(Math.random() * 5) - 5);
+                } else {
+                    // Add large positive
+                    arr.push(size + Math.floor(Math.random() * 10) + 1);
+                }
+            }
+            
+            // Shuffle array
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            
+            document.getElementById('array').value = arr.join(',');
+            initializeVisualization();
+        }
+
+        function generateSteps(nums) {
+            const steps = [];
+            const arr = [...nums];
+            const n = arr.length;
+            let i = 0;
+
+            steps.push({
+                type: 'init',
+                arr: [...arr],
+                currentIndex: -1,
+                phase: 1,
+                explanation: 'Phase 1: Cyclic sort for numbers 1 to n only',
+                codeLine: 1
+            });
+
+            // Phase 1: Cyclic sort
+            while (i < n) {
+                const j = arr[i] - 1;
+                
+                steps.push({
+                    type: 'check',
+                    arr: [...arr],
+                    currentIndex: i,
+                    targetIndex: j,
+                    phase: 1,
+                    explanation: `Checking ${arr[i]}: valid range? ${arr[i] > 0 && arr[i] <= n ? 'Yes' : 'No'}`,
+                    codeLine: 8
+                });
+
+                if (arr[i] > 0 && arr[i] <= n && arr[i] !== arr[j]) {
+                    steps.push({
+                        type: 'swap',
+                        arr: [...arr],
+                        currentIndex: i,
+                        swapIndex: j,
+                        phase: 1,
+                        explanation: `Swapping ${arr[i]} to position ${j}`,
+                        codeLine: 9
+                    });
+                    
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                } else {
+                    steps.push({
+                        type: 'skip',
+                        arr: [...arr],
+                        currentIndex: i,
+                        phase: 1,
+                        explanation: `${arr[i]} is out of range or already correct, skipping`,
+                        codeLine: 11
+                    });
+                    i++;
+                }
+            }
+
+            // Phase 2: Find missing
+            steps.push({
+                type: 'find_phase',
+                arr: [...arr],
+                currentIndex: -1,
+                phase: 2,
+                explanation: 'Phase 2: Finding first missing positive',
+                codeLine: 14
+            });
+
+            for (let k = 0; k < n; k++) {
+                steps.push({
+                    type: 'find_check',
+                    arr: [...arr],
+                    currentIndex: k,
+                    phase: 2,
+                    explanation: `Checking position ${k}: expected ${k + 1}, found ${arr[k]}`,
+                    codeLine: 15
+                });
+
+                if (arr[k] !== k + 1) {
+                    steps.push({
+                        type: 'found',
+                        arr: [...arr],
+                        currentIndex: k,
+                        phase: 2,
+                        result: k + 1,
+                        explanation: `First missing positive: ${k + 1}`,
+                        codeLine: 16
+                    });
+                    return steps;
+                }
+            }
+
+            // All numbers 1 to n are present
+            steps.push({
+                type: 'found',
+                arr: [...arr],
+                currentIndex: -1,
+                phase: 2,
+                result: n + 1,
+                explanation: `All numbers 1 to ${n} are present. Answer: ${n + 1}`,
+                codeLine: 18
+            });
+
+            return steps;
+        }
+
+        function initializeVisualization() {
+            const input = document.getElementById('array').value;
+            arr = input.split(',').map(x => parseInt(x.trim())).filter(x => !isNaN(x));
+            
+            if (arr.length === 0) {
+                alert('Please enter a valid array');
+                return;
+            }
+
+            currentStep = 0;
+            steps = generateSteps(arr);
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            if (currentStep >= steps.length) currentStep = steps.length - 1;
+            if (currentStep < 0) currentStep = 0;
+
+            const step = steps[currentStep];
+            const arrayDiv = document.getElementById('arrayVisualization');
+            const explanationDiv = document.getElementById('explanation');
+            const resultDiv = document.getElementById('result');
+            const currentIndexDiv = document.getElementById('currentIndex');
+
+            arrayDiv.innerHTML = '';
+
+            step.arr.forEach((num, i) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'array-element w-16 h-16 rounded-lg border-2 flex items-center justify-center text-lg font-bold';
+                
+                // Color coding
+                if (step.currentIndex === i) {
+                    elementDiv.classList.add('current');
+                } else if (step.swapIndex === i || step.targetIndex === i) {
+                    elementDiv.classList.add('swapping');
+                } else if (step.type === 'found' && step.currentIndex === i) {
+                    elementDiv.classList.add('missing');
+                } else if (num === i + 1 && step.phase === 2) {
+                    elementDiv.classList.add('correct-position');
+                } else if (num <= 0 || num > step.arr.length) {
+                    elementDiv.classList.add('ignored');
+                }
+
+                elementDiv.innerHTML = `
+                    <div class="text-center">
+                        <div>${num}</div>
+                        <div class="text-xs text-gray-400">${i}</div>
+                    </div>
+                `;
+                arrayDiv.appendChild(elementDiv);
+            });
+
+            // Update current index display
+            if (step.phase === 1) {
+                currentIndexDiv.textContent = step.currentIndex >= 0 ? `Phase 1 - i = ${step.currentIndex}` : 'Phase 1 Complete';
+            } else {
+                currentIndexDiv.textContent = step.currentIndex >= 0 ? `Phase 2 - i = ${step.currentIndex}` : 'Phase 2 Complete';
+            }
+
+            // Update explanation
+            explanationDiv.innerHTML = `
+                <p>Step ${currentStep + 1}/${steps.length}</p>
+                <p>${step.explanation}</p>
+            `;
+
+            // Update result
+            if (step.type === 'found') {
+                resultDiv.textContent = `First Missing Positive: ${step.result}`;
+            } else {
+                resultDiv.textContent = '';
+            }
+
+            highlightCodeLine(step.codeLine);
+        }
+
+        function highlightCodeLine(lineNumber) {
+            const codeLines = document.querySelectorAll('.code-line');
+            codeLines.forEach(line => line.classList.remove('active'));
+            const activeLine = document.querySelector(`[data-line="${lineNumber}"]`);
+            if (activeLine) activeLine.classList.add('active');
+        }
+
+        function next() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                updateVisualization();
+            }
+        }
+
+        function prev() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateVisualization();
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = 'Pause';
+                playBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                playBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                const speed = parseInt(document.getElementById('speedSlider').value);
+                const delay = 2000 - (speed * 18);
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, delay);
+            } else {
+                playBtn.textContent = 'Play';
+                playBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                playBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                clearInterval(playInterval);
+            }
+        }
+
+        document.getElementById('speedSlider').addEventListener('input', function() {
+            document.getElementById('speedValue').textContent = this.value;
+            
+            if (isPlaying) {
+                clearInterval(playInterval);
+                const speed = parseInt(this.value);
+                const delay = 2000 - (speed * 18);
+                
+                playInterval = setInterval(() => {
+                    if (currentStep < steps.length - 1) {
+                        next();
+                    } else {
+                        togglePlay();
+                    }
+                }, delay);
+            }
+        });
+
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html>

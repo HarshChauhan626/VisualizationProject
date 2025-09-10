@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Duplicates from Sorted Array Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif; /* Maintaining Inter as per general instruction */
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .array-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* Align numbers to the bottom of their cells */
+            min-height: 100px;
+            margin-top: 20px;
+        }
+        .array-element {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #4a5568; /* Grey background for elements */
+            border: 2px solid #a0aec0; /* Light border */
+            border-radius: 8px;
+            margin: 0 4px;
+            font-weight: bold;
+            font-size: 1.25rem; /* text-xl */
+            transition: all 0.3s ease-in-out;
+            position: relative;
+        }
+        .array-element.active {
+            background-color: #38b2ac; /* Teal for active */
+            border-color: #38b2ac;
+            color: #fff;
+        }
+        /* Adjusted pointer colors to better match the reference design */
+        .array-element.left-pointer {
+            border-bottom: 4px solid #63b3ed; /* Blue for left pointer */
+            box-shadow: 0 0 10px rgba(99, 179, 237, 0.7);
+        }
+        .array-element.right-pointer {
+            border-bottom: 4px solid #a7f3d0; /* Yellow-green for right pointer */
+            box-shadow: 0 0 10px rgba(167, 243, 208, 0.7);
+        }
+        .pointer-label {
+            position: absolute;
+            top: -25px;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: normal;
+            color: #e2e8f0;
+        }
+        .pointer-label.left {
+            color: #63b3ed; /* Blue for left label */
+        }
+        .pointer-label.right {
+            color: #a7f3d0; /* Yellow-green for right label */
+        }
+
+        /* Styling for Pseudocode Block */
+        .pseudocode-block {
+            background-color: #2d3748; /* Darker grey */
+            border: 1px solid #4a5568;
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            margin-top: 2rem; /* mt-8 */
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.95rem;
+            color: #a0aec0; /* Light grey text */
+            overflow-x: auto; /* Allow horizontal scrolling for long lines */
+        }
+        .pseudocode-block pre {
+            margin: 0;
+            white-space: pre-wrap; /* Ensure lines wrap within the pre block */
+        }
+        .pseudocode-line {
+            display: block; /* Make each line a block for highlighting */
+            padding: 2px 0;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .pseudocode-line.highlighted {
+            background-color: rgba(99, 179, 237, 0.2); /* Light blue background for highlighted line */
+            border-left: 3px solid #63b3ed; /* Blue border on left */
+            padding-left: 10px;
+        }
+        .pseudocode-keyword {
+            color: #63b3ed; /* Blue for keywords */
+            font-weight: bold;
+        }
+        .pseudocode-comment {
+            color: #718096; /* Grey for comments */
+            font-style: italic;
+        }
+        .pseudocode-return {
+             color: #fc8181; /* Red for return */
+             font-weight: bold;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+    <div class="bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-4xl">
+        <h1 class="text-4xl font-extrabold text-center mb-6 text-teal-400">
+            Remove Duplicates from Sorted Array
+        </h1>
+        <p class="text-center text-lg mb-8 text-gray-300">
+            Visualize the two-pointer approach to remove duplicates in-place.
+        </p>
+
+        <!-- Array Input and Controls -->
+        <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
+            <input type="text" id="arrayInput" placeholder="Enter comma-separated numbers (e.g., 0,0,1,1,2,3)"
+                   class="p-3 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500 flex-grow max-w-md md:max-w-none">
+            <button id="loadArrayBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200">
+                Load Array
+            </button>
+        </div>
+
+        <!-- Visualization Area -->
+        <div id="visualization" class="array-container">
+            <!-- Array elements will be rendered here by JavaScript -->
+        </div>
+
+        <!-- Pointers Display -->
+        <div class="flex justify-center gap-8 mt-6 text-xl font-semibold">
+            <div id="leftPointerDisplay" class="text-blue-400">Left: -</div>
+            <div id="rightPointerDisplay" class="text-green-300">Right: -</div>
+        </div>
+
+        <!-- Explanation and Final Result -->
+        <div class="bg-gray-700 p-4 rounded-lg mt-8 shadow-inner">
+            <h2 class="text-2xl font-bold text-teal-300 mb-2">Current Step:</h2>
+            <p id="explanation" class="text-gray-200 text-lg min-h-[4rem]">Press Start to begin!</p>
+            <div id="finalResult" class="mt-4 text-xl font-semibold text-green-400 hidden">
+                New Length: <span id="finalLength"></span>, Array: <span id="finalArray"></span>
+            </div>
+        </div>
+
+        <!-- Pseudocode Section -->
+        <div class="pseudocode-block">
+            <h2 class="text-2xl font-bold text-teal-300 mb-4">Pseudocode</h2>
+            <pre>
+<span id="line-1" class="pseudocode-line"><span class="pseudocode-keyword">function</span> removeDuplicates(nums):</span>
+  <span id="line-2" class="pseudocode-line"><span class="pseudocode-comment">// Handle edge case of an empty array.</span></span>
+  <span id="line-3" class="pseudocode-line">  <span class="pseudocode-keyword">if</span> nums.length == 0:</span>
+  <span id="line-4" class="pseudocode-line">    <span class="pseudocode-return">return</span> 0</span>
+<span id="line-5" class="pseudocode-line"></span>
+  <span id="line-6" class="pseudocode-line"><span class="pseudocode-comment">// The 'left' pointer tracks the position to place the next unique element.</span></span>
+  <span id="line-7" class="pseudocode-line"><span class="pseudocode-comment">// It starts at index 0 because the first element is always unique.</span></span>
+  <span id="line-8" class="pseudocode-line">  left = 0</span>
+<span id="line-9" class="pseudocode-line"></span>
+  <span id="line-10" class="pseudocode-line"><span class="pseudocode-comment">// The 'right' pointer scans the array from the second element onwards.</span></span>
+  <span id="line-11" class="pseudocode-line">  <span class="pseudocode-keyword">for</span> right <span class="pseudocode-keyword">from</span> 1 <span class="pseudocode-keyword">to</span> nums.length - 1:</span>
+  <span id="line-12" class="pseudocode-line">    <span class="pseudocode-comment">// If the element at 'right' is different from the element at 'left',</span></span>
+  <span id="line-13" class="pseudocode-line">    <span class="pseudocode-comment">// it's a unique element.</span></span>
+  <span id="line-14" class="pseudocode-line">    <span class="pseudocode-keyword">if</span> nums[right] != nums[left]:</span>
+  <span id="line-15" class="pseudocode-line">      <span class="pseudocode-comment">// Move 'left' one step forward to the next empty spot.</span></span>
+  <span id="line-16" class="pseudocode-line">      left = left + 1</span>
+  <span id="line-17" class="pseudocode-line">      <span class="pseudocode-comment">// Place the unique element found at 'right' into the new 'left' position.</span></span>
+  <span id="line-18" class="pseudocode-line">      nums[left] = nums[right]</span>
+  <span id="line-19" class="pseudocode-line">    <span class="pseudocode-keyword">else</span>: <span class="pseudocode-comment">// Optional: for explicit 'else' branch highlighting</span></span>
+  <span id="line-20" class="pseudocode-line">      <span class="pseudocode-comment">// Element is a duplicate, skip it.</span></span>
+<span id="line-21" class="pseudocode-line"></span>
+  <span id="line-22" class="pseudocode-line"><span class="pseudocode-comment">// The final length is 'left' plus one, because 'left' is a 0-based index.</span></span>
+  <span id="line-23" class="pseudocode-line">  <span class="pseudocode-return">return</span> left + 1</span>
+            </pre>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 mt-8">
+            <button id="startButton" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200">
+                Start
+            </button>
+            <button id="nextButton" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200" disabled>
+                Next Step
+            </button>
+            <button id="prevButton" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200" disabled>
+                Previous Step
+            </button>
+            <button id="resetButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-200" disabled>
+                Reset
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let nums = [];
+        let history = []; // To store states for forward/backward navigation
+        let currentStepIndex = -1;
+        let originalNums = []; // To keep original for reset
+
+        const arrayInput = document.getElementById('arrayInput');
+        const loadArrayBtn = document.getElementById('loadArrayBtn');
+        const visualizationDiv = document.getElementById('visualization');
+        const leftPointerDisplay = document.getElementById('leftPointerDisplay');
+        const rightPointerDisplay = document.getElementById('rightPointerDisplay');
+        const explanationDiv = document.getElementById('explanation');
+        const finalResultDiv = document.getElementById('finalResult');
+        const finalLengthSpan = document.getElementById('finalLength');
+        const finalArraySpan = document.getElementById('finalArray'); // Corrected typo here: was document = document.getElementById
+        const startButton = document.getElementById('startButton');
+        const nextButton = document.getElementById('nextButton');
+        const prevButton = document.getElementById('prevButton');
+        const resetButton = document.getElementById('resetButton');
+
+        // Map pseudocode lines to their IDs for highlighting
+        const PSEUDOCODE_LINES = {
+            FUNCTION_START: 'line-1',
+            CHECK_EMPTY_ARRAY: 'line-3',
+            RETURN_ZERO: 'line-4',
+            INIT_LEFT: 'line-8',
+            FOR_LOOP_START: 'line-11',
+            CHECK_DIFFERENT: 'line-14',
+            INCREMENT_LEFT: 'line-16',
+            COPY_ELEMENT: 'line-18',
+            HANDLE_DUPLICATE: 'line-20', // For the else branch
+            RETURN_FINAL_LENGTH: 'line-23'
+        };
+
+
+        // Function to render the current state of the array
+        function renderArray() {
+            visualizationDiv.innerHTML = '';
+            const currentState = history[currentStepIndex];
+            if (!currentState) return;
+
+            currentState.arr.forEach((val, index) => {
+                const elementDiv = document.createElement('div');
+                elementDiv.classList.add('array-element');
+                elementDiv.textContent = val;
+
+                if (index === currentState.left) {
+                    elementDiv.classList.add('left-pointer');
+                    const label = document.createElement('span');
+                    label.classList.add('pointer-label', 'left');
+                    label.textContent = 'Left';
+                    elementDiv.appendChild(label);
+                }
+                if (index === currentState.right) {
+                    elementDiv.classList.add('right-pointer');
+                    const label = document.createElement('span');
+                    label.classList.add('pointer-label', 'right');
+                    label.textContent = 'Right';
+                    elementDiv.appendChild(label);
+                }
+                visualizationDiv.appendChild(elementDiv);
+            });
+
+            leftPointerDisplay.textContent = `Left: ${currentState.left === null ? '-' : currentState.left}`;
+            rightPointerDisplay.textContent = `Right: ${currentState.right === null ? '-' : currentState.right}`;
+            explanationDiv.innerHTML = currentState.explanation;
+
+            if (currentStepIndex === history.length - 1 && history.length > 0) {
+                finalResultDiv.classList.remove('hidden');
+                finalLengthSpan.textContent = currentState.finalLength;
+                finalArraySpan.textContent = `[${currentState.arr.slice(0, currentState.finalLength).join(', ')}]`;
+            } else {
+                finalResultDiv.classList.add('hidden');
+            }
+
+            // Highlight pseudocode
+            document.querySelectorAll('.pseudocode-line').forEach(line => {
+                line.classList.remove('highlighted');
+            });
+            if (currentState.highlightedLineId) {
+                const lineElement = document.getElementById(currentState.highlightedLineId);
+                if (lineElement) {
+                    lineElement.classList.add('highlighted');
+                }
+            }
+
+            updateButtonStates();
+        }
+
+        // Function to update button disabled states
+        function updateButtonStates() {
+            startButton.disabled = history.length > 0; // Disable start after it's been run
+            nextButton.disabled = currentStepIndex >= history.length - 1;
+            prevButton.disabled = currentStepIndex <= 0;
+            resetButton.disabled = currentStepIndex < 0 && history.length === 0; // Enable reset if there's any history
+            loadArrayBtn.disabled = history.length > 0; // Disable load once visualization has started
+            arrayInput.disabled = history.length > 0;
+        }
+
+        // Algorithm simulation
+        function simulateRemoveDuplicates() {
+            history = [];
+            currentStepIndex = -1; // Reset index
+            finalResultDiv.classList.add('hidden'); // Hide final result initially
+
+            if (nums.length === 0) {
+                history.push({
+                    arr: [],
+                    left: '-',
+                    right: '-',
+                    explanation: "Checking if array is empty.",
+                    highlightedLineId: PSEUDOCODE_LINES.CHECK_EMPTY_ARRAY,
+                });
+                history.push({
+                    arr: [],
+                    left: '-',
+                    right: '-',
+                    explanation: "Array is empty, returning 0.",
+                    highlightedLineId: PSEUDOCODE_LINES.RETURN_ZERO,
+                    finalLength: 0
+                });
+                currentStepIndex = 0;
+                renderArray();
+                return;
+            }
+
+            let currentNums = [...nums];
+            let left = 0;
+            
+            // Initial state - Function start and left pointer initialization
+            history.push({
+                arr: [...currentNums],
+                left: left,
+                right: 0,
+                explanation: `Starting the algorithm. Initializing left pointer at index ${left}.`,
+                highlightedLineId: PSEUDOCODE_LINES.INIT_LEFT,
+            });
+            
+            for (let right = 1; right < currentNums.length; right++) {
+                history.push({
+                    arr: [...currentNums],
+                    left: left,
+                    right: right,
+                    explanation: `Starting loop iteration. Right pointer is at index ${right}.`,
+                    highlightedLineId: PSEUDOCODE_LINES.FOR_LOOP_START,
+                });
+
+                // If the element at 'right' is different from the element at 'left', it's unique.
+                if (currentNums[right] !== currentNums[left]) {
+                    history.push({
+                        arr: [...currentNums],
+                        left: left,
+                        right: right,
+                        explanation: `nums[${right}] (${currentNums[right]}) is different from nums[${left}] (${currentNums[left]}). This is a unique element.`,
+                        highlightedLineId: PSEUDOCODE_LINES.CHECK_DIFFERENT,
+                    });
+
+                    left++; // Move 'left' one step forward
+                    history.push({
+                        arr: [...currentNums],
+                        left: left,
+                        right: right,
+                        explanation: `Incrementing left pointer to ${left}.`,
+                        highlightedLineId: PSEUDOCODE_LINES.INCREMENT_LEFT,
+                    });
+                    
+                    currentNums[left] = currentNums[right]; // Place the unique element
+                    history.push({
+                        arr: [...currentNums],
+                        left: left,
+                        right: right,
+                        explanation: `Copying nums[${right}] (${currentNums[right]}) to nums[${left}].`,
+                        highlightedLineId: PSEUDOCODE_LINES.COPY_ELEMENT,
+                    });
+                } else {
+                    // Elements are the same (duplicate)
+                    history.push({
+                        arr: [...currentNums],
+                        left: left,
+                        right: right,
+                        explanation: `nums[${right}] (${currentNums[right]}) is a duplicate of nums[${left}] (${currentNums[left]}). Skipping.`,
+                        highlightedLineId: PSEUDOCODE_LINES.CHECK_DIFFERENT, // Highlight the if condition again for the else branch
+                    });
+                     history.push({
+                        arr: [...currentNums],
+                        left: left,
+                        right: right,
+                        explanation: `Duplicate found. Skipping element at index ${right}.`,
+                        highlightedLineId: PSEUDOCODE_LINES.HANDLE_DUPLICATE,
+                    });
+                }
+            }
+
+            // Final state
+            const finalLength = left + 1;
+            history.push({
+                arr: [...currentNums],
+                left: left,
+                right: currentNums.length, // Indicate right pointer is beyond the array
+                explanation: `Loop finished. All unique elements are at the beginning of the array.`,
+                highlightedLineId: PSEUDOCODE_LINES.FOR_LOOP_START, // Show loop completion
+            });
+            history.push({
+                arr: [...currentNums],
+                left: left,
+                right: currentNums.length,
+                explanation: `The new length of the array after removing duplicates is ${finalLength}.`,
+                finalLength: finalLength,
+                highlightedLineId: PSEUDOCODE_LINES.RETURN_FINAL_LENGTH,
+            });
+
+            currentStepIndex = 0; // Start at the first step
+            renderArray();
+        }
+
+        // Event Listeners
+        startButton.addEventListener('click', () => {
+            if (nums.length === 0 && arrayInput.value.trim() === '') {
+                explanationDiv.textContent = "Please load an array first!";
+                return;
+            }
+            if (history.length === 0) { // Only run simulation if not already done
+                simulateRemoveDuplicates();
+            }
+            currentStepIndex = 0;
+            renderArray();
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (currentStepIndex < history.length - 1) {
+                currentStepIndex++;
+                renderArray();
+            }
+        });
+
+        prevButton.addEventListener('click', () => {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                renderArray();
+            }
+        });
+
+        resetButton.addEventListener('click', () => {
+            nums = [...originalNums]; // Restore original array
+            history = [];
+            currentStepIndex = -1;
+            renderArray(); // Render empty or original initial state
+            explanationDiv.textContent = "Press Start to begin!";
+            finalResultDiv.classList.add('hidden');
+            updateButtonStates();
+            // Clear pointer displays
+            leftPointerDisplay.textContent = "Left: -";
+            rightPointerDisplay.textContent = "Right: -";
+            // Clear pseudocode highlighting
+            document.querySelectorAll('.pseudocode-line').forEach(line => {
+                line.classList.remove('highlighted');
+            });
+        });
+
+        loadArrayBtn.addEventListener('click', () => {
+            const inputVal = arrayInput.value.trim();
+            if (inputVal) {
+                const parsedNums = inputVal.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                if (parsedNums.length > 0) {
+                    nums = parsedNums;
+                    originalNums = [...nums]; // Save original
+                    resetButton.click(); // Reset visualization to initial state with new array
+                    // Manually re-enable start button
+                    startButton.disabled = false;
+                    loadArrayBtn.disabled = false;
+                    arrayInput.disabled = false;
+                    explanationDiv.textContent = "Array loaded. Press Start to visualize!";
+                    renderArray(); // Show the initial array without pointers
+                } else {
+                    explanationDiv.textContent = "Invalid array input. Please enter comma-separated numbers.";
+                }
+            } else {
+                nums = []; // Empty array
+                originalNums = [];
+                resetButton.click();
+                startButton.disabled = false;
+                loadArrayBtn.disabled = false;
+                arrayInput.disabled = false;
+                explanationDiv.textContent = "Array cleared. Press Start (if array is empty) or Load Array to set a new one.";
+                renderArray();
+            }
+        });
+
+        // Initialize with a default array if desired
+        arrayInput.value = "0,0,1,1,1,2,2,3,3,4";
+        loadArrayBtn.click(); // Load default array on page load
+    </script>
+</body>
+</html>
