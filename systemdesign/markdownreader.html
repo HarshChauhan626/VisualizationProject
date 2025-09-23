@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Document Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Mermaid for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .markdown-content {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+            border-radius: 12px;
+            padding: 2rem;
+            line-height: 1.8;
+        }
+        .markdown-content h1 {
+            color: #3b82f6;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 0.5rem;
+        }
+        .markdown-content h2 {
+            color: #60a5fa;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 0.5rem;
+        }
+        .markdown-content h3 {
+            color: #93c5fd;
+            font-size: 1.5rem;
+            font-weight: semibold;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .markdown-content h4 {
+            color: #bfdbfe;
+            font-size: 1.25rem;
+            font-weight: semibold;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-content p {
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+        }
+        .markdown-content ul li {
+            list-style-type: disc;
+        }
+        .markdown-content ol li {
+            list-style-type: decimal;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #3b82f6;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            background-color: #1e40af20;
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+        }
+        .markdown-content code {
+            background-color: #374151;
+            color: #fbbf24;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .markdown-content pre {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .markdown-content pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background-color: #1f2937;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #374151;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .markdown-content th {
+            background-color: #374151;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        .markdown-content tr:nth-child(even) {
+            background-color: #1e293b;
+        }
+        .markdown-content a {
+            color: #3b82f6;
+            text-decoration: underline;
+        }
+        .markdown-content a:hover {
+            color: #60a5fa;
+        }
+        .mermaid {
+            background-color: #1f2937;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #374151;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        .spinner {
+            border: 4px solid #374151;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            background-color: #dc2626;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #fbbf24;
+        }
+        .error-message h3 {
+            color: #fbbf24;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+        .error-message p {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .error-message code {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .solution-box {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .solution-box h4 {
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+        .back-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            transition: all 0.2s;
+        }
+        .back-button:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            transform: translateY(-1px);
+        }
+        .toc {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            max-width: 300px;
+            position: sticky;
+            top: 20px;
+        }
+        .toc h3 {
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: bold;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .toc li {
+            margin-bottom: 0.25rem;
+        }
+        .toc a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            display: block;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .toc a:hover {
+            color: #3b82f6;
+            background-color: #374151;
+        }
+        .content-wrapper {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .toc {
+                max-width: none;
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">System Design Reader</div>
+                <div class="flex space-x-4">
+                    <a href="index.html" class="text-gray-300 hover:text-white px-3 py-2">← Back to System Design</a>
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">← Main</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <!-- Document Info -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-blue-400" id="documentTitle">Loading...</h1>
+                    <p class="text-gray-400" id="documentPath"></p>
+                </div>
+                <button id="backButton" class="back-button text-white px-4 py-2 rounded-lg font-semibold">
+                    ← Back to Documents
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-wrapper">
+            <!-- Table of Contents -->
+            <div id="tocContainer" class="toc" style="display: none;">
+                <h3>Table of Contents</h3>
+                <ul id="tocList"></ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                <div id="loadingIndicator" class="loading">
+                    <div class="spinner"></div>
+                </div>
+                
+                <div id="errorContainer" style="display: none;">
+                    <div class="error-message">
+                        <h3>⚠️ Error Loading Document</h3>
+                        <p id="errorMessage">The requested document could not be loaded.</p>
+                        <div class="solution-box" id="solutionBox" style="display: none;">
+                            <h4>💡 Quick Solutions:</h4>
+                            <div id="solutionContent"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="markdownContainer" class="markdown-content" style="display: none;">
+                    <!-- Markdown content will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const marked = window.marked;
+        
+        // Configure marked options
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {}
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            langPrefix: 'hljs language-',
+            breaks: true,
+            gfm: true
+        });
+
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#e2e8f0',
+                primaryBorderColor: '#374151',
+                lineColor: '#6b7280',
+                secondaryColor: '#1f2937',
+                tertiaryColor: '#374151',
+                background: '#1f2937',
+                mainBkg: '#1f2937',
+                secondBkg: '#374151',
+                tertiaryBkg: '#1e293b'
+            }
+        });
+
+        let currentFolder = '';
+        let currentFile = '';
+
+        // Initialize page
+        function init() {
+            parseURLParameters();
+            setupEventListeners();
+            loadMarkdownFile();
+        }
+
+        function parseURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentFolder = urlParams.get('folder') || '';
+            currentFile = urlParams.get('file') || '';
+            
+            if (!currentFolder || !currentFile) {
+                showError('Missing file parameters. Please navigate from the system design index.');
+                return;
+            }
+
+            updateDocumentInfo();
+        }
+
+        function updateDocumentInfo() {
+            const displayTitle = currentFile.replace('.md', '').replace(/-/g, ' ');
+            document.getElementById('documentTitle').textContent = displayTitle;
+            document.getElementById('documentPath').textContent = `${currentFolder}/${currentFile}`;
+            document.title = `${displayTitle} - System Design Reader`;
+        }
+
+        function setupEventListeners() {
+            document.getElementById('backButton').addEventListener('click', () => {
+                window.close();
+                // Fallback if window.close() doesn't work
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 100);
+            });
+        }
+
+        async function loadMarkdownFile() {
+            try {
+                const filePath = `${currentFolder}/${currentFile}`;
+                
+                // For GitHub Pages, files are served over HTTPS so no CORS issues
+                const response = await fetch(filePath);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const markdownText = await response.text();
+                await renderMarkdown(markdownText);
+                
+            } catch (error) {
+                console.error('Error loading markdown file:', error);
+                if (error.message.includes('404')) {
+                    showError(`Document not found: ${currentFile}. Please check if the file exists in the ${currentFolder} folder.`);
+                } else {
+                    showError(`Failed to load the document: ${error.message}`);
+                }
+            }
+        }
+
+        async function renderMarkdown(markdownText) {
+            try {
+                // Process mermaid diagrams before marked
+                const processedMarkdown = await processMermaidDiagrams(markdownText);
+                
+                // Convert markdown to HTML
+                const htmlContent = marked.parse(processedMarkdown);
+                
+                // Update DOM
+                const container = document.getElementById('markdownContainer');
+                container.innerHTML = htmlContent;
+                
+                // Highlight code blocks
+                container.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+
+                // Render mermaid diagrams
+                await renderMermaidDiagrams();
+                
+                // Generate table of contents
+                generateTableOfContents();
+                
+                // Show content and hide loading
+                document.getElementById('loadingIndicator').style.display = 'none';
+                container.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error rendering markdown:', error);
+                showError(`Failed to render the document: ${error.message}`);
+            }
+        }
+
+        async function processMermaidDiagrams(markdownText) {
+            // Replace mermaid code blocks with div containers
+            return markdownText.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, diagram) => {
+                const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+                return `<div class="mermaid" id="${id}">\n${diagram.trim()}\n</div>`;
+            });
+        }
+
+        async function renderMermaidDiagrams() {
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            
+            for (let element of mermaidElements) {
+                try {
+                    const graphDefinition = element.textContent.trim();
+                    if (graphDefinition) {
+                        const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
+                        element.innerHTML = svg;
+                    }
+                } catch (error) {
+                    console.error('Error rendering mermaid diagram:', error);
+                    element.innerHTML = `<div class="error-message">Error rendering diagram: ${error.message}</div>`;
+                }
+            }
+        }
+
+        function generateTableOfContents() {
+            const headings = document.querySelectorAll('.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4');
+            const tocList = document.getElementById('tocList');
+            const tocContainer = document.getElementById('tocContainer');
+            
+            if (headings.length === 0) {
+                return; // No headings found
+            }
+
+            tocList.innerHTML = '';
+            
+            headings.forEach((heading, index) => {
+                // Create an ID for the heading if it doesn't have one
+                if (!heading.id) {
+                    heading.id = 'heading-' + index;
+                }
+                
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#' + heading.id;
+                a.textContent = heading.textContent;
+                a.style.paddingLeft = (parseInt(heading.tagName.charAt(1)) - 1) * 12 + 'px';
+                
+                // Smooth scrolling
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    heading.scrollIntoView({ behavior: 'smooth' });
+                });
+                
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+            
+            tocContainer.style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('errorMessage').textContent = message;
+            
+            // Show solutions for common errors
+            const solutionBox = document.getElementById('solutionBox');
+            const solutionContent = document.getElementById('solutionContent');
+            
+            if (message.includes('not found') || message.includes('404')) {
+                solutionBox.style.display = 'block';
+                solutionContent.innerHTML = `
+                    <p><strong>File not found solutions:</strong></p>
+                    <p>• Check if the markdown file exists in the correct folder</p>
+                    <p>• Verify the file name matches exactly (case-sensitive)</p>
+                    <p>• Ensure the file has the .md extension</p>
+                    <p>• Try refreshing the page</p>
+                `;
+            } else if (window.location.protocol === 'file:') {
+                solutionBox.style.display = 'block';
+                solutionContent.innerHTML = `
+                    <p><strong>Local Development Options:</strong></p>
+                    <p><code>cd "d:\\visualizationrepo\\VisualizationProject"</code></p>
+                    <p><code>python -m http.server 8080</code> or <code>npx http-server -p 8080</code></p>
+                    <p>Then visit: <code>http://localhost:8080</code></p>
+                    
+                    <p><strong>Or use VS Code Live Server extension</strong></p>
+                `;
+            }
+            
+            document.getElementById('errorContainer').style.display = 'block';
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            parseURLParameters();
+            loadMarkdownFile();
+        });
+    </script>
+</body>
+</html>

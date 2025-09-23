@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design Knowledge Base</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0f1729;
+            color: #e2e8f0;
+        }
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #2d3748;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .folder-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            cursor: pointer;
+        }
+        .folder-card:hover {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            border-color: #3b82f6;
+        }
+        .file-link {
+            transition: all 0.2s;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin: 2px 0;
+        }
+        .file-link:hover {
+            background-color: #2d3748;
+            color: #3b82f6;
+            transform: translateX(5px);
+        }
+        .breadcrumb {
+            color: #94a3b8;
+        }
+        .breadcrumb-active {
+            color: #3b82f6;
+        }
+        .folder-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+        .file-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+        }
+        .back-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            transition: all 0.2s;
+        }
+        .back-button:hover {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-8">
+    <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-blue-400">System Design Knowledge Base</div>
+                <div class="flex space-x-4">
+                    <a href="../index.html" class="text-gray-300 hover:text-white px-3 py-2">← Back to Main</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto mt-20">
+        <!-- Breadcrumb -->
+        <div class="mb-6" id="breadcrumb">
+            <span class="breadcrumb">System Design</span>
+        </div>
+
+        <!-- Back Button (hidden initially) -->
+        <div class="mb-6" id="backButtonContainer" style="display: none;">
+            <button id="backButton" class="back-button text-white px-4 py-2 rounded-lg font-semibold">
+                ← Back to Folders
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent">
+            <!-- Folders View -->
+            <div id="foldersView">
+                <h1 class="text-4xl font-bold mb-4 text-blue-400">System Design Topics</h1>
+                <p class="text-gray-400 mb-8">Explore comprehensive system design concepts, patterns, and real-world implementations.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="foldersGrid">
+                    <!-- Folders will be populated here -->
+                </div>
+            </div>
+
+            <!-- Files View -->
+            <div id="filesView" style="display: none;">
+                <h1 class="text-4xl font-bold mb-4 text-blue-400" id="folderTitle"></h1>
+                <p class="text-gray-400 mb-8" id="folderDescription"></p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="filesGrid">
+                    <!-- Files will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System design folder structure with descriptions
+        const systemDesignStructure = {
+            'systemdesignconcepts': {
+                title: 'System Design Concepts',
+                description: 'Fundamental concepts and principles of system design including scalability, reliability, and performance.',
+                files: [
+                    'API Gateway.md',
+                    'Authentication and Authorization.md',
+                    'Availability vs Reliability.md',
+                    'Bulkhead Pattern.md',
+                    'CAP Theorem.md',
+                    'Caching.md',
+                    'Checksum.md',
+                    'Circuit Breaker Pattern.md',
+                    'Compression.md',
+                    'Connection Pooling.md',
+                    'Consistency Patterns.md',
+                    'Consistent Hashing.md',
+                    'Content Delivery Network (CDN).md',
+                    'Data Partitioning (Sharding).md',
+                    'Database Concepts (SQL vs NoSQL).md',
+                    'Database Indexing.md',
+                    'Database Replication.md',
+                    'Distributed Coordination Services.md',
+                    'Distributed File Systems.md',
+                    'Distributed Messaging Systems.md',
+                    'Domain Name System (DNS).md',
+                    'Event Sourcing.md',
+                    'Fault Tolerance.md',
+                    'Forward Proxy vs Reverse Proxy.md',
+                    'Full-Text Search.md',
+                    'Health Checks & Auto-Recovery.md',
+                    'Heartbeat Mechanisms.md',
+                    'Horizontal vs Vertical Scaling.md',
+                    'Idempotency.md',
+                    'Latency vs Throughput.md',
+                    'Lazy Loading.md',
+                    'Load Balancing.md',
+                    'Long Polling vs WebSockets.md',
+                    'Microservices Architecture.md',
+                    'Notification Systems.md',
+                    'Pagination.md',
+                    'Prefetching.md',
+                    'Rate Limiting.md',
+                    'Retry Mechanisms.md',
+                    'Security Monitoring.md'
+                ]
+            },
+            'systemdesignpatterns': {
+                title: 'System Design Patterns',
+                description: 'Common architectural patterns and design approaches for building scalable systems.',
+                files: [
+                    'API Gateway Pattern.md',
+                    'Anti-Patterns.md',
+                    'Caching Patterns.md',
+                    'Circuit Breaker Pattern.md',
+                    'Cloud Patterns.md',
+                    'Communication Patterns.md',
+                    'Data Patterns.md',
+                    'Database Patterns.md',
+                    'Event-Driven Architecture Pattern.md',
+                    'Load Balancing Patterns.md',
+                    'Microservices Architecture Pattern.md',
+                    'Microservices Patterns.md',
+                    'Monitoring Patterns.md',
+                    'Performance Patterns.md',
+                    'Reliability Patterns.md',
+                    'Saga Pattern.md',
+                    'Scalability Patterns.md',
+                    'Security Patterns.md'
+                ]
+            },
+            'systemdesignscenarios': {
+                title: 'System Design Scenarios',
+                description: 'Real-world system design problems and their solutions, commonly asked in interviews.',
+                files: [
+                    '01-URL-Shortener-System-Design.md',
+                    '02-Social-Media-Feed-System-Design.md',
+                    '03-Chat-System-Design.md',
+                    '04-Video-Streaming-System-Design.md',
+                    '05-Web-Crawler-System-Design.md',
+                    '06-Search-Engine-System-Design.md',
+                    '07-Ride-Sharing-System-Design.md',
+                    '08-Notification-System-Design.md',
+                    '09-Distributed-Cache-System-Design.md',
+                    '10-Key-Value-Store-System-Design.md',
+                    '11-Content-Delivery-Network-System-Design.md',
+                    '12-Load-Balancer-System-Design.md',
+                    '13-Rate-Limiter-System-Design.md',
+                    '14-Online-Marketplace-System-Design.md',
+                    '15-Food-Delivery-System-Design.md',
+                    '16-Parking-Lot-System-Design.md',
+                    '17-Distributed-File-System-Design.md',
+                    '18-Logging-System-Design.md',
+                    '19-Metrics-Analytics-System-Design.md',
+                    '20-Recommendation-System-Design.md',
+                    '21-Payment-System-Design.md',
+                    '22-Booking-System-Design.md',
+                    '23-Distributed-Message-Queue-Design.md',
+                    '24-Stock-Trading-System-Design.md',
+                    '25-Collaborative-Document-Editor-Design.md',
+                    '26-Social-Network-System-Design.md',
+                    '27-Gaming-Leaderboard-System-Design.md',
+                    '28-Distributed-Lock-Service-Design.md',
+                    '29-Email-Service-Design.md',
+                    '30-Code-Deployment-System-Design.md'
+                ]
+            },
+            'systemdesignrealworld': {
+                title: 'Real-World System Architectures',
+                description: 'Study how major tech companies like Google, Facebook, Netflix architect their systems.',
+                files: [
+                    'AWS Global Infrastructure.md',
+                    'Airbnb Marketplace Architecture.md',
+                    'Amazon E-Commerce Platform.md',
+                    'Discord Real-Time Gaming Communication.md',
+                    'Dropbox Storage Infrastructure.md',
+                    'Facebook News Feed Architecture.md',
+                    'Fortnite Backend Architecture.md',
+                    'Google Search Architecture.md',
+                    'Netflix Microservices Architecture.md',
+                    'PayPal Payment Processing.md',
+                    'Pokemon GO Location-Based Gaming.md',
+                    'Robinhood High-Frequency Trading Platform.md',
+                    'Shopify Multi-Tenant E-Commerce Platform.md',
+                    'Slack Messaging Architecture.md',
+                    'Stripe Payment Infrastructure.md',
+                    'Tesla Autopilot and Fleet Management.md',
+                    'TikTok Real-Time Recommendation Engine.md',
+                    'Uber Real-Time Marketplace.md',
+                    'WhatsApp Messaging System.md',
+                    'YouTube Video Processing Pipeline.md',
+                    'Zoom Video Conferencing Infrastructure.md'
+                ]
+            }
+        };
+
+        let currentView = 'folders';
+        let currentFolder = null;
+
+        // Initialize the page
+        function init() {
+            renderFolders();
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            document.getElementById('backButton').addEventListener('click', () => {
+                showFoldersView();
+            });
+        }
+
+        function renderFolders() {
+            const foldersGrid = document.getElementById('foldersGrid');
+            foldersGrid.innerHTML = '';
+
+            Object.keys(systemDesignStructure).forEach(folderName => {
+                const folder = systemDesignStructure[folderName];
+                const folderCard = document.createElement('div');
+                folderCard.className = 'folder-card rounded-lg p-6 shadow-lg';
+                
+                folderCard.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <svg class="folder-icon text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path>
+                        </svg>
+                        <h3 class="text-xl font-bold text-blue-400">${folder.title}</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-4">${folder.description}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs text-gray-400">${folder.files.length} documents</span>
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                `;
+
+                folderCard.addEventListener('click', () => {
+                    showFilesView(folderName);
+                });
+
+                foldersGrid.appendChild(folderCard);
+            });
+        }
+
+        function showFilesView(folderName) {
+            currentView = 'files';
+            currentFolder = folderName;
+            const folder = systemDesignStructure[folderName];
+
+            // Update breadcrumb
+            document.getElementById('breadcrumb').innerHTML = `
+                <span class="breadcrumb">System Design</span>
+                <span class="breadcrumb"> > </span>
+                <span class="breadcrumb-active">${folder.title}</span>
+            `;
+
+            // Update title and description
+            document.getElementById('folderTitle').textContent = folder.title;
+            document.getElementById('folderDescription').textContent = folder.description;
+
+            // Show files view and hide folders view
+            document.getElementById('foldersView').style.display = 'none';
+            document.getElementById('filesView').style.display = 'block';
+            document.getElementById('backButtonContainer').style.display = 'block';
+
+            // Render files
+            renderFiles(folder.files, folderName);
+        }
+
+        function renderFiles(files, folderName) {
+            const filesGrid = document.getElementById('filesGrid');
+            filesGrid.innerHTML = '';
+
+            files.forEach(fileName => {
+                if (fileName === 'task.md') return; // Skip task.md files
+                
+                const fileCard = document.createElement('div');
+                fileCard.className = 'card rounded-lg p-4 shadow-lg';
+                
+                const displayName = fileName.replace('.md', '');
+                
+                fileCard.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <svg class="file-icon text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                        </svg>
+                        <h4 class="text-sm font-semibold text-gray-200">${displayName}</h4>
+                    </div>
+                `;
+
+                fileCard.classList.add('file-link');
+                fileCard.addEventListener('click', () => {
+                    openMarkdownReader(folderName, fileName);
+                });
+
+                filesGrid.appendChild(fileCard);
+            });
+        }
+
+        function showFoldersView() {
+            currentView = 'folders';
+            currentFolder = null;
+
+            // Update breadcrumb
+            document.getElementById('breadcrumb').innerHTML = `
+                <span class="breadcrumb-active">System Design</span>
+            `;
+
+            // Show folders view and hide files view
+            document.getElementById('foldersView').style.display = 'block';
+            document.getElementById('filesView').style.display = 'none';
+            document.getElementById('backButtonContainer').style.display = 'none';
+        }
+
+        function openMarkdownReader(folderName, fileName) {
+            const encodedFolderName = encodeURIComponent(folderName);
+            const encodedFileName = encodeURIComponent(fileName);
+            window.open(`markdownreader.html?folder=${encodedFolderName}&file=${encodedFileName}`, '_blank');
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
