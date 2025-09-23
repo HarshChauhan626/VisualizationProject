@@ -137,6 +137,37 @@
             padding: 1rem;
             margin: 1rem 0;
             border: 1px solid #374151;
+            overflow-x: auto;
+        }
+        .diagram-error {
+            background-color: #7f1d1d;
+            border: 1px solid #dc2626;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #fecaca;
+        }
+        .diagram-error h4 {
+            color: #fbbf24;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+        .diagram-error p {
+            margin-bottom: 0.5rem;
+            color: #f3f4f6;
+        }
+        .diagram-error pre {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            font-size: 0.875rem;
+        }
+        .diagram-error code {
+            color: #e5e7eb;
+            background: none;
         }
         .loading {
             display: flex;
@@ -333,10 +364,16 @@
             gfm: true
         });
 
-        // Initialize Mermaid
+        // Initialize Mermaid with enhanced error handling
         mermaid.initialize({
             startOnLoad: false,
             theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
             themeVariables: {
                 primaryColor: '#3b82f6',
                 primaryTextColor: '#e2e8f0',
@@ -348,7 +385,10 @@
                 mainBkg: '#1f2937',
                 secondBkg: '#374151',
                 tertiaryBkg: '#1e293b'
-            }
+            },
+            fontFamily: 'Inter, system-ui, sans-serif',
+            logLevel: 'error',
+            suppressErrorRendering: true
         });
 
         let currentFolder = '';
@@ -452,8 +492,72 @@
             // Replace mermaid code blocks with div containers
             return markdownText.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, diagram) => {
                 const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
-                return `<div class="mermaid" id="${id}">\n${diagram.trim()}\n</div>`;
+                
+                // Clean and validate the diagram syntax
+                const cleanedDiagram = cleanMermaidDiagram(diagram.trim());
+                
+                return `<div class="mermaid" id="${id}" data-original="${encodeURIComponent(diagram.trim())}">
+${cleanedDiagram}
+</div>`;
             });
+        }
+        
+        function cleanMermaidDiagram(diagram) {
+            // Comprehensive cleaning for Mermaid diagrams
+            let cleaned = diagram
+                // Remove all emojis that cause parsing issues
+                .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+                // Remove HTML tags and entities
+                .replace(/<br\/?>/gi, ' | ')
+                .replace(/<[^>]*>/g, '')
+                .replace(/&[a-zA-Z0-9#]+;/g, '')
+                // Fix node definitions with problematic content
+                .replace(/\[([^\]].*?)\]/g, (match, content) => {
+                    // Clean content inside brackets
+                    const cleanContent = content
+                        .replace(/["']/g, '')
+                        .replace(/\s+/g, ' ')
+                        .replace(/[^a-zA-Z0-9\s\-_|:,.()]/g, '')
+                        .substring(0, 80) // Limit length
+                        .trim();
+                    return `["${cleanContent}"]`;
+                })
+                // Fix subgraph definitions
+                .replace(/subgraph\s+["']([^"']*)["']/g, (match, title) => {
+                    const cleanTitle = title.replace(/[^a-zA-Z0-9\s\-_]/g, '').trim();
+                    return `subgraph "${cleanTitle}"`;
+                })
+                // Fix node IDs to be valid
+                .replace(/^\s*([A-Za-z0-9_]+)\s*\[/gm, (match, nodeId) => {
+                    const cleanId = nodeId.replace(/[^a-zA-Z0-9_]/g, '');
+                    return `    ${cleanId}[`;
+                })
+                // Remove lines that are too problematic
+                .split('\n')
+                .filter(line => {
+                    const trimmed = line.trim();
+                    // Skip empty lines and comments
+                    if (!trimmed || trimmed.startsWith('%%')) return false;
+                    // Skip lines with unmatched brackets or quotes
+                    if ((trimmed.match(/\[/g) || []).length !== (trimmed.match(/\]/g) || []).length) return false;
+                    if ((trimmed.match(/"/g) || []).length % 2 !== 0) return false;
+                    return true;
+                })
+                .join('\n')
+                // Ensure proper diagram type
+                .replace(/^(?!graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|pie|gitgraph)/m, 'graph TD\n')
+                // Clean up whitespace
+                .replace(/\n\s*\n/g, '\n')
+                .trim();
+            
+            // If the diagram is still problematic, create a fallback
+            if (cleaned.length < 10 || !cleaned.includes('-->') && !cleaned.includes('subgraph')) {
+                return `graph TD
+    A["Original diagram had syntax issues"] --> B["See error details below"]
+    B --> C["Please check the source markdown"]`;
+            }
+            
+            return cleaned;
         }
 
         async function renderMermaidDiagrams() {
@@ -463,14 +567,80 @@
                 try {
                     const graphDefinition = element.textContent.trim();
                     if (graphDefinition) {
+                        // Try to render the cleaned diagram
                         const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
                         element.innerHTML = svg;
                     }
                 } catch (error) {
-                    console.error('Error rendering mermaid diagram:', error);
-                    element.innerHTML = `<div class="error-message">Error rendering diagram: ${error.message}</div>`;
+                    console.warn('Mermaid diagram error:', error);
+                    
+                    // Try with original diagram if cleaning failed
+                    const originalDiagram = element.getAttribute('data-original');
+                    if (originalDiagram) {
+                        try {
+                            const decodedDiagram = decodeURIComponent(originalDiagram);
+                            const simplifiedDiagram = createFallbackDiagram(decodedDiagram);
+                            const { svg } = await mermaid.render(element.id + '-fallback-svg', simplifiedDiagram);
+                            element.innerHTML = svg;
+                            continue;
+                        } catch (fallbackError) {
+                            console.warn('Fallback diagram also failed:', fallbackError);
+                        }
+                    }
+                    
+                    // Show user-friendly error with diagram source
+                    element.innerHTML = `
+                        <div class="diagram-error">
+                            <h4>⚠️ Diagram Rendering Issue</h4>
+                            <p>This diagram contains syntax that couldn't be rendered. Here's the source:</p>
+                            <pre><code class="language-text">${element.textContent}</code></pre>
+                            <p><em>Error: ${error.message}</em></p>
+                        </div>
+                    `;
                 }
             }
+        }
+        
+        function createFallbackDiagram(originalDiagram) {
+            // Create a simple flowchart as fallback
+            const lines = originalDiagram.split('\n').filter(line => line.trim());
+            const diagramType = lines[0] || 'graph TD';
+            
+            // Extract key concepts from the diagram
+            const concepts = [];
+            lines.forEach(line => {
+                const match = line.match(/([A-Za-z0-9_]+)\s*\[(.*?)\]/g);
+                if (match) {
+                    match.forEach(m => {
+                        const parts = m.match(/([A-Za-z0-9_]+)\s*\[(.*?)\]/);
+                        if (parts) {
+                            concepts.push({ id: parts[1], label: parts[2].replace(/[^\w\s]/g, '').trim() });
+                        }
+                    });
+                }
+            });
+            
+            if (concepts.length === 0) {
+                return `graph TD
+    A[Diagram Content] --> B[Could not be rendered]
+    B --> C[See source below]`;
+            }
+            
+            // Create a simple linear flow
+            let fallback = diagramType.startsWith('graph') ? diagramType : 'graph TD';
+            fallback += '\n';
+            
+            concepts.forEach((concept, index) => {
+                const cleanId = concept.id.replace(/[^a-zA-Z0-9]/g, '');
+                const cleanLabel = concept.label.substring(0, 30);
+                fallback += `    ${cleanId}[${cleanLabel}]\n`;
+                if (index > 0) {
+                    const prevId = concepts[index - 1].id.replace(/[^a-zA-Z0-9]/g, '');
+                    fallback += `    ${prevId} --> ${cleanId}\n`;
+                }
+            });
+            
+            return fallback;
         }
 
         function generateTableOfContents() {
