@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Cheatsheets & Tricks - Reference Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .dashboard {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        .cheatsheets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .cheatsheet-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cheatsheet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .cheatsheet-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0 10px 0 50px;
+            opacity: 0.1;
+        }
+
+        .card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .card-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .difficulty-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-level.beginner { background: #d4edda; color: #155724; }
+        .difficulty-level.intermediate { background: #fff3cd; color: #856404; }
+        .difficulty-level.advanced { background: #f8d7da; color: #721c24; }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            margin: 0 auto;
+            display: block;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-tags {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tag {
+            padding: 6px 15px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-tag:hover,
+        .filter-tag.active {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cheatsheets-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 DSA Cheatsheets & Tricks</h1>
+            <p>Essential reference guides for mastering Data Structures & Algorithms</p>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="../index.html" class="nav-btn">🏠 Home</a>
+            <a href="../plan/index.html" class="nav-btn">📋 Practice Plan</a>
+            <a href="../systemdesign/index.html" class="nav-btn">🏗️ System Design</a>
+        </div>
+
+        <div class="dashboard">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>7</h3>
+                    <p>Core Topics</p>
+                </div>
+                <div class="stat-card">
+                    <h3>200+</h3>
+                    <p>Tricks & Tips</p>
+                </div>
+                <div class="stat-card">
+                    <h3>50+</h3>
+                    <p>Code Patterns</p>
+                </div>
+                <div class="stat-card">
+                    <h3>100+</h3>
+                    <p>Examples</p>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <input type="text" class="search-input" placeholder="Search cheatsheets..." id="searchInput" oninput="filterCheatsheets()">
+                <div class="filter-tags">
+                    <span class="filter-tag active" data-filter="all" onclick="filterByTag('all')">All</span>
+                    <span class="filter-tag" data-filter="beginner" onclick="filterByTag('beginner')">Beginner</span>
+                    <span class="filter-tag" data-filter="intermediate" onclick="filterByTag('intermediate')">Intermediate</span>
+                    <span class="filter-tag" data-filter="advanced" onclick="filterByTag('advanced')">Advanced</span>
+                </div>
+            </div>
+
+            <div class="cheatsheets-grid" id="cheatsheets-grid">
+                <!-- Array Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="intermediate" data-keywords="array sorting searching two-pointer sliding-window">
+                    <div class="card-icon">🔢</div>
+                    <div class="card-title">Array Data Structure</div>
+                    <div class="card-description">
+                        Comprehensive guide covering array fundamentals, common patterns like two-pointers and sliding window, 
+                        sorting algorithms, and essential tricks for array manipulation problems.
+                    </div>
+                    <div class="difficulty-level intermediate">Intermediate</div>
+                    <div class="card-stats">
+                        <span>📖 ~25 min read</span>
+                        <span>⚡ 40+ patterns</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="array.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('array')">✓ Mark Read</a>
+                    </div>
+                </div>
+
+                <!-- Dynamic Programming Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="advanced" data-keywords="dp dynamic-programming memoization tabulation optimization">
+                    <div class="card-icon">🧠</div>
+                    <div class="card-title">Dynamic Programming</div>
+                    <div class="card-description">
+                        Master DP patterns including memoization, tabulation, state transitions, and optimization techniques. 
+                        Covers classic problems like knapsack, LCS, and path counting.
+                    </div>
+                    <div class="difficulty-level advanced">Advanced</div>
+                    <div class="card-stats">
+                        <span>📖 ~20 min read</span>
+                        <span>⚡ 30+ patterns</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="dp.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('dp')">✓ Mark Read</a>
+                    </div>
+                </div>
+
+                <!-- Geometry Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="intermediate" data-keywords="geometry computational mathematics coordinates vectors">
+                    <div class="card-icon">📐</div>
+                    <div class="card-title">Computational Geometry</div>
+                    <div class="card-description">
+                        Essential geometric algorithms and mathematical formulas for competitive programming. 
+                        Includes coordinate geometry, convex hull, line intersections, and area calculations.
+                    </div>
+                    <div class="difficulty-level intermediate">Intermediate</div>
+                    <div class="card-stats">
+                        <span>📖 ~18 min read</span>
+                        <span>⚡ 25+ formulas</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="geometry.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('geometry')">✓ Mark Read</a>
+                    </div>
+                </div>
+
+                <!-- Graph Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="advanced" data-keywords="graph bfs dfs traversal shortest-path mst">
+                    <div class="card-icon">🕸️</div>
+                    <div class="card-title">Graph Algorithms</div>
+                    <div class="card-description">
+                        Complete guide to graph theory and algorithms. Covers traversal methods (BFS/DFS), 
+                        shortest path algorithms, MST, topological sorting, and cycle detection.
+                    </div>
+                    <div class="difficulty-level advanced">Advanced</div>
+                    <div class="card-stats">
+                        <span>📖 ~22 min read</span>
+                        <span>⚡ 35+ algorithms</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="graph.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('graph')">✓ Mark Read</a>
+                    </div>
+                </div>
+
+                <!-- Queue & Stack Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="beginner" data-keywords="queue stack deque monotonic lifo fifo">
+                    <div class="card-icon">📚</div>
+                    <div class="card-title">Queue & Stack</div>
+                    <div class="card-description">
+                        Fundamental linear data structures with their variations. Includes implementation details, 
+                        common patterns, monotonic stacks/queues, and priority queue applications.
+                    </div>
+                    <div class="difficulty-level beginner">Beginner</div>
+                    <div class="card-stats">
+                        <span>📖 ~15 min read</span>
+                        <span>⚡ 20+ patterns</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="queuestack.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('queuestack')">✓ Mark Read</a>
+                    </div>
+                </div>
+
+                <!-- String Algorithms Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="intermediate" data-keywords="string pattern-matching kmp regex palindrome">
+                    <div class="card-icon">🔤</div>
+                    <div class="card-title">String Algorithms</div>
+                    <div class="card-description">
+                        String processing techniques and pattern matching algorithms. Covers KMP, Z-algorithm, 
+                        rolling hash, palindrome detection, and string manipulation tricks.
+                    </div>
+                    <div class="difficulty-level intermediate">Intermediate</div>
+                    <div class="card-stats">
+                        <span>📖 ~19 min read</span>
+                        <span>⚡ 28+ patterns</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="string.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('string')">✓ Mark Read</a>
+                    </div>
+                </div>
+
+                <!-- Tree Algorithms Cheatsheet -->
+                <div class="cheatsheet-card" data-difficulty="intermediate" data-keywords="tree binary-tree bst traversal lca diameter">
+                    <div class="card-icon">🌳</div>
+                    <div class="card-title">Tree Algorithms</div>
+                    <div class="card-description">
+                        Comprehensive tree data structures guide. Includes binary trees, BST, tree traversals, 
+                        LCA algorithms, tree DP, and advanced tree manipulation techniques.
+                    </div>
+                    <div class="difficulty-level intermediate">Intermediate</div>
+                    <div class="card-stats">
+                        <span>📖 ~21 min read</span>
+                        <span>⚡ 32+ algorithms</span>
+                    </div>
+                    <div class="card-actions">
+                        <a href="tree.md" class="btn btn-primary" target="_blank">📖 Read Guide</a>
+                        <a href="#" class="btn btn-outline" onclick="markAsRead('tree')">✓ Mark Read</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'all';
+
+        function filterByTag(tag) {
+            currentFilter = tag;
+            
+            // Update active tag
+            document.querySelectorAll('.filter-tag').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${tag}"]`).classList.add('active');
+            
+            applyFilters();
+        }
+
+        function filterCheatsheets() {
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.cheatsheet-card');
+
+            cards.forEach(card => {
+                const difficulty = card.dataset.difficulty;
+                const keywords = card.dataset.keywords.toLowerCase();
+                const title = card.querySelector('.card-title').textContent.toLowerCase();
+                const description = card.querySelector('.card-description').textContent.toLowerCase();
+
+                const matchesFilter = currentFilter === 'all' || difficulty === currentFilter;
+                const matchesSearch = searchTerm === '' || 
+                    keywords.includes(searchTerm) || 
+                    title.includes(searchTerm) || 
+                    description.includes(searchTerm);
+
+                card.style.display = matchesFilter && matchesSearch ? 'block' : 'none';
+            });
+        }
+
+        function markAsRead(cheatsheetId) {
+            const readCheatsheets = JSON.parse(localStorage.getItem('readCheatsheets') || '[]');
+            if (!readCheatsheets.includes(cheatsheetId)) {
+                readCheatsheets.push(cheatsheetId);
+                localStorage.setItem('readCheatsheets', JSON.stringify(readCheatsheets));
+            }
+            
+            // Visual feedback
+            event.target.textContent = '✓ Read';
+            event.target.style.background = '#28a745';
+            event.target.style.color = 'white';
+            event.target.style.borderColor = '#28a745';
+        }
+
+        function loadReadStatus() {
+            const readCheatsheets = JSON.parse(localStorage.getItem('readCheatsheets') || '[]');
+            readCheatsheets.forEach(cheatsheetId => {
+                const button = document.querySelector(`button[onclick="markAsRead('${cheatsheetId}')"]`);
+                if (button) {
+                    button.textContent = '✓ Read';
+                    button.style.background = '#28a745';
+                    button.style.color = 'white';
+                    button.style.borderColor = '#28a745';
+                }
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReadStatus();
+        });
+    </script>
+</body>
+</html>
