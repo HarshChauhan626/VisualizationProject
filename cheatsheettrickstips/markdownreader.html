@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cheatsheet Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- Mermaid for diagram rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .reader-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            color: #333;
+        }
+        .markdown-content {
+            line-height: 1.8;
+            padding: 2rem;
+        }
+        .markdown-content h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        .markdown-content h2 {
+            color: #764ba2;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        .markdown-content h3 {
+            color: #667eea;
+            font-size: 1.5rem;
+            font-weight: semibold;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .markdown-content h4 {
+            color: #764ba2;
+            font-size: 1.25rem;
+            font-weight: semibold;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-content p {
+            margin-bottom: 1rem;
+            color: #4a5568;
+            text-align: justify;
+        }
+        .markdown-content ul, .markdown-content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+            color: #4a5568;
+        }
+        .markdown-content ul li {
+            list-style-type: disc;
+        }
+        .markdown-content ol li {
+            list-style-type: decimal;
+        }
+        .markdown-content blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            background-color: rgba(102, 126, 234, 0.1);
+            border-radius: 0 6px 6px 0;
+            font-style: italic;
+            padding: 1rem;
+        }
+        .markdown-content code {
+            background-color: #f7fafc;
+            color: #d69e2e;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            border: 1px solid #e2e8f0;
+        }
+        .markdown-content pre {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        .markdown-content pre code {
+            background: none;
+            color: #e2e8f0;
+            padding: 0;
+            border-radius: 0;
+            border: none;
+        }
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            text-align: left;
+        }
+        .markdown-content th {
+            background-color: #667eea;
+            font-weight: bold;
+            color: white;
+        }
+        .markdown-content tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        .markdown-content a {
+            color: #667eea;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .markdown-content a:hover {
+            color: #764ba2;
+        }
+        .mermaid {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #e2e8f0;
+            overflow-x: auto;
+        }
+        .diagram-error {
+            background-color: #fed7d7;
+            border: 1px solid #e53e3e;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #742a2a;
+        }
+        .diagram-error h4 {
+            color: #c53030;
+            margin-bottom: 0.5rem;
+            font-size: 1.125rem;
+        }
+        .diagram-error p {
+            margin-bottom: 0.5rem;
+        }
+        .diagram-error pre {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            font-size: 0.875rem;
+        }
+        .diagram-error code {
+            color: #e2e8f0;
+            background: none;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-message {
+            background-color: #fed7d7;
+            color: #742a2a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #e53e3e;
+        }
+        .error-message h3 {
+            color: #c53030;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+        .error-message p {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        .error-message code {
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .solution-box {
+            background-color: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .solution-box h4 {
+            color: #276749;
+            margin-bottom: 0.5rem;
+        }
+        .toc {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            max-width: 350px;
+            position: sticky;
+            top: 100px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .toc h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: #4a5568;
+            text-decoration: none;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            display: block;
+            border-radius: 6px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .toc a:hover {
+            color: #667eea;
+            background-color: rgba(102, 126, 234, 0.1);
+            border-left-color: #667eea;
+            transform: translateX(5px);
+        }
+        .content-wrapper {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .header-bar {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 8px 20px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        @media (max-width: 1024px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .toc {
+                max-width: none;
+                position: static;
+            }
+        }
+        /* Progress indicator */
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 100;
+            transition: width 0.1s ease;
+        }
+        /* Scroll to top button */
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+        .scroll-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .scroll-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <!-- Reading progress bar -->
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- Header -->
+    <nav class="header-bar fixed top-0 left-0 right-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="text-2xl font-bold text-white">📚 Cheatsheet Reader</div>
+                <div class="flex space-x-4">
+                    <a href="index.html" class="nav-button">← Back to Cheatsheets</a>
+                    <a href="../index.html" class="nav-button">🏠 Main</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto pt-20 px-4 pb-8">
+        <!-- Document Info -->
+        <div class="mb-6">
+            <div class="text-center">
+                <h1 class="text-4xl font-bold text-white mb-2" id="documentTitle">Loading...</h1>
+                <p class="text-white opacity-90 text-lg" id="documentPath"></p>
+                <div class="mt-4">
+                    <span id="readingTime" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm backdrop-filter backdrop-blur-sm"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="reader-container">
+            <div class="content-wrapper">
+                <!-- Table of Contents -->
+                <div id="tocContainer" class="toc" style="display: none;">
+                    <h3>📋 Table of Contents</h3>
+                    <ul id="tocList"></ul>
+                </div>
+
+                <!-- Main Content -->
+                <div class="main-content">
+                    <div id="loadingIndicator" class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                    
+                    <div id="errorContainer" style="display: none;">
+                        <div class="error-message">
+                            <h3>⚠️ Error Loading Cheatsheet</h3>
+                            <p id="errorMessage">The requested cheatsheet could not be loaded.</p>
+                            <div class="solution-box" id="solutionBox" style="display: none;">
+                                <h4>💡 Quick Solutions:</h4>
+                                <div id="solutionContent"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="markdownContainer" class="markdown-content" style="display: none;">
+                        <!-- Markdown content will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to top button -->
+    <button class="scroll-top" id="scrollTopBtn" onclick="scrollToTop()">↑</button>
+
+    <script>
+        // Configuration
+        const marked = window.marked;
+        
+        // Configure marked options
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {}
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            langPrefix: 'hljs language-',
+            breaks: true,
+            gfm: true,
+            tables: true
+        });
+
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'base',
+            securityLevel: 'loose',
+            themeVariables: {
+                primaryColor: '#667eea',
+                primaryTextColor: '#333',
+                primaryBorderColor: '#e2e8f0',
+                lineColor: '#4a5568',
+                secondaryColor: '#f8fafc',
+                tertiaryColor: '#e2e8f0'
+            }
+        });
+
+        let currentFile = '';
+
+        // Initialize page
+        function init() {
+            parseURLParameters();
+            setupEventListeners();
+            loadMarkdownFile();
+        }
+
+        function parseURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentFile = urlParams.get('file') || '';
+            
+            if (!currentFile) {
+                showError('Missing file parameter. Please navigate from the cheatsheets index.');
+                return;
+            }
+
+            updateDocumentInfo();
+        }
+
+        function updateDocumentInfo() {
+            const displayTitle = currentFile.replace('.md', '').replace(/([A-Z])/g, ' $1').trim();
+            const formattedTitle = displayTitle.charAt(0).toUpperCase() + displayTitle.slice(1);
+            
+            document.getElementById('documentTitle').textContent = formattedTitle + ' Cheatsheet';
+            document.getElementById('documentPath').textContent = `cheatsheettrickstips/${currentFile}`;
+            document.title = `${formattedTitle} - Cheatsheet Reader`;
+        }
+
+        function setupEventListeners() {
+            // Scroll progress
+            window.addEventListener('scroll', updateReadingProgress);
+            
+            // Scroll to top button
+            window.addEventListener('scroll', toggleScrollTopButton);
+        }
+
+        function updateReadingProgress() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const progress = (scrollTop / scrollHeight) * 100;
+            
+            document.getElementById('readingProgress').style.width = Math.min(progress, 100) + '%';
+        }
+
+        function toggleScrollTopButton() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollTopBtn = document.getElementById('scrollTopBtn');
+            
+            if (scrollTop > 300) {
+                scrollTopBtn.classList.add('visible');
+            } else {
+                scrollTopBtn.classList.remove('visible');
+            }
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        async function loadMarkdownFile() {
+            try {
+                const response = await fetch(currentFile);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const markdownText = await response.text();
+                await renderMarkdown(markdownText);
+                
+                // Calculate reading time
+                const wordCount = markdownText.split(/\s+/).length;
+                const readingTime = Math.ceil(wordCount / 200); // Average 200 words per minute
+                document.getElementById('readingTime').textContent = `📖 ${readingTime} min read • ${wordCount} words`;
+                
+            } catch (error) {
+                console.error('Error loading markdown file:', error);
+                if (error.message.includes('404')) {
+                    showError(`Cheatsheet not found: ${currentFile}. Please check if the file exists.`);
+                } else {
+                    showError(`Failed to load the cheatsheet: ${error.message}`);
+                }
+            }
+        }
+
+        async function renderMarkdown(markdownText) {
+            try {
+                // Process mermaid diagrams before marked
+                const processedMarkdown = await processMermaidDiagrams(markdownText);
+                
+                // Convert markdown to HTML
+                const htmlContent = marked.parse(processedMarkdown);
+                
+                // Update DOM
+                const container = document.getElementById('markdownContainer');
+                container.innerHTML = htmlContent;
+                
+                // Highlight code blocks
+                container.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+
+                // Render mermaid diagrams
+                await renderMermaidDiagrams();
+                
+                // Generate table of contents
+                generateTableOfContents();
+                
+                // Show content and hide loading
+                document.getElementById('loadingIndicator').style.display = 'none';
+                container.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error rendering markdown:', error);
+                showError(`Failed to render the cheatsheet: ${error.message}`);
+            }
+        }
+
+        async function processMermaidDiagrams(markdownText) {
+            return markdownText.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, diagram) => {
+                const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+                return `<div class="mermaid" id="${id}">${diagram.trim()}</div>`;
+            });
+        }
+
+        async function renderMermaidDiagrams() {
+            const mermaidElements = document.querySelectorAll('.mermaid');
+            
+            for (let element of mermaidElements) {
+                try {
+                    const graphDefinition = element.textContent.trim();
+                    if (graphDefinition) {
+                        const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
+                        element.innerHTML = svg;
+                    }
+                } catch (error) {
+                    console.warn('Mermaid diagram error:', error);
+                    element.innerHTML = `
+                        <div class="diagram-error">
+                            <h4>⚠️ Diagram Rendering Issue</h4>
+                            <p>This diagram contains syntax that couldn't be rendered.</p>
+                            <pre><code>${element.textContent}</code></pre>
+                            <p><em>Error: ${error.message}</em></p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function generateTableOfContents() {
+            const headings = document.querySelectorAll('.markdown-content h1, .markdown-content h2, .markdown-content h3, .markdown-content h4');
+            const tocList = document.getElementById('tocList');
+            const tocContainer = document.getElementById('tocContainer');
+            
+            if (headings.length === 0) {
+                return; // No headings found
+            }
+
+            tocList.innerHTML = '';
+            
+            headings.forEach((heading, index) => {
+                // Create an ID for the heading if it doesn't have one
+                if (!heading.id) {
+                    const headingText = heading.textContent.toLowerCase()
+                        .replace(/[^\w\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .trim();
+                    heading.id = headingText || 'heading-' + index;
+                }
+                
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#' + heading.id;
+                a.textContent = heading.textContent;
+                a.style.paddingLeft = (parseInt(heading.tagName.charAt(1)) - 1) * 12 + 'px';
+                
+                // Smooth scrolling
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+                
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+            
+            tocContainer.style.display = 'block';
+        }
+
+        function showError(message) {
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('errorMessage').textContent = message;
+            
+            // Show solutions for common errors
+            const solutionBox = document.getElementById('solutionBox');
+            const solutionContent = document.getElementById('solutionContent');
+            
+            if (message.includes('not found') || message.includes('404')) {
+                solutionBox.style.display = 'block';
+                solutionContent.innerHTML = `
+                    <p><strong>File not found solutions:</strong></p>
+                    <p>• Check if the markdown file exists in the cheatsheettrickstips folder</p>
+                    <p>• Verify the file name matches exactly (case-sensitive)</p>
+                    <p>• Ensure the file has the .md extension</p>
+                    <p>• Try refreshing the page</p>
+                `;
+            } else if (window.location.protocol === 'file:') {
+                solutionBox.style.display = 'block';
+                solutionContent.innerHTML = `
+                    <p><strong>Local Development Options:</strong></p>
+                    <p><code>cd "d:\\visualizationrepo\\VisualizationProject"</code></p>
+                    <p><code>python -m http.server 8080</code> or <code>npx http-server -p 8080</code></p>
+                    <p>Then visit: <code>http://localhost:8080</code></p>
+                    
+                    <p><strong>Or use VS Code Live Server extension</strong></p>
+                `;
+            }
+            
+            document.getElementById('errorContainer').style.display = 'block';
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            parseURLParameters();
+            loadMarkdownFile();
+        });
+    </script>
+</body>
+</html>
