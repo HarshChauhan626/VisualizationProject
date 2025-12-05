@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,28 +11,34 @@
             background-color: #0f1729;
             color: #e2e8f0;
         }
+
         .card {
             background-color: #1e293b;
             border: 1px solid #2d3748;
             transition: transform 0.2s;
         }
+
         .card:hover {
             transform: translateY(-2px);
         }
+
         .search-input {
             background-color: #1e293b;
             border: 1px solid #2d3748;
             color: #e2e8f0;
         }
+
         .search-input:focus {
             outline: none;
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
+
         .category-title {
             position: relative;
             padding-left: 20px;
         }
+
         .category-title::before {
             content: '';
             position: absolute;
@@ -41,19 +48,24 @@
             height: 2px;
             background-color: #3b82f6;
         }
+
         .algorithm-link {
             transition: all 0.2s;
         }
+
         .algorithm-link:hover {
             color: #3b82f6;
             transform: translateX(5px);
         }
+
         .hidden-algo {
             display: none;
         }
+
         .category-filter.active {
             position: relative;
         }
+
         .category-filter.active::after {
             content: '';
             position: absolute;
@@ -65,6 +77,7 @@
         }
     </style>
 </head>
+
 <body class="min-h-screen p-8">
     <nav class="bg-gray-800 fixed top-0 left-0 right-0 z-50 shadow-lg">
         <div class="max-w-7xl mx-auto px-4">
@@ -72,8 +85,10 @@
                 <div class="text-2xl font-bold text-blue-400">DSA Visualizer</div>
                 <div class="flex space-x-4">
                     <a href="#" class="text-white px-3 py-2">Home</a>
-                    <a href="plan/index.html" class="text-blue-400 hover:text-blue-300 px-3 py-2 font-semibold">📋 Plan</a>
-                    <a href="cheatsheettrickstips/index.html" class="text-green-400 hover:text-green-300 px-3 py-2 font-semibold">📚 Cheatsheets</a>
+                    <a href="plan/index.html" class="text-blue-400 hover:text-blue-300 px-3 py-2 font-semibold">📋
+                        Plan</a>
+                    <a href="cheatsheettrickstips/index.html"
+                        class="text-green-400 hover:text-green-300 px-3 py-2 font-semibold">📚 Cheatsheets</a>
                     <a href="systemdesign/index.html" class="text-gray-300 hover:text-white px-3 py-2">System Design</a>
                     <a href="#" class="text-gray-300 hover:text-white px-3 py-2">About</a>
                     <a href="#" class="text-gray-300 hover:text-white px-3 py-2">Learn</a>
@@ -90,75 +105,92 @@
         <!-- Search and Filter Section -->
         <div class="mb-8 space-y-4">
             <div class="max-w-2xl">
-                <input type="text" 
-                    id="searchInput" 
-                    placeholder="Search algorithms and problems..." 
-                    class="w-full px-4 py-3 rounded-lg search-input text-lg"
-                    oninput="filterAlgorithms()">
+                <input type="text" id="searchInput" placeholder="Search algorithms and problems..."
+                    class="w-full px-4 py-3 rounded-lg search-input text-lg" oninput="filterAlgorithms()">
             </div>
-            
+
             <!-- Category Filters -->
             <div class="flex flex-wrap gap-3">
-                <button onclick="filterByCategory('all')" class="category-filter active bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                <button onclick="filterByCategory('all')"
+                    class="category-filter active bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
                     All <span class="ml-2 bg-blue-500 px-2 py-0.5 rounded-full text-sm">85</span>
                 </button>
-                <button onclick="filterByCategory('sorting')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('sorting')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Sorting <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">12</span>
                 </button>
-                <button onclick="filterByCategory('binary-search')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('binary-search')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Binary Search <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">16</span>
                 </button>
-                <button onclick="filterByCategory('sliding-window')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
-                    Sliding Window <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">21</span>
+                <button onclick="filterByCategory('sliding-window')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Sliding Window <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">22</span>
                 </button>
-                <button onclick="filterByCategory('tortoise-and-hare')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('tortoise-and-hare')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Tortoise and Hare <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">13</span>
                 </button>
-                <button onclick="filterByCategory('two-pointer')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('two-pointer')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Two Pointer <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">11</span>
                 </button>
-                <button onclick="filterByCategory('graph')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('graph')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Graph <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">10</span>
                 </button>
-                <button onclick="filterByCategory('backtracking')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('backtracking')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Backtracking <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">6</span>
                 </button>
-                <button onclick="filterByCategory('greedy')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('greedy')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Greedy <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">12</span>
                 </button>
-                <button onclick="filterByCategory('monotonic-stack-queue')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('monotonic-stack-queue')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Monotonic Stack/Queue <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">10</span>
                 </button>
-                <button onclick="filterByCategory('matrix-traversal')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('matrix-traversal')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Matrix Traversal <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">5</span>
                 </button>
-                <button onclick="filterByCategory('prefix-sum')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('prefix-sum')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Prefix Sum <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">4</span>
                 </button>
-                <button onclick="filterByCategory('dynamic-programming')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('dynamic-programming')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Dynamic Programming <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">16</span>
                 </button>
-                <button onclick="filterByCategory('string-algorithms')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('string-algorithms')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     String Algorithms <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">12</span>
                 </button>
                 <!-- New categories -->
-                <button onclick="filterByCategory('cyclic-sort')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('cyclic-sort')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Cyclic Sort <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">5</span>
                 </button>
-                <button onclick="filterByCategory('recursion')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('recursion')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Recursion <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">8</span>
                 </button>
-                <button onclick="filterByCategory('trees')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('trees')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Trees <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">7</span>
                 </button>
-                <button onclick="filterByCategory('trie')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('trie')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Trie <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">5</span>
                 </button>
                 <!-- Heap and Union-Find categories -->
-                <button onclick="filterByCategory('heap')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('heap')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Heap <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">7</span>
                 </button>
-                <button onclick="filterByCategory('unionfind')" class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                <button onclick="filterByCategory('unionfind')"
+                    class="category-filter bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
                     Union-Find <span class="ml-2 bg-gray-600 px-2 py-0.5 rounded-full text-sm">5</span>
                 </button>
             </div>
@@ -170,18 +202,30 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Sorting</h2>
                 <div class="space-y-2">
-                    <a href="sorting/bubble-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Bubble Sort</a>
-                    <a href="sorting/bucket-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Bucket Sort</a>
-                    <a href="sorting/counting-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Counting Sort</a>
-                    <a href="sorting/heap-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Heap Sort</a>
-                    <a href="sorting/insertion-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Insertion Sort</a>
-                    <a href="sorting/merge-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge Sort</a>
-                    <a href="sorting/quick-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Quick Sort</a>
-                    <a href="sorting/radix-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Radix Sort</a>
-                    <a href="sorting/selection-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Selection Sort</a>
-                    <a href="sorting/shell-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Shell Sort</a>
-                    <a href="sorting/tim-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tim Sort</a>
-                    <a href="sorting/tree-sort.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tree Sort</a>
+                    <a href="sorting/bubble-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Bubble Sort</a>
+                    <a href="sorting/bucket-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Bucket Sort</a>
+                    <a href="sorting/counting-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Counting Sort</a>
+                    <a href="sorting/heap-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Heap Sort</a>
+                    <a href="sorting/insertion-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Insertion Sort</a>
+                    <a href="sorting/merge-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge Sort</a>
+                    <a href="sorting/quick-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Quick Sort</a>
+                    <a href="sorting/radix-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Radix Sort</a>
+                    <a href="sorting/selection-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Selection Sort</a>
+                    <a href="sorting/shell-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Shell Sort</a>
+                    <a href="sorting/tim-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tim Sort</a>
+                    <a href="sorting/tree-sort.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tree Sort</a>
                 </div>
             </div>
 
@@ -189,22 +233,44 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Binary Search</h2>
                 <div class="space-y-2">
-                    <a href="binary-search/find-minimum-in-rotated-sorted-array.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Minimum in Rotated Sorted Array</a>
-                    <a href="binary-search/find-peak-element.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Peak Element</a>
-                    <a href="binary-search/find-rotation-count.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Rotation Count</a>
-                    <a href="binary-search/first-and-last-position.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">First and Last Position</a>
-                    <a href="binary-search/floor-and-ceiling.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Floor and Ceiling</a>
-                    <a href="binary-search/infinite-array-search.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Infinite Array Search</a>
-                    <a href="binary-search/max-subarray-sum-k.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Subarray Sum K</a>
-                    <a href="binary-search/median-of-two-sorted-arrays.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Median of Two Sorted Arrays</a>
-                    <a href="binary-search/min-days-to-make-bouquets.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Min Days to Make Bouquets</a>
-                    <a href="binary-search/nth-root.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Nth Root</a>
-                    <a href="binary-search/search-in-2d-matrix.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search in 2D Matrix</a>
-                    <a href="binary-search/search-in-rotated-sorted-array-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search in Rotated Sorted Array II</a>
-                    <a href="binary-search/search-in-rotated-sorted-array.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search in Rotated Sorted Array</a>
-                    <a href="binary-search/search-insert-position.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search Insert Position</a>
-                    <a href="binary-search/smallest-letter-greater-than-target.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Smallest Letter Greater Than Target</a>
-                    <a href="binary-search/split-array-largest-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Split Array Largest Sum</a>
+                    <a href="binary-search/find-minimum-in-rotated-sorted-array.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Minimum in Rotated
+                        Sorted Array</a>
+                    <a href="binary-search/find-peak-element.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Peak Element</a>
+                    <a href="binary-search/find-rotation-count.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Rotation Count</a>
+                    <a href="binary-search/first-and-last-position.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">First and Last Position</a>
+                    <a href="binary-search/floor-and-ceiling.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Floor and Ceiling</a>
+                    <a href="binary-search/infinite-array-search.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Infinite Array Search</a>
+                    <a href="binary-search/max-subarray-sum-k.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Subarray Sum K</a>
+                    <a href="binary-search/median-of-two-sorted-arrays.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Median of Two Sorted
+                        Arrays</a>
+                    <a href="binary-search/min-days-to-make-bouquets.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Min Days to Make
+                        Bouquets</a>
+                    <a href="binary-search/nth-root.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Nth Root</a>
+                    <a href="binary-search/search-in-2d-matrix.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search in 2D Matrix</a>
+                    <a href="binary-search/search-in-rotated-sorted-array-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search in Rotated Sorted
+                        Array II</a>
+                    <a href="binary-search/search-in-rotated-sorted-array.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search in Rotated Sorted
+                        Array</a>
+                    <a href="binary-search/search-insert-position.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Search Insert Position</a>
+                    <a href="binary-search/smallest-letter-greater-than-target.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Smallest Letter Greater Than
+                        Target</a>
+                    <a href="binary-search/split-array-largest-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Split Array Largest Sum</a>
                 </div>
             </div>
 
@@ -212,24 +278,65 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Sliding Window</h2>
                 <div class="space-y-2">
-                    <a href="sliding-window/longest-substring-without-repeating-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring Without Repeating Characters</a>
-                    <a href="sliding-window/longest-substring-with-k-distinct-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring with K Distinct Characters</a>
-                    <a href="sliding-window/longest-substring-with-at-most-two-distinct-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring with At Most Two Distinct Characters</a>
-                    <a href="sliding-window/min-window-substring.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Min Window Substring</a>
-                    <a href="sliding-window/permutation-in-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Permutation in String</a>
-                    <a href="sliding-window/find-all-anagrams-in-a-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Anagrams in a String</a>
-                    <a href="sliding-window/longest-repeating-character-replacement.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Repeating Character Replacement</a>
-                    <a href="sliding-window/max-consecutive-ones-iii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Consecutive Ones III</a>
-                    <a href="sliding-window/grumpy-bookstore-owner.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Grumpy Bookstore Owner</a>
-                    <a href="sliding-window/max-number-of-k-count-in-a-window.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Number of K Count in a Window</a>
-                    <a href="sliding-window/maximum-sum-of-two-non-overlapping-subarrays.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum of Two Non-Overlapping Subarrays</a>
-                    <a href="sliding-window/maximum-sum-of-three-non-overlapping-subarrays.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum of Three Non-Overlapping Subarrays</a>
-                    <a href="sliding-window/longest-subarray-with-zero-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Subarray with Zero Sum</a>
-                    <a href="sliding-window/maximum-points-you-can-see.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Points You Can See</a>
-                    <a href="sliding-window/minimum-window-substring-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Window Substring II</a>
-                    <a href="sliding-window/number-of-substrings-with-all-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Substrings with All Characters</a>
-                    <a href="sliding-window/number-of-substrings-with-k-unique-characters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Substrings with K Unique Characters</a>
-                    <a href="sliding-window/smallest-window-in-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Smallest Window in String</a>
+                    <a href="sliding-window/at-most-two-distinct.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring with At
+                        Most Two Distinct Characters</a>
+                    <a href="sliding-window/binary-subarrays-with-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Binary Subarrays With
+                        Sum</a>
+                    <a href="sliding-window/concatenation-of-words.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Concatenation of All
+                        Words</a>
+                    <a href="sliding-window/find-all-anagrams.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Anagrams in a
+                        String</a>
+                    <a href="sliding-window/fruits-into-baskets.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Fruit Into Baskets</a>
+                    <a href="sliding-window/k-different-integers.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarrays with K Different
+                        Integers</a>
+                    <a href="sliding-window/longest-ones-after-delete.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Subarray of 1's
+                        After Deleting One Element</a>
+                    <a href="sliding-window/longest-substring-no-repeat.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring Without
+                        Repeating Characters (Alt)</a>
+                    <a href="sliding-window/longest-substring-without-repeating-characters.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring Without
+                        Repeating Characters</a>
+                    <a href="sliding-window/max-consecutive-ones-iii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Consecutive Ones III</a>
+                    <a href="sliding-window/maximum-substring-without-repeating-character.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Substring Without
+                        Repeating Characters</a>
+                    <a href="sliding-window/maximum-sum-subarray.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum Subarray</a>
+                    <a href="sliding-window/minimum-size-subarray.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Size Subarray
+                        Sum</a>
+                    <a href="sliding-window/minimum-window-subsequence.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Window
+                        Subsequence</a>
+                    <a href="sliding-window/minimum-window-substring.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Window Substring</a>
+                    <a href="sliding-window/nice-subarrays.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Count Number of Nice
+                        Subarrays</a>
+                    <a href="sliding-window/permutation-in-string.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Permutation in String</a>
+                    <a href="sliding-window/sliding-window-maximum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sliding Window Maximum</a>
+                    <a href="sliding-window/subarray-product-less-than-k.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarray Product Less Than
+                        K</a>
+                    <a href="sliding-window/subarray-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarray Sum</a>
+                    <a href="sliding-window/substrings-differ-by-one.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Count Substrings That Differ
+                        by One Character</a>
+                    <a href="sliding-window/substrings-with-abc.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Substrings
+                        Containing All Three Characters</a>
                 </div>
             </div>
 
@@ -237,13 +344,22 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Heap</h2>
                 <div class="space-y-2">
-                    <a href="heap/top-k-elements.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Top K Elements</a>
-                    <a href="heap/merge-k-sorted-lists.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge K Sorted Lists</a>
-                    <a href="heap/find-median-data-stream.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Median from Data Stream</a>
-                    <a href="heap/task-scheduler.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Task Scheduler</a>
-                    <a href="heap/ugly-number-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Ugly Number II</a>
-                    <a href="heap/meeting-rooms-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Meeting Rooms II</a>
-                    <a href="heap/k-closest-points-to-origin.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">K Closest Points to Origin</a>
+                    <a href="heap/top-k-elements.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Top K Elements</a>
+                    <a href="heap/merge-k-sorted-lists.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge K Sorted Lists</a>
+                    <a href="heap/find-median-data-stream.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Median from Data
+                        Stream</a>
+                    <a href="heap/task-scheduler.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Task Scheduler</a>
+                    <a href="heap/ugly-number-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Ugly Number II</a>
+                    <a href="heap/meeting-rooms-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Meeting Rooms II</a>
+                    <a href="heap/k-closest-points-to-origin.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">K Closest Points to
+                        Origin</a>
                 </div>
             </div>
 
@@ -251,11 +367,17 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Union-Find</h2>
                 <div class="space-y-2">
-                    <a href="unionfind/number-of-connected-components.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Connected Components</a>
-                    <a href="unionfind/graph-valid-tree.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Graph Valid Tree</a>
-                    <a href="unionfind/accounts-merge.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Accounts Merge</a>
-                    <a href="unionfind/redundant-connection-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Redundant Connection II</a>
-                    <a href="unionfind/most-stones-removed.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Most Stones Removed</a>
+                    <a href="unionfind/number-of-connected-components.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Connected
+                        Components</a>
+                    <a href="unionfind/graph-valid-tree.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Graph Valid Tree</a>
+                    <a href="unionfind/accounts-merge.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Accounts Merge</a>
+                    <a href="unionfind/redundant-connection-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Redundant Connection II</a>
+                    <a href="unionfind/most-stones-removed.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Most Stones Removed</a>
                 </div>
             </div>
 
@@ -263,19 +385,33 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Tortoise and Hare</h2>
                 <div class="space-y-2">
-                    <a href="tortoise-and-hare/happy-number.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Happy Number</a>
-                    <a href="tortoise-and-hare/linked-list-cycle-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Linked List Cycle II</a>
-                    <a href="tortoise-and-hare/linked-list-cycle.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Linked List Cycle</a>
-                    <a href="tortoise-and-hare/merge-k-sorted-lists.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge K Sorted Lists</a>
-                    <a href="tortoise-and-hare/middle-of-linked-list.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Middle of Linked List</a>
-                    <a href="tortoise-and-hare/palindrome-linked-list.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindrome Linked List</a>
-                    <a href="tortoise-and-hare/remove-duplicates-from-sorted-list-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Remove Duplicates from Sorted List II</a>
-                    <a href="tortoise-and-hare/remove-nth-from-end.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Remove Nth from End</a>
-                    <a href="tortoise-and-hare/reorder-list.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Reorder List</a>
-                    <a href="tortoise-and-hare/reverse-nodes-in-k-group.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Reverse Nodes in K Group</a>
-                    <a href="tortoise-and-hare/rotate-list.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Rotate List</a>
-                    <a href="tortoise-and-hare/sort-list.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sort List</a>
-                    <a href="tortoise-and-hare/swap-nodes-in-pairs.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Swap Nodes in Pairs</a>
+                    <a href="tortoise-and-hare/happy-number.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Happy Number</a>
+                    <a href="tortoise-and-hare/linked-list-cycle-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Linked List Cycle II</a>
+                    <a href="tortoise-and-hare/linked-list-cycle.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Linked List Cycle</a>
+                    <a href="tortoise-and-hare/merge-k-sorted-lists.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Merge K Sorted Lists</a>
+                    <a href="tortoise-and-hare/middle-of-linked-list.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Middle of Linked List</a>
+                    <a href="tortoise-and-hare/palindrome-linked-list.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindrome Linked List</a>
+                    <a href="tortoise-and-hare/remove-duplicates-from-sorted-list-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Remove Duplicates from
+                        Sorted List II</a>
+                    <a href="tortoise-and-hare/remove-nth-from-end.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Remove Nth from End</a>
+                    <a href="tortoise-and-hare/reorder-list.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Reorder List</a>
+                    <a href="tortoise-and-hare/reverse-nodes-in-k-group.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Reverse Nodes in K Group</a>
+                    <a href="tortoise-and-hare/rotate-list.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Rotate List</a>
+                    <a href="tortoise-and-hare/sort-list.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sort List</a>
+                    <a href="tortoise-and-hare/swap-nodes-in-pairs.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Swap Nodes in Pairs</a>
                 </div>
             </div>
 
@@ -283,17 +419,30 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Two Pointer</h2>
                 <div class="space-y-2">
-                    <a href="two-pointer/4sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">4Sum</a>
-                    <a href="two-pointer/longest-substring-two-distinct.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring Two Distinct</a>
-                    <a href="two-pointer/maximumsumcontainer.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum Container</a>
-                    <a href="two-pointer/minimum-size-subarray-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Size Subarray Sum</a>
-                    <a href="two-pointer/move-zeroes.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Move Zeroes</a>
-                    <a href="two-pointer/reverse-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Reverse String</a>
-                    <a href="two-pointer/sort-colors.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sort Colors</a>
-                    <a href="two-pointer/threesum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Three Sum</a>
-                    <a href="two-pointer/trapping-rain-water.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Trapping Rain Water</a>
-                    <a href="two-pointer/two-sum-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Two Sum II</a>
-                    <a href="two-pointer/valid-palindrome.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Valid Palindrome</a>
+                    <a href="two-pointer/4sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">4Sum</a>
+                    <a href="two-pointer/longest-substring-two-distinct.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Substring Two
+                        Distinct</a>
+                    <a href="two-pointer/maximumsumcontainer.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Sum Container</a>
+                    <a href="two-pointer/minimum-size-subarray-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Size Subarray
+                        Sum</a>
+                    <a href="two-pointer/move-zeroes.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Move Zeroes</a>
+                    <a href="two-pointer/reverse-string.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Reverse String</a>
+                    <a href="two-pointer/sort-colors.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sort Colors</a>
+                    <a href="two-pointer/threesum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Three Sum</a>
+                    <a href="two-pointer/trapping-rain-water.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Trapping Rain Water</a>
+                    <a href="two-pointer/two-sum-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Two Sum II</a>
+                    <a href="two-pointer/valid-palindrome.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Valid Palindrome</a>
                 </div>
             </div>
 
@@ -301,16 +450,27 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Graph</h2>
                 <div class="space-y-2">
-                    <a href="graph/bfs.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Breadth-First Search</a>
-                    <a href="graph/dfs.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Depth-First Search</a>
-                    <a href="graph/number-of-provinces.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Provinces</a>
-                    <a href="graph/flood-fill.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Flood Fill</a>
-                    <a href="graph/clone-graph.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Clone Graph</a>
-                    <a href="graph/rotting-oranges.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Rotting Oranges</a>
-                    <a href="graph/course-schedule.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Course Schedule</a>
-                    <a href="graph/detect-cycle-undirected.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Detect Cycle in Undirected Graph</a>
-                    <a href="graph/redundant-connection.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Redundant Connection</a>
-                    <a href="graph/kruskal-mst.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Kruskal's MST</a>
+                    <a href="graph/bfs.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Breadth-First Search</a>
+                    <a href="graph/dfs.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Depth-First Search</a>
+                    <a href="graph/number-of-provinces.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Number of Provinces</a>
+                    <a href="graph/flood-fill.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Flood Fill</a>
+                    <a href="graph/clone-graph.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Clone Graph</a>
+                    <a href="graph/rotting-oranges.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Rotting Oranges</a>
+                    <a href="graph/course-schedule.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Course Schedule</a>
+                    <a href="graph/detect-cycle-undirected.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Detect Cycle in Undirected
+                        Graph</a>
+                    <a href="graph/redundant-connection.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Redundant Connection</a>
+                    <a href="graph/kruskal-mst.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Kruskal's MST</a>
                 </div>
             </div>
 
@@ -318,12 +478,19 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Backtracking</h2>
                 <div class="space-y-2">
-                    <a href="backtracking/palindrome-partitioning.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindrome Partitioning</a>
-                    <a href="backtracking/generate-parentheses.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Generate Parentheses</a>
-                    <a href="backtracking/subsets-permutations-combinations.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subsets, Permutations, Combinations</a>
-                    <a href="backtracking/n-queens.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">N-Queens</a>
-                    <a href="backtracking/sudoku-solver.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sudoku Solver</a>
-                    <a href="backtracking/word-search.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Search</a>
+                    <a href="backtracking/palindrome-partitioning.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindrome Partitioning</a>
+                    <a href="backtracking/generate-parentheses.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Generate Parentheses</a>
+                    <a href="backtracking/subsets-permutations-combinations.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subsets, Permutations,
+                        Combinations</a>
+                    <a href="backtracking/n-queens.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">N-Queens</a>
+                    <a href="backtracking/sudoku-solver.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sudoku Solver</a>
+                    <a href="backtracking/word-search.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Search</a>
                 </div>
             </div>
 
@@ -331,18 +498,32 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Greedy</h2>
                 <div class="space-y-2">
-                    <a href="greedy/jump-game.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Jump Game</a>
-                    <a href="greedy/gas-station.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Gas Station</a>
-                    <a href="greedy/task-scheduler.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Task Scheduler</a>
-                    <a href="greedy/non-overlapping-intervals.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Non-overlapping Intervals</a>
-                    <a href="greedy/partition-labels.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Partition Labels</a>
-                    <a href="greedy/huffman-coding.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Huffman Coding</a>
-                    <a href="greedy/minimum-arrows.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Arrows</a>
-                    <a href="greedy/minimum-platforms.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Platforms</a>
-                    <a href="greedy/lemonade-change.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Lemonade Change</a>
-                    <a href="greedy/monotone-increasing-digits.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Monotone Increasing Digits</a>
-                    <a href="greedy/boats-save-people.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Boats to Save People</a>
-                    <a href="greedy/two-city-scheduling.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Two City Scheduling</a>
+                    <a href="greedy/jump-game.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Jump Game</a>
+                    <a href="greedy/gas-station.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Gas Station</a>
+                    <a href="greedy/task-scheduler.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Task Scheduler</a>
+                    <a href="greedy/non-overlapping-intervals.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Non-overlapping
+                        Intervals</a>
+                    <a href="greedy/partition-labels.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Partition Labels</a>
+                    <a href="greedy/huffman-coding.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Huffman Coding</a>
+                    <a href="greedy/minimum-arrows.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Arrows</a>
+                    <a href="greedy/minimum-platforms.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Platforms</a>
+                    <a href="greedy/lemonade-change.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Lemonade Change</a>
+                    <a href="greedy/monotone-increasing-digits.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Monotone Increasing
+                        Digits</a>
+                    <a href="greedy/boats-save-people.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Boats to Save People</a>
+                    <a href="greedy/two-city-scheduling.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Two City Scheduling</a>
                 </div>
             </div>
 
@@ -350,16 +531,28 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Monotonic Stack/Queue</h2>
                 <div class="space-y-2">
-                    <a href="monotonic-stack-queue/largest-rectangle-histogram.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Largest Rectangle in Histogram</a>
-                    <a href="monotonic-stack-queue/daily-temperatures.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Daily Temperatures</a>
-                    <a href="monotonic-stack-queue/asteroid-collision.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Asteroid Collision</a>
-                    <a href="monotonic-stack-queue/remove-duplicate-letters.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Remove Duplicate Letters</a>
-                    <a href="monotonic-stack-queue/evaluate-rpn.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Evaluate RPN</a>
-                    <a href="monotonic-stack-queue/trapping-rain-water-2.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Trapping Rain Water II</a>
-                    <a href="monotonic-stack-queue/sum-subarray-minimums.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sum of Subarray Minimums</a>
-                    <a href="monotonic-stack-queue/max-k-subarray-sums.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max K Subarray Sums</a>
-                    <a href="monotonic-stack-queue/max-sliding-window-avg.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Sliding Window Average</a>
-                    <a href="monotonic-stack-queue/max-subarray-sum-k.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Subarray Sum K</a>
+                    <a href="monotonic-stack-queue/largest-rectangle-histogram.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Largest Rectangle in
+                        Histogram</a>
+                    <a href="monotonic-stack-queue/daily-temperatures.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Daily Temperatures</a>
+                    <a href="monotonic-stack-queue/asteroid-collision.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Asteroid Collision</a>
+                    <a href="monotonic-stack-queue/remove-duplicate-letters.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Remove Duplicate Letters</a>
+                    <a href="monotonic-stack-queue/evaluate-rpn.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Evaluate RPN</a>
+                    <a href="monotonic-stack-queue/trapping-rain-water-2.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Trapping Rain Water II</a>
+                    <a href="monotonic-stack-queue/sum-subarray-minimums.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Sum of Subarray Minimums</a>
+                    <a href="monotonic-stack-queue/max-k-subarray-sums.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max K Subarray Sums</a>
+                    <a href="monotonic-stack-queue/max-sliding-window-avg.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Sliding Window
+                        Average</a>
+                    <a href="monotonic-stack-queue/max-subarray-sum-k.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Subarray Sum K</a>
                 </div>
             </div>
 
@@ -367,11 +560,16 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Matrix Traversal</h2>
                 <div class="space-y-2">
-                    <a href="matrix-traversal/spiral-matrix.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Spiral Matrix</a>
-                    <a href="matrix-traversal/rotate-image.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Rotate Image</a>
-                    <a href="matrix-traversal/set-matrix-zeroes.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Set Matrix Zeroes</a>
-                    <a href="matrix-traversal/game-of-life.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Game of Life</a>
-                    <a href="matrix-traversal/pacific-atlantic.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Pacific Atlantic</a>
+                    <a href="matrix-traversal/spiral-matrix.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Spiral Matrix</a>
+                    <a href="matrix-traversal/rotate-image.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Rotate Image</a>
+                    <a href="matrix-traversal/set-matrix-zeroes.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Set Matrix Zeroes</a>
+                    <a href="matrix-traversal/game-of-life.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Game of Life</a>
+                    <a href="matrix-traversal/pacific-atlantic.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Pacific Atlantic</a>
                 </div>
             </div>
 
@@ -379,10 +577,14 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Prefix Sum</h2>
                 <div class="space-y-2">
-                    <a href="prefix-sum/subarray-sum-equals-k.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarray Sum Equals K</a>
-                    <a href="prefix-sum/binary-subarray-with-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Binary Subarray with Sum</a>
-                    <a href="prefix-sum/range-sum-query.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Range Sum Query</a>
-                    <a href="prefix-sum/difference-array.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Difference Array</a>
+                    <a href="prefix-sum/subarray-sum-equals-k.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Subarray Sum Equals K</a>
+                    <a href="prefix-sum/binary-subarray-with-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Binary Subarray with Sum</a>
+                    <a href="prefix-sum/range-sum-query.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Range Sum Query</a>
+                    <a href="prefix-sum/difference-array.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Difference Array</a>
                 </div>
             </div>
 
@@ -390,22 +592,41 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Dynamic Programming</h2>
                 <div class="space-y-2">
-                    <a href="dynamic-programming/climbing-stairs.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Climbing Stairs</a>
-                    <a href="dynamic-programming/jump-game.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Jump Game</a>
-                    <a href="dynamic-programming/unique-paths.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Unique Paths</a>
-                    <a href="dynamic-programming/maximum-product-subarray.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Product Subarray</a>
-                    <a href="dynamic-programming/best-time-buy-sell-cooldown.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Best Time to Buy and Sell with Cooldown</a>
-                    <a href="dynamic-programming/partition-equal-subset-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Partition Equal Subset Sum</a>
-                    <a href="dynamic-programming/minimum-path-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Path Sum</a>
-                    <a href="dynamic-programming/decode-ways.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Decode Ways</a>
-                    <a href="dynamic-programming/distinct-subsequences.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Distinct Subsequences</a>
-                    <a href="dynamic-programming/interleaving-string.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Interleaving String</a>
-                    <a href="dynamic-programming/knapsack.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Knapsack</a>
-                    <a href="dynamic-programming/longest-common-subsequence.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Common Subsequence</a>
-                    <a href="dynamic-programming/house-robber.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">House Robber</a>
-                    <a href="dynamic-programming/max-product-subarray.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Product Subarray</a>
-                    <a href="dynamic-programming/palindromic-substrings.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindromic Substrings</a>
-                    <a href="dynamic-programming/edit-distance.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Edit Distance</a>
+                    <a href="dynamic-programming/climbing-stairs.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Climbing Stairs</a>
+                    <a href="dynamic-programming/jump-game.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Jump Game</a>
+                    <a href="dynamic-programming/unique-paths.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Unique Paths</a>
+                    <a href="dynamic-programming/maximum-product-subarray.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum Product Subarray</a>
+                    <a href="dynamic-programming/best-time-buy-sell-cooldown.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Best Time to Buy and Sell
+                        with Cooldown</a>
+                    <a href="dynamic-programming/partition-equal-subset-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Partition Equal Subset
+                        Sum</a>
+                    <a href="dynamic-programming/minimum-path-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Minimum Path Sum</a>
+                    <a href="dynamic-programming/decode-ways.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Decode Ways</a>
+                    <a href="dynamic-programming/distinct-subsequences.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Distinct Subsequences</a>
+                    <a href="dynamic-programming/interleaving-string.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Interleaving String</a>
+                    <a href="dynamic-programming/knapsack.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Knapsack</a>
+                    <a href="dynamic-programming/longest-common-subsequence.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Common
+                        Subsequence</a>
+                    <a href="dynamic-programming/house-robber.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">House Robber</a>
+                    <a href="dynamic-programming/max-product-subarray.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Product Subarray</a>
+                    <a href="dynamic-programming/palindromic-substrings.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindromic Substrings</a>
+                    <a href="dynamic-programming/edit-distance.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Edit Distance</a>
                 </div>
             </div>
 
@@ -413,18 +634,34 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">String Algorithms</h2>
                 <div class="space-y-2">
-                    <a href="string-algorithms/regex-matching.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Regex Matching</a>
-                    <a href="string-algorithms/wildcard-matching.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Wildcard Matching</a>
-                    <a href="string-algorithms/longest-palindromic-substring.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Palindromic Substring</a>
-                    <a href="string-algorithms/distinct-subsequences.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Distinct Subsequences</a>
-                    <a href="string-algorithms/longest-common-subsequence.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Common Subsequence</a>
-                    <a href="string-algorithms/valid-anagram.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Valid Anagram</a>
-                    <a href="string-algorithms/shortest-palindrome.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Shortest Palindrome</a>
-                    <a href="string-algorithms/find-all-palindromes.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Palindromes</a>
-                    <a href="string-algorithms/palindrome-partitioning-2.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindrome Partitioning II</a>
-                    <a href="string-algorithms/repeated-substring-pattern.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Repeated Substring Pattern</a>
-                    <a href="string-algorithms/zigzag-conversion.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Zigzag Conversion</a>
-                    <a href="string-algorithms/string-matching-dp.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">String Matching DP</a>
+                    <a href="string-algorithms/regex-matching.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Regex Matching</a>
+                    <a href="string-algorithms/wildcard-matching.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Wildcard Matching</a>
+                    <a href="string-algorithms/longest-palindromic-substring.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Palindromic
+                        Substring</a>
+                    <a href="string-algorithms/distinct-subsequences.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Distinct Subsequences</a>
+                    <a href="string-algorithms/longest-common-subsequence.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Longest Common
+                        Subsequence</a>
+                    <a href="string-algorithms/valid-anagram.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Valid Anagram</a>
+                    <a href="string-algorithms/shortest-palindrome.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Shortest Palindrome</a>
+                    <a href="string-algorithms/find-all-palindromes.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Palindromes</a>
+                    <a href="string-algorithms/palindrome-partitioning-2.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Palindrome Partitioning
+                        II</a>
+                    <a href="string-algorithms/repeated-substring-pattern.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Repeated Substring
+                        Pattern</a>
+                    <a href="string-algorithms/zigzag-conversion.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Zigzag Conversion</a>
+                    <a href="string-algorithms/string-matching-dp.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">String Matching DP</a>
                 </div>
             </div>
 
@@ -432,11 +669,16 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Cyclic Sort</h2>
                 <div class="space-y-2">
-                    <a href="cyclic-sort/missing-number.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Missing Number</a>
-                    <a href="cyclic-sort/find-duplicate-number.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Duplicate Number</a>
-                    <a href="cyclic-sort/first-missing-positive.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">First Missing Positive</a>
-                    <a href="cyclic-sort/find-all-missing-numbers.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Missing Numbers</a>
-                    <a href="cyclic-sort/find-all-duplicates.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Duplicates</a>
+                    <a href="cyclic-sort/missing-number.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Missing Number</a>
+                    <a href="cyclic-sort/find-duplicate-number.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find Duplicate Number</a>
+                    <a href="cyclic-sort/first-missing-positive.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">First Missing Positive</a>
+                    <a href="cyclic-sort/find-all-missing-numbers.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Missing Numbers</a>
+                    <a href="cyclic-sort/find-all-duplicates.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Find All Duplicates</a>
                 </div>
             </div>
 
@@ -444,14 +686,23 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Recursion</h2>
                 <div class="space-y-2">
-                    <a href="recursion/fibonacci-memoized.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Fibonacci Memoized</a>
-                    <a href="recursion/climbing-stairs.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Climbing Stairs</a>
-                    <a href="recursion/n-queens.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">N-Queens</a>
-                    <a href="recursion/partition-equal-subset-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Partition Equal Subset Sum</a>
-                    <a href="recursion/target-sum.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Target Sum</a>
-                    <a href="recursion/tower-of-hanoi.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tower of Hanoi</a>
-                    <a href="recursion/unique-paths.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Unique Paths</a>
-                    <a href="recursion/word-break.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Break</a>
+                    <a href="recursion/fibonacci-memoized.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Fibonacci Memoized</a>
+                    <a href="recursion/climbing-stairs.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Climbing Stairs</a>
+                    <a href="recursion/n-queens.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">N-Queens</a>
+                    <a href="recursion/partition-equal-subset-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Partition Equal Subset
+                        Sum</a>
+                    <a href="recursion/target-sum.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Target Sum</a>
+                    <a href="recursion/tower-of-hanoi.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tower of Hanoi</a>
+                    <a href="recursion/unique-paths.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Unique Paths</a>
+                    <a href="recursion/word-break.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Break</a>
                 </div>
             </div>
 
@@ -459,13 +710,20 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Trees</h2>
                 <div class="space-y-2">
-                    <a href="trees/binary_tree_traversals.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Binary Tree Traversals</a>
-                    <a href="trees/invert_binary_tree.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Invert Binary Tree</a>
-                    <a href="trees/level_order_traversal.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Level Order Traversal</a>
-                    <a href="trees/lowest_common_ancestor.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Lowest Common Ancestor</a>
-                    <a href="trees/max_depth_tree.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Depth Tree</a>
-                    <a href="trees/tree_diameter.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tree Diameter</a>
-                    <a href="trees/validate_bst.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Validate BST</a>
+                    <a href="trees/binary_tree_traversals.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Binary Tree Traversals</a>
+                    <a href="trees/invert_binary_tree.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Invert Binary Tree</a>
+                    <a href="trees/level_order_traversal.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Level Order Traversal</a>
+                    <a href="trees/lowest_common_ancestor.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Lowest Common Ancestor</a>
+                    <a href="trees/max_depth_tree.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Max Depth Tree</a>
+                    <a href="trees/tree_diameter.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Tree Diameter</a>
+                    <a href="trees/validate_bst.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Validate BST</a>
                 </div>
             </div>
 
@@ -473,11 +731,17 @@
             <div class="card rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-400">Trie (Prefix Tree)</h2>
                 <div class="space-y-2">
-                    <a href="trie/implement-trie.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Implement Trie</a>
-                    <a href="trie/word-search-ii.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Search II</a>
-                    <a href="trie/add-and-search-word.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Add and Search Word</a>
-                    <a href="trie/maximum-xor-two-numbers.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum XOR of Two Numbers</a>
-                    <a href="trie/replace-words.html" class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Replace Words</a>
+                    <a href="trie/implement-trie.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Implement Trie</a>
+                    <a href="trie/word-search-ii.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Word Search II</a>
+                    <a href="trie/add-and-search-word.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Add and Search Word</a>
+                    <a href="trie/maximum-xor-two-numbers.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Maximum XOR of Two
+                        Numbers</a>
+                    <a href="trie/replace-words.html"
+                        class="algorithm-link block text-gray-300 hover:text-blue-400 py-1">Replace Words</a>
                 </div>
             </div>
         </div>
@@ -490,7 +754,7 @@
         function filterByCategory(category) {
             currentCategory = category;
             updateFilters();
-            
+
             // Update active state of category buttons
             document.querySelectorAll('.category-filter').forEach(button => {
                 if (button.textContent.toLowerCase().includes(category)) {
@@ -540,7 +804,7 @@
         function updateVisibleCount() {
             const visibleAlgorithms = document.querySelectorAll('.algorithm-link:not(.hidden-algo)').length;
             const totalCount = document.querySelectorAll('.algorithm-link').length;
-            
+
             // Update the results count in the UI
             const searchInput = document.getElementById('searchInput');
             if (currentSearchTerm) {
@@ -558,4 +822,5 @@
         });
     </script>
 </body>
+
 </html>
